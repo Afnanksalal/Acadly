@@ -48,6 +48,12 @@ export default async function DashboardPage() {
               seller: true,
               listing: true
             }
+          },
+          reporter: true,
+          actions: {
+            include: {
+              admin: true
+            }
           }
         } 
       }),

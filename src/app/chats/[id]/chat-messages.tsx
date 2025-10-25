@@ -23,15 +23,23 @@ export function ChatMessages({
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [newMessage, setNewMessage] = useState("")
   const [sending, setSending] = useState(false)
+  const [shouldScroll, setShouldScroll] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+    }
   }
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    // Only scroll if we explicitly set shouldScroll (when user sends a message)
+    if (shouldScroll) {
+      scrollToBottom()
+      setShouldScroll(false)
+    }
+  }, [messages, shouldScroll])
 
   // Poll for new messages every 3 seconds (network efficient)
   useEffect(() => {
@@ -101,6 +109,7 @@ export function ChatMessages({
           sender: { email: "You" }
         }])
         setNewMessage("")
+        setShouldScroll(true) // Only scroll when user sends a message
       }
     } catch (error) {
       console.error("Failed to send message:", error)
@@ -110,9 +119,9 @@ export function ChatMessages({
   }
 
   return (
-    <div className="flex flex-col h-[600px]">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+    <div className="flex flex-col h-[70vh] min-h-[500px] max-h-[700px]">
+      {/* Messages - Scrollable area */}
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-4">
         {messages.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <p>No messages yet. Start the conversation!</p>

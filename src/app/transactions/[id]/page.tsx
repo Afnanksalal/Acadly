@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PickupCodeDisplay } from "./pickup-code-display"
 import { DisputeButton } from "./dispute-button"
+import { ReviewButton } from "./review-button"
 
 export default async function TransactionPage({ 
   params,
@@ -27,7 +28,13 @@ export default async function TransactionPage({
       listing: true,
       buyer: true,
       seller: true,
-      pickup: true
+      pickup: true,
+      reviews: {
+        include: {
+          reviewer: true,
+          reviewee: true
+        }
+      }
     }
   })
 
@@ -54,6 +61,17 @@ export default async function TransactionPage({
   const isBuyer = transaction.buyerId === user.id
   const isSeller = transaction.sellerId === user.id
   const showSuccess = searchParams.success === "true"
+  
+  // Check if transaction is completed (pickup confirmed)
+  const isCompleted = transaction.status === "PAID" && transaction.pickup?.status === "CONFIRMED"
+  
+  // Check if user has already reviewed
+  const userReview = transaction.reviews.find(r => r.reviewerId === user.id)
+  const canReview = isCompleted && !userReview
+  
+  // Get the other party for review
+  const revieweeId = isBuyer ? transaction.sellerId : transaction.buyerId
+  const revieweeName = isBuyer ? transaction.seller.email?.split('@')[0] : transaction.buyer.email?.split('@')[0]
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-6">
@@ -138,6 +156,38 @@ export default async function TransactionPage({
                 </Link>
               )}
             </div>
+            
+            {/* Review Button */}
+            {canReview && (
+              <ReviewButton
+                transactionId={transaction.id}
+                revieweeId={revieweeId}
+                revieweeName={revieweeName || "User"}
+                canReview={canReview}
+              />
+            )}
+            
+            {/* Show existing review */}
+            {userReview && (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium">Your Review:</span>
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className={i < userReview.rating ? "text-yellow-500" : "text-gray-300"}>
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {userReview.comment && (
+                    <p className="text-sm text-muted-foreground">{userReview.comment}</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+            
             <DisputeButton transactionId={transaction.id} />
           </div>
         </CardContent>

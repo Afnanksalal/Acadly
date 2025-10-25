@@ -26,12 +26,30 @@ export default function NewListingPage() {
   const router = useRouter()
 
   useEffect(() => {
-    supabaseClient.auth.getUser().then((res) => {
+    // Check auth BEFORE allowing user to fill form
+    supabaseClient.auth.getUser().then(async (res) => {
       const id = res.data.user?.id
-      if (id) setUserId(id)
+      
+      if (!id) {
+        // Redirect to login if not authenticated
+        router.push('/auth/login?redirect=/listings/new')
+        return
+      }
+      
+      // Check if verified
+      const profileRes = await fetch('/api/profile')
+      if (profileRes.ok) {
+        const { profile } = await profileRes.json()
+        if (!profile.verified) {
+          setError('Please verify your account to create listings')
+          return
+        }
+      }
+      
+      setUserId(id)
     })
     fetch("/api/categories").then(r => r.json()).then((list: Array<{ id: string; name: string }>) => setCategories(list))
-  }, [])
+  }, [router])
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files

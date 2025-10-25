@@ -15,6 +15,7 @@ export function DisputeButton({ transactionId }: { transactionId: string }) {
   
   const [subject, setSubject] = useState("")
   const [description, setDescription] = useState("")
+  const [reason, setReason] = useState("OTHER")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -28,7 +29,8 @@ export function DisputeButton({ transactionId }: { transactionId: string }) {
         body: JSON.stringify({
           transactionId,
           subject,
-          description
+          description,
+          reason
         })
       })
 
@@ -69,6 +71,26 @@ export function DisputeButton({ transactionId }: { transactionId: string }) {
           </Alert>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="reason">Reason</Label>
+              <select
+                id="reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-md"
+                disabled={loading}
+              >
+                <option value="NOT_AS_DESCRIBED">Not as described</option>
+                <option value="NOT_RECEIVED">Not received</option>
+                <option value="DAMAGED">Damaged item</option>
+                <option value="FAKE">Fake/counterfeit</option>
+                <option value="SELLER_UNRESPONSIVE">Seller unresponsive</option>
+                <option value="BUYER_UNRESPONSIVE">Buyer unresponsive</option>
+                <option value="PAYMENT_ISSUE">Payment issue</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
             <div>
               <Label htmlFor="subject">Subject</Label>
               <Input

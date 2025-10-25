@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
       transactionId: z.string().uuid(),
       subject: z.string().min(5).max(200),
       description: z.string().min(10).max(2000),
-      reason: z.enum(["NOT_AS_DESCRIBED", "NOT_RECEIVED", "DAMAGED", "FAKE", "OTHER"]).optional()
+      reason: z.enum(["NOT_AS_DESCRIBED", "NOT_RECEIVED", "DAMAGED", "FAKE", "SELLER_UNRESPONSIVE", "BUYER_UNRESPONSIVE", "PAYMENT_ISSUE", "OTHER"]),
+      evidence: z.array(z.string().url()).max(5).optional()
     })
 
     const parsed = schema.safeParse(await req.json())
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
 
-    const { transactionId, subject, description } = parsed.data
+    const { transactionId, subject, description, reason, evidence } = parsed.data
 
     // Verify transaction exists and user is a participant
     const transaction = await prisma.transaction.findUnique({
@@ -72,7 +73,10 @@ export async function POST(req: NextRequest) {
         reporterId: user.id, 
         subject, 
         description,
-        status: "OPEN"
+        reason,
+        evidence: evidence || [],
+        status: "OPEN",
+        priority: "MEDIUM"
       },
       include: {
         reporter: { select: { email: true } },

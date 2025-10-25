@@ -32,8 +32,20 @@ export async function Header() {
               <Link href="/chats" className="text-sm font-medium hover:text-primary transition-colors">
                 Messages
               </Link>
+              <Link href="/listings" className="text-sm font-medium hover:text-primary transition-colors">
+                Listings
+              </Link>
+              <Link href="/events" className="text-sm font-medium hover:text-primary transition-colors">
+                Events
+              </Link>
               <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
                 Dashboard
+              </Link>
+              <Link href="/profile" className="text-sm font-medium hover:text-primary transition-colors">
+                Profile
+              </Link>
+              <Link href="/reviews" className="text-sm font-medium hover:text-primary transition-colors">
+                Reviews
               </Link>
               <div className="h-8 w-px bg-border" />
               <div className="flex items-center gap-3">

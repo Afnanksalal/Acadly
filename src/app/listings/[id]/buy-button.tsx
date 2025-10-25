@@ -80,51 +80,74 @@ export function BuyButton({
 
       const { order, transaction } = await res.json()
 
-      // Load Razorpay script
-      const script = document.createElement("script")
-      script.src = "https://checkout.razorpay.com/v1/checkout.js"
-      script.async = true
-      document.body.appendChild(script)
-
-      script.onload = () => {
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-          amount: order.amount,
-          currency: order.currency,
-          name: "collegemart",
-          description: title,
-          order_id: order.id,
-          handler: function () {
-            // Payment successful
-            router.push(`/transactions/${transaction.id}?success=true`)
-          },
-          prefill: {
-            name: "",
-            email: "",
-            contact: ""
-          },
-          theme: {
-            color: "#7c3aed"
-          },
-          modal: {
-            ondismiss: function() {
-              setLoading(false)
-            }
+      // Load Razorpay script (check if already loaded)
+      const loadRazorpayScript = () => {
+        return new Promise((resolve, reject) => {
+          // Check if script already exists
+          if (window.Razorpay) {
+            resolve(true)
+            return
           }
-        }
-
-        const rzp = new window.Razorpay(options)
-        rzp.on("payment.failed", function () {
-          setError("Payment failed. Please try again.")
-          setLoading(false)
+          
+          // Check if script tag already exists
+          const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')
+          if (existingScript) {
+            existingScript.addEventListener('load', () => resolve(true))
+            existingScript.addEventListener('error', () => reject(new Error('Failed to load Razorpay')))
+            return
+          }
+          
+          // Create new script
+          const script = document.createElement("script")
+          script.src = "https://checkout.razorpay.com/v1/checkout.js"
+          script.async = true
+          script.onload = () => resolve(true)
+          script.onerror = () => reject(new Error('Failed to load Razorpay'))
+          document.body.appendChild(script)
         })
-        rzp.open()
       }
 
-      script.onerror = () => {
+      try {
+        await loadRazorpayScript()
+      } catch {
         setError("Failed to load payment gateway")
         setLoading(false)
+        return
       }
+
+      // Initialize Razorpay
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "collegemart",
+        description: title,
+        order_id: order.id,
+        handler: function () {
+          // Payment successful
+          router.push(`/transactions/${transaction.id}?success=true`)
+        },
+        prefill: {
+          name: "",
+          email: "",
+          contact: ""
+        },
+        theme: {
+          color: "#7c3aed"
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false)
+          }
+        }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on("payment.failed", function () {
+        setError("Payment failed. Please try again.")
+        setLoading(false)
+      })
+      rzp.open()
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to initiate purchase")

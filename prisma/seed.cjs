@@ -5,27 +5,34 @@ const prisma = new PrismaClient()
 async function main() {
   console.log("🌱 Starting database seed...")
 
-  // Create categories
-  const categories = [
-    { name: "Textbooks" },
-    { name: "Calculators" },
-    { name: "Electronics" },
-    { name: "Furniture" },
-    { name: "Lab Equipment" },
-    { name: "Stationery" },
-    { name: "Sports & Fitness" },
-    { name: "Clothing" },
-    { name: "Lab Assistance" },
-    { name: "Project Support" },
-    { name: "Record Writing" },
-    { name: "Tutoring" },
-  ]
+  // Check if categories already exist
+  const existingCategories = await prisma.category.count()
+  
+  if (existingCategories === 0) {
+    // Create categories only if none exist
+    const categories = [
+      { name: "Textbooks" },
+      { name: "Calculators" },
+      { name: "Electronics" },
+      { name: "Furniture" },
+      { name: "Lab Equipment" },
+      { name: "Stationery" },
+      { name: "Sports & Fitness" },
+      { name: "Clothing" },
+      { name: "Lab Assistance" },
+      { name: "Project Support" },
+      { name: "Record Writing" },
+      { name: "Tutoring" },
+    ]
 
-  const createdCategories = await prisma.category.createMany({
-    data: categories,
-    skipDuplicates: true,
-  })
-  console.log(`✅ Created ${categories.length} categories`)
+    await prisma.category.createMany({
+      data: categories,
+      skipDuplicates: true,
+    })
+    console.log(`✅ Created ${categories.length} categories`)
+  } else {
+    console.log(`ℹ️  Categories already exist (${existingCategories} found), skipping creation`)
+  }
 
   // Elevate admin if profile already exists (after first login)
   const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || []

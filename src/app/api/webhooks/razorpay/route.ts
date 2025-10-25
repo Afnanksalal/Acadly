@@ -44,10 +44,15 @@ export async function POST(req: NextRequest) {
         })
         console.log(`Updated ${updated.count} transactions for order ${orderId}`)
         
-        // Generate pickup code
+        // Generate pickup code and mark listing as sold
         if (updated.count > 0) {
-          const tx = await prisma.transaction.findFirst({ where: { razorpayOrderId: orderId } })
+          const tx = await prisma.transaction.findFirst({ 
+            where: { razorpayOrderId: orderId },
+            include: { listing: true }
+          })
+          
           if (tx) {
+            // Generate pickup code
             await prisma.pickup.upsert({
               where: { transactionId: tx.id },
               create: {
@@ -57,6 +62,14 @@ export async function POST(req: NextRequest) {
               },
               update: {}
             })
+            
+            // Mark listing as sold (no longer active)
+            await prisma.listing.update({
+              where: { id: tx.listingId },
+              data: { isActive: false }
+            })
+            
+            console.log(`Listing ${tx.listingId} marked as sold`)
           }
         }
       }
@@ -75,6 +88,36 @@ export async function POST(req: NextRequest) {
           },
         })
         console.log(`Payment captured for order ${orderId}, updated ${updated.count} transactions`)
+        
+        // Generate pickup code and mark listing as sold (fallback)
+        if (updated.count > 0) {
+          const tx = await prisma.transaction.findFirst({ 
+            where: { razorpayOrderId: orderId },
+            include: { listing: true, pickup: true }
+          })
+          
+          if (tx) {
+            // Generate pickup code if not exists
+            if (!tx.pickup) {
+              await prisma.pickup.create({
+                data: {
+                  transactionId: tx.id,
+                  pickupCode: Math.floor(100000 + Math.random() * 900000).toString(),
+                  status: "GENERATED"
+                }
+              })
+            }
+            
+            // Mark listing as sold
+            if (tx.listing.isActive) {
+              await prisma.listing.update({
+                where: { id: tx.listingId },
+                data: { isActive: false }
+              })
+              console.log(`Listing ${tx.listingId} marked as sold (fallback)`)
+            }
+          }
+        }
       }
     }
     
