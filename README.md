@@ -1,6 +1,17 @@
 # 🎓 CollegeMart - Complete Campus Marketplace Platform
 
-A modern, full-stack marketplace platform built for college students to buy, sell, and trade items within their campus community.
+A modern, full-stack marketplace platform built for college students to buy, sell, trade items, and discover campus events within their college community. Built with Next.js 14, TypeScript, Prisma, and Supabase.
+
+## 🌟 Key Highlights
+
+- 🛒 **Complete Marketplace** - Buy/sell products & services with secure payments
+- 💬 **Real-Time Messaging** - Chat with buyers/sellers, make offers, negotiate prices
+- 🔐 **Secure Transactions** - Razorpay integration with unique pickup codes
+- 📅 **Campus Events** - Discover and create college events
+- ⭐ **Reputation System** - User ratings and reviews for trust
+- 🛡️ **Admin Panel** - User verification, dispute resolution, analytics
+- 📱 **Mobile Responsive** - Seamless experience across all devices
+- 🎨 **Modern UI** - Beautiful interface with Tailwind CSS v4
 
 ---
 
@@ -50,23 +61,73 @@ A modern, full-stack marketplace platform built for college students to buy, sel
 
 ## ✨ Features
 
-### User Features
-✅ Email authentication  
-✅ Create product/service listings  
-✅ Upload up to 5 images (drag & drop)  
-✅ Browse and search listings  
-✅ Real-time chat  
-✅ Make/receive offers  
-✅ Secure payments (Razorpay)  
-✅ Unique pickup codes  
-✅ Rate and review users  
-✅ Mobile responsive  
+### 🛍️ Core Marketplace
+- **Product & Service Listings** - Buy and sell within campus community
+- **Multi-Category System** - Hierarchical category organization
+- **Image Upload** - Up to 5 images per listing with drag & drop support
+- **Listing Management** - Create, edit, and manage your listings
+- **Advanced Search** - Browse and filter listings by category and type
+- **Listing Details** - Comprehensive product information with seller profiles
 
-### Admin Features
-✅ User verification  
-✅ Dispute resolution  
-✅ Platform analytics  
-✅ User management  
+### 👤 Authentication & User Management
+- **Secure Authentication** - Email/password auth via Supabase
+- **User Verification** - Admin approval system for new users
+- **Role-Based Access** - User and Admin roles with different permissions
+- **Profile Management** - Customize name, username, bio, department, year, class, phone
+- **Public Profiles** - Username-based public profile pages (`/u/username`)
+- **Reputation System** - User ratings with average score calculation
+
+### 💬 Messaging & Negotiation
+- **Real-Time Chat** - Direct messaging between buyers and sellers
+- **Read Receipts** - Message status tracking (Sent/Delivered/Read)
+- **Price Offers** - Make and receive counter-offers
+- **Offer Management** - Track offer status (Proposed/Countered/Accepted/Declined/Expired/Cancelled)
+- **Unread Notifications** - Badge indicators for new messages
+
+### 💳 Payments & Transactions
+- **Razorpay Integration** - Secure payment processing
+- **Order Tracking** - Separate views for purchases and sales
+- **Transaction Management** - Status tracking (Initiated/Paid/Cancelled/Refunded)
+- **Pickup Codes** - Unique codes generated for secure item handoffs
+- **Pickup Confirmation** - Seller confirms pickup with buyer's code
+
+### ⭐ Reviews & Ratings
+- **User Reviews** - Rate and review after completed transactions
+- **5-Star System** - Rating with optional comments
+- **Average Ratings** - Automatic calculation of user reputation
+- **Review History** - View all reviews received on profile
+
+### 📅 Events Management
+- **Create Events** - Post campus events with details
+- **Event Discovery** - Browse upcoming campus events
+- **Event Details** - Title, description, venue, date/time, host information
+- **Event Status** - Track status (Upcoming/Ongoing/Completed/Cancelled/Rescheduled)
+- **Event Images** - Upload event banners and photos
+
+### 🛡️ Admin Dashboard
+- **User Verification** - Approve or reject new user registrations
+- **Dispute Resolution** - Handle transaction disputes with priority levels
+- **Dispute Management** - Multiple dispute reasons (Not as described, Not received, Damaged, Fake, etc.)
+- **Admin Actions** - Track all administrative actions taken
+- **Platform Analytics** - KPIs including user count, verified users, active listings, transactions
+- **Content Moderation** - Monitor recent listings and user activity
+
+### 🔒 Security & Policies
+- **Checkout Policy** - Clear transaction guidelines
+- **Privacy Policy** - User data protection information
+- **Terms of Service** - Platform usage terms
+- **Secure Uploads** - File validation and size limits
+- **Webhook Security** - Razorpay signature verification
+- **Row-Level Security** - Database-level access control
+
+### 🎨 UI/UX
+- **Fully Responsive** - Mobile-first design approach
+- **Modern UI** - Built with Tailwind CSS v4
+- **Theme Support** - Dark/light mode compatibility
+- **Mobile Navigation** - Smooth hamburger menu with animations
+- **Toast Notifications** - User feedback for actions
+- **Loading States** - Skeleton screens and spinners
+- **Error Handling** - Graceful error messages and fallbacks
 
 ---
 
@@ -256,39 +317,72 @@ Click **Deploy**
 ```
 collegemart/
 ├── prisma/
-│   ├── schema.prisma       # Database schema
+│   ├── schema.prisma       # Database schema (20+ models)
 │   ├── migrations/         # Migration files
-│   └── seed.cjs            # Seed script
+│   └── seed.cjs            # Seed script (categories & admin)
 ├── src/
 │   ├── app/
 │   │   ├── api/            # API routes
-│   │   │   ├── admin/      # Admin endpoints
+│   │   │   ├── admin/      # Admin endpoints (verify users, disputes)
 │   │   │   ├── auth/       # Auth endpoints
+│   │   │   ├── categories/ # Category management
+│   │   │   ├── chats/      # Chat CRUD operations
+│   │   │   ├── disputes/   # Dispute management
+│   │   │   ├── events/     # Event CRUD
 │   │   │   ├── listings/   # Listing CRUD
-│   │   │   ├── chats/      # Chat endpoints
-│   │   │   ├── payments/   # Payment processing
-│   │   │   ├── upload/     # Image upload
+│   │   │   ├── messages/   # Message operations
+│   │   │   ├── offers/     # Offer management
+│   │   │   ├── payments/   # Razorpay payment processing
+│   │   │   ├── pickups/    # Pickup code confirmation
+│   │   │   ├── profile/    # Profile updates
+│   │   │   ├── reviews/    # Review system
+│   │   │   ├── transactions/ # Transaction management
+│   │   │   ├── upload/     # Image upload to Supabase
 │   │   │   └── webhooks/   # Razorpay webhooks
+│   │   ├── admin/          # Admin dashboard page
 │   │   ├── auth/           # Login/Signup pages
-│   │   ├── listings/       # Listing pages
+│   │   │   ├── login/
+│   │   │   └── signup/
 │   │   ├── chats/          # Chat pages
-│   │   ├── dashboard/      # User dashboard
-│   │   ├── layout.tsx      # Root layout
+│   │   │   └── [id]/       # Individual chat view
+│   │   ├── dashboard/      # User/Admin dashboard
+│   │   ├── events/         # Events pages
+│   │   │   ├── new/        # Create event
+│   │   │   └── [id]/       # Event details
+│   │   ├── listings/       # Listing pages
+│   │   │   ├── new/        # Create listing
+│   │   │   └── [id]/       # Listing details
+│   │   ├── orders/         # Order tracking
+│   │   │   └── [id]/       # Order details
+│   │   ├── policies/       # Legal pages
+│   │   │   ├── checkout/
+│   │   │   ├── privacy/
+│   │   │   └── terms/
+│   │   ├── profile/        # User profile management
+│   │   ├── reviews/        # Reviews page
+│   │   ├── transactions/   # Transaction history
+│   │   │   └── [id]/       # Transaction details
+│   │   ├── u/              # Public user profiles
+│   │   │   └── [username]/ # Username-based profiles
+│   │   ├── layout.tsx      # Root layout with header
 │   │   ├── page.tsx        # Homepage
+│   │   ├── middleware.ts   # Auth middleware
 │   │   └── globals.css     # Global styles
 │   ├── components/
-│   │   ├── ui/             # UI components
-│   │   ├── header.tsx      # Site header
-│   │   └── mobile-nav.tsx  # Mobile nav
+│   │   ├── ui/             # Reusable UI components
+│   │   ├── header.tsx      # Site header with nav
+│   │   ├── mobile-nav.tsx  # Mobile navigation
+│   │   └── logout-button.tsx
 │   └── lib/
-│       ├── prisma.ts       # Prisma client
-│       ├── supabase-client.ts
-│       └── supabase-server.ts
+│       ├── prisma.ts       # Prisma client singleton
+│       ├── supabase-client.ts # Client-side Supabase
+│       └── supabase-server.ts # Server-side Supabase
 ├── .env                    # Environment variables
+├── .env.example            # Environment template
 ├── next.config.mjs         # Next.js config
-├── tailwind.config.ts      # Tailwind config
+├── tailwind.config.ts      # Tailwind CSS v4 config
 ├── tsconfig.json           # TypeScript config
-├── vercel.json             # Vercel config
+├── vercel.json             # Vercel deployment config
 └── package.json            # Dependencies
 ```
 
@@ -351,37 +445,47 @@ Handle payment webhooks (signature verified)
 
 ## 🗃️ Database Schema
 
-### Core Models
+### Core Models (20+ tables)
 
-**Profile**
+**Profile** - User accounts
 ```prisma
 model Profile {
   id          String   @id @db.Uuid
   email       String   @unique
+  name        String?
+  username    String?  @unique
+  avatarUrl   String?
+  phone       String?
+  department  String?
+  year        String?
+  class       String?
+  bio         String?
   role        Role     @default(USER)
   verified    Boolean  @default(false)
   ratingAvg   Float    @default(0)
+  ratingCount Int      @default(0)
   createdAt   DateTime @default(now())
 }
 ```
 
-**Listing**
+**Listing** - Products and services
 ```prisma
 model Listing {
-  id          String      @id @default(uuid())
-  userId      String      @db.Uuid
-  title       String
-  description String
-  price       Decimal     @db.Decimal(12, 2)
-  categoryId  String      @db.Uuid
-  images      Json        # Array of URLs
-  type        ListingType # PRODUCT | SERVICE
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
+  id               String      @id @default(uuid())
+  userId           String      @db.Uuid
+  title            String
+  description      String
+  price            Decimal     @db.Decimal(12, 2)
+  categoryId       String      @db.Uuid
+  images           Json        # Array of URLs
+  type             ListingType # PRODUCT | SERVICE
+  isActive         Boolean     @default(true)
+  requiresApproval Boolean     @default(false)
+  createdAt        DateTime    @default(now())
 }
 ```
 
-**Transaction**
+**Transaction** - Payment records
 ```prisma
 model Transaction {
   id                String            @id @default(uuid())
@@ -396,7 +500,7 @@ model Transaction {
 }
 ```
 
-**Chat**
+**Chat** - Messaging system
 ```prisma
 model Chat {
   id        String    @id @default(uuid())
@@ -404,7 +508,96 @@ model Chat {
   buyerId   String    @db.Uuid
   sellerId  String    @db.Uuid
   messages  Message[]
+  offers    Offer[]
   createdAt DateTime  @default(now())
+}
+```
+
+**Message** - Chat messages
+```prisma
+model Message {
+  id         String     @id @default(uuid())
+  chatId     String     @db.Uuid
+  senderId   String     @db.Uuid
+  text       String
+  readStatus ReadStatus @default(SENT)
+  createdAt  DateTime   @default(now())
+}
+```
+
+**Offer** - Price negotiations
+```prisma
+model Offer {
+  id         String      @id @default(uuid())
+  chatId     String      @db.Uuid
+  proposerId String      @db.Uuid
+  price      Decimal     @db.Decimal(12, 2)
+  status     OfferStatus @default(PROPOSED)
+  createdAt  DateTime    @default(now())
+  expiresAt  DateTime?
+}
+```
+
+**Pickup** - Secure item handoff
+```prisma
+model Pickup {
+  id            String       @id @default(uuid())
+  transactionId String       @unique @db.Uuid
+  pickupCode    String
+  status        PickupStatus @default(GENERATED)
+  createdAt     DateTime     @default(now())
+  confirmedAt   DateTime?
+}
+```
+
+**Review** - User ratings
+```prisma
+model Review {
+  id            String      @id @default(uuid())
+  transactionId String      @db.Uuid
+  reviewerId    String      @db.Uuid
+  revieweeId    String      @db.Uuid
+  rating        Int
+  comment       String?
+  helpful       Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+}
+```
+
+**Dispute** - Conflict resolution
+```prisma
+model Dispute {
+  id            String          @id @default(uuid())
+  transactionId String          @db.Uuid
+  reporterId    String          @db.Uuid
+  subject       String
+  description   String
+  reason        DisputeReason   @default(OTHER)
+  evidence      Json?
+  status        DisputeStatus   @default(OPEN)
+  priority      DisputePriority @default(MEDIUM)
+  createdAt     DateTime        @default(now())
+  resolvedAt    DateTime?
+  resolution    String?
+  refundAmount  Decimal?        @db.Decimal(12, 2)
+}
+```
+
+**Event** - Campus events
+```prisma
+model Event {
+  id          String   @id @default(uuid())
+  creatorId   String   @db.Uuid
+  title       String
+  description String
+  venue       String
+  hostName    String
+  imageUrl    String?
+  startTime   DateTime
+  endTime     DateTime?
+  status      String   # UPCOMING, ONGOING, COMPLETED, CANCELLED, RESCHEDULED
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }
 ```
 
@@ -413,6 +606,12 @@ model Chat {
 enum Role { USER, ADMIN }
 enum ListingType { PRODUCT, SERVICE }
 enum TransactionStatus { INITIATED, PAID, CANCELLED, REFUNDED }
+enum PickupStatus { GENERATED, CONFIRMED }
+enum OfferStatus { PROPOSED, COUNTERED, ACCEPTED, DECLINED, EXPIRED, CANCELLED }
+enum ReadStatus { SENT, DELIVERED, READ }
+enum DisputeStatus { OPEN, IN_REVIEW, RESOLVED, REJECTED }
+enum DisputeReason { NOT_AS_DESCRIBED, NOT_RECEIVED, DAMAGED, FAKE, SELLER_UNRESPONSIVE, BUYER_UNRESPONSIVE, PAYMENT_ISSUE, OTHER }
+enum DisputePriority { LOW, MEDIUM, HIGH, URGENT }
 ```
 
 ---
