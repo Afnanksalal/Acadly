@@ -166,24 +166,28 @@ cp .env.example .env
 ### 2. Add your credentials to .env
 
 ```env
-# DATABASE
-DATABASE_URL="postgresql://user:pass@host:5432/db?pgbouncer=true&connection_limit=1"
+# Database
+# Connection Pooler URL (for app runtime - use Transaction mode from Supabase)
+DATABASE_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
 
-# SUPABASE (Get from: https://app.supabase.com/project/_/settings/api)
-NEXT_PUBLIC_SUPABASE_URL="https://xxxxx.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+# Direct Connection URL (for migrations - use Session mode from Supabase)
+DIRECT_URL="postgresql://postgres:[PASSWORD]@db.xxxxx.supabase.co:5432/postgres"
 
-# RAZORPAY (Get from: https://dashboard.razorpay.com/app/keys)
-NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_test_xxxxx"
-RAZORPAY_KEY_ID="rzp_test_xxxxx"
-RAZORPAY_KEY_SECRET="xxxxx"
-RAZORPAY_WEBHOOK_SECRET="xxxxx"
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL="https://xxx.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJxxx..."
+SUPABASE_SERVICE_ROLE_KEY="eyJxxx..."
 
-# ADMIN
-ADMIN_EMAILS="admin@example.com"
+# Razorpay
+NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_test_xxx"
+RAZORPAY_KEY_ID="rzp_test_xxx"
+RAZORPAY_KEY_SECRET="xxx"
+RAZORPAY_WEBHOOK_SECRET="xxx"
 
-# NODE
+# Admin (comma-separated emails)
+ADMIN_EMAILS="admin@example.com,admin2@example.com"
+
+# Optional: Node Environment
 NODE_ENV="development"
 ```
 
