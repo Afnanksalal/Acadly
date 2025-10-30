@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { apiRequest, getErrorMessage } from "@/lib/api-client"
 
 export default function NewListingPage() {
   const [title, setTitle] = useState("")
@@ -133,18 +134,19 @@ export default function NewListingPage() {
     if (!title || !price) { setError("Title and price are required."); return }
     if (parseFloat(price) <= 0) { setError("Price must be greater than 0."); return }
     setLoading(true)
-    const res = await fetch("/api/listings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, title, description, price, categoryId, type, images: imageUrls })
-    })
-    setLoading(false)
-    if (res.ok) {
+    try {
+      await apiRequest("/api/listings", {
+        method: "POST",
+        body: JSON.stringify({ userId, title, description, price, categoryId, type, images: imageUrls })
+      })
+      
       router.push("/listings")
       router.refresh()
-    } else {
-      const data = await res.json()
-      setError(data.error?.message || "Failed to create listing")
+    } catch (err) {
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
     }
   }
 

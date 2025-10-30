@@ -8,12 +8,57 @@ const settingsSchema = z.object({
   maintenanceMode: z.boolean().optional(),
   registrationEnabled: z.boolean().optional(),
   emailVerificationRequired: z.boolean().optional(),
-  maxListingsPerUser: z.number().int().positive().optional(),
-  maxTransactionAmount: z.number().positive().optional(),
-  platformFeePercentage: z.number().min(0).max(100).optional(),
+  maxListingsPerUser: z.union([
+    z.number().int().positive(),
+    z.string().transform((val) => {
+      const num = parseInt(val)
+      if (isNaN(num) || num <= 0) {
+        throw new Error("Invalid max listings per user")
+      }
+      return num
+    })
+  ]).optional(),
+  maxTransactionAmount: z.union([
+    z.number().positive(),
+    z.string().transform((val) => {
+      const num = parseFloat(val)
+      if (isNaN(num) || num <= 0) {
+        throw new Error("Invalid max transaction amount")
+      }
+      return num
+    })
+  ]).optional(),
+  platformFeePercentage: z.union([
+    z.number().min(0).max(100),
+    z.string().transform((val) => {
+      const num = parseFloat(val)
+      if (isNaN(num) || num < 0 || num > 100) {
+        throw new Error("Invalid platform fee percentage")
+      }
+      return num
+    })
+  ]).optional(),
   autoApproveListings: z.boolean().optional(),
-  disputeAutoResolveHours: z.number().int().positive().optional(),
-  transactionTimeoutMinutes: z.number().int().positive().optional(),
+  disputeAutoResolveHours: z.union([
+    z.number().int().positive(),
+    z.string().transform((val) => {
+      const num = parseInt(val)
+      if (isNaN(num) || num <= 0) {
+        throw new Error("Invalid dispute auto resolve hours")
+      }
+      return num
+    })
+  ]).optional(),
+  transactionTimeoutMinutes: z.union([
+    z.number().int().positive(),
+    z.string().transform((val) => {
+      const num = parseInt(val)
+      if (isNaN(num) || num <= 0) {
+        throw new Error("Invalid transaction timeout minutes")
+      }
+      return num
+    })
+  ]).optional(),
 })
 
 // Mock settings storage (in a real app, you'd store this in database)

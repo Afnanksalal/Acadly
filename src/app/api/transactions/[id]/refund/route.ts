@@ -6,8 +6,26 @@ import { processRefund, processPartialRefund } from "@/lib/refund"
 import { z } from "zod"
 
 const refundSchema = z.object({
-  amount: z.number().positive().optional(),
-  percentage: z.number().min(0).max(1).optional(),
+  amount: z.union([
+    z.number().positive(),
+    z.string().transform((val) => {
+      const num = parseFloat(val)
+      if (isNaN(num) || num <= 0) {
+        throw new Error("Invalid amount")
+      }
+      return num
+    })
+  ]).optional(),
+  percentage: z.union([
+    z.number().min(0).max(1),
+    z.string().transform((val) => {
+      const num = parseFloat(val)
+      if (isNaN(num) || num < 0 || num > 1) {
+        throw new Error("Invalid percentage")
+      }
+      return num
+    })
+  ]).optional(),
   reason: z.string().max(500).optional(),
 })
 

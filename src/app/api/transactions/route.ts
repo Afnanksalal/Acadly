@@ -8,7 +8,7 @@ import { createTransactionSchema, validateAndSanitizeBody, validatePagination } 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    
+
     // Pagination
     const { page, limit, skip } = validatePagination({
       page: parseInt(searchParams.get("page") || "1"),
@@ -121,7 +121,7 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
     }
 
     // Use listing price or provided amount
-    const finalAmount = data.amount || Number(listing.price)
+    const finalAmount: number = typeof data.amount === 'number' ? data.amount : parseFloat(listing.price.toString())
 
     // Validate Razorpay credentials
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {

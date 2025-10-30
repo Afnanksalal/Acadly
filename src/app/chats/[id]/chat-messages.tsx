@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { apiRequest, getErrorMessage } from "@/lib/api-client"
 
 type Message = {
   id: string
@@ -41,20 +42,25 @@ export function ChatMessages({
     }
   }, [messages, shouldScroll])
 
-  // Poll for new messages every 3 seconds (network efficient)
+  // Real-time message updates using optimized polling
   useEffect(() => {
     let interval: NodeJS.Timeout
     
-    const pollMessages = async () => {
+    const fetchNewMessages = async () => {
       try {
-        const res = await fetch(`/api/messages?chatId=${chatId}`, {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
+        // Only fetch if we don't have the latest messages
+        const lastMessageTime = messages.length > 0 
+          ? new Date(messages[messages.length - 1].createdAt).getTime()
+          : 0
+        
+        const res = await fetch(`/api/messages?chatId=${chatId}&after=${lastMessageTime}`, {
+          cache: 'no-store'
         })
+        
         if (res.ok) {
-          const data = await res.json()
-          if (data.length > messages.length) {
-            setMessages(data)
+          const newMessages = await res.json()
+          if (newMessages.length > 0) {
+            setMessages(prev => [...prev, ...newMessages])
           }
         }
       } catch (error) {
@@ -62,18 +68,17 @@ export function ChatMessages({
       }
     }
 
-    // Poll every 3 seconds when tab is visible
+    // Faster polling for better real-time feel, but only when tab is active
     if (typeof document !== 'undefined' && !document.hidden) {
-      interval = setInterval(pollMessages, 3000)
+      interval = setInterval(fetchNewMessages, 1000) // 1 second for real-time feel
     }
 
-    // Handle visibility change
     const handleVisibilityChange = () => {
       if (document.hidden) {
         clearInterval(interval)
       } else {
-        pollMessages() // Immediate fetch when tab becomes visible
-        interval = setInterval(pollMessages, 3000)
+        fetchNewMessages() // Immediate fetch when tab becomes visible
+        interval = setInterval(fetchNewMessages, 1000)
       }
     }
 
@@ -83,36 +88,39 @@ export function ChatMessages({
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [chatId, messages.length])
+  }, [chatId, messages])
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
     if (!newMessage.trim() || sending) return
 
     setSending(true)
+    
+    // Optimistically add the message immediately for instant feedback
+    const optimisticMessage = {
+      id: `temp-${Date.now()}`,
+      text: newMessage.trim(),
+      senderId: currentUserId,
+      createdAt: new Date().toISOString(),
+      sender: { email: "You" }
+    }
+    setMessages(prev => [...prev, optimisticMessage])
+    setNewMessage("")
+    setShouldScroll(true)
+    
     try {
-      const res = await fetch("/api/messages", {
+      await apiRequest("/api/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chatId,
-          senderId: currentUserId,
-          content: newMessage.trim()
+          text: newMessage.trim()
         })
       })
-
-      if (res.ok) {
-        const data = await res.json()
-        setMessages([...messages, {
-          ...data,
-          createdAt: new Date().toISOString(),
-          sender: { email: "You" }
-        }])
-        setNewMessage("")
-        setShouldScroll(true) // Only scroll when user sends a message
-      }
     } catch (error) {
       console.error("Failed to send message:", error)
+      // Remove the optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id))
+      setNewMessage(newMessage.trim()) // Restore the message text
     } finally {
       setSending(false)
     }

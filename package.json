@@ -42,7 +42,6 @@
     "@upstash/redis": "^1.35.6",
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^3.0.2",
-    "clsx": "^2.1.1",
     "dompurify": "^3.3.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.5",

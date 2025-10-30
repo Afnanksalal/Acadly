@@ -8,8 +8,26 @@ import { z } from "zod"
 const resolveDisputeSchema = z.object({
   resolution: z.string().min(10, "Resolution must be at least 10 characters").max(1000, "Resolution too long"),
   action: z.enum(["RESOLVED", "REJECTED"]),
-  refundPercentage: z.number().min(0).max(1).optional(), // 0 to 1 (0% to 100%)
-  refundAmount: z.number().positive().optional(), // Specific amount in rupees
+  refundPercentage: z.union([
+    z.number().min(0).max(1),
+    z.string().transform((val) => {
+      const num = parseFloat(val)
+      if (isNaN(num) || num < 0 || num > 1) {
+        throw new Error("Invalid refund percentage")
+      }
+      return num
+    })
+  ]).optional(), // 0 to 1 (0% to 100%)
+  refundAmount: z.union([
+    z.number().positive(),
+    z.string().transform((val) => {
+      const num = parseFloat(val)
+      if (isNaN(num) || num <= 0) {
+        throw new Error("Invalid refund amount")
+      }
+      return num
+    })
+  ]).optional(), // Specific amount in rupees
 })
 
 export const POST = withAdminAuth(async (request: NextRequest, user) => {

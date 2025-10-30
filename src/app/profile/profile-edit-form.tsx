@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { supabaseClient } from "@/lib/supabase-client"
+import { apiRequest, getErrorMessage } from "@/lib/api-client"
 import Image from "next/image"
 
 type Profile = {
@@ -152,22 +153,10 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
 
       console.log('Submitting profile update:', cleanedData)
 
-      const res = await fetch("/api/profile", {
+      const data = await apiRequest("/api/profile", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cleanedData)
       })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        const errorMsg = typeof data.error?.message === 'string' 
-          ? data.error.message 
-          : data.error?.message?.fieldErrors 
-          ? 'Please check your input fields' 
-          : 'Failed to update profile'
-        throw new Error(errorMsg)
-      }
 
       console.log('Profile updated successfully:', data)
       
@@ -180,7 +169,7 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
       
     } catch (err) {
       console.error('Profile update error:', err)
-      const errorMessage = err instanceof Error ? err.message : "Failed to update profile. Please try again."
+      const errorMessage = getErrorMessage(err)
       setError(errorMessage)
       
       // Scroll to top to show error

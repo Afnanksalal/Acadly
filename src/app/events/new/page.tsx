@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabaseClient } from "@/lib/supabase-client"
+import { apiRequest, getErrorMessage } from "@/lib/api-client"
 import Image from "next/image"
 
 export default function NewEventPage() {
@@ -127,27 +128,20 @@ export default function NewEventPage() {
 
       console.log('Submitting event:', payload)
 
-      const res = await fetch("/api/events", {
+      const data = await apiRequest("/api/events", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
 
-      const data = await res.json()
       console.log('API response:', data)
-
-      if (!res.ok) {
-        console.error('API error full details:', JSON.stringify(data, null, 2))
-        const errorMsg = data.error?.message || JSON.stringify(data.error) || "Failed to create event"
-        throw new Error(errorMsg)
-      }
 
       setSuccess(true)
       setTimeout(() => {
         router.push(`/events/${data.event.id}`)
       }, 1500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create event")
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

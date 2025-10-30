@@ -76,7 +76,16 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
 const updateOfferSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(["ACCEPTED", "DECLINED", "CANCELLED"]),
-  counterPrice: z.number().positive().optional(),
+  counterPrice: z.union([
+    z.number().positive(),
+    z.string().transform((val) => {
+      const num = parseFloat(val)
+      if (isNaN(num) || num <= 0) {
+        throw new Error("Invalid counter price")
+      }
+      return num
+    })
+  ]).optional(),
 })
 
 export const PUT = withVerifiedAuth(async (request: NextRequest, user) => {

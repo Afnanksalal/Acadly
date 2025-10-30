@@ -8,18 +8,44 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const chatId = searchParams.get("chatId")
+    const after = searchParams.get("after")
 
     if (!chatId) {
       return validationErrorResponse("chatId is required")
     }
 
-    // Pagination
+    // If 'after' parameter is provided, only get newer messages (for real-time updates)
+    if (after) {
+      const afterDate = new Date(parseInt(after))
+      const newMessages = await prisma.message.findMany({
+        where: { 
+          chatId,
+          createdAt: { gt: afterDate }
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+        take: 50, // Limit to prevent large responses
+      })
+
+      return successResponse(newMessages)
+    }
+
+    // Regular pagination for initial load
     const { page, limit, skip } = validatePagination({
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "50"),
     })
 
-    // Get messages with pagination (most recent first, then reverse for display)
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
         where: { chatId },
@@ -29,19 +55,17 @@ export async function GET(request: NextRequest) {
               id: true,
               username: true,
               name: true,
+              email: true,
               avatarUrl: true,
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: "asc" },
         skip,
         take: limit,
       }),
       prisma.message.count({ where: { chatId } }),
     ])
-
-    // Reverse to show oldest first
-    messages.reverse()
 
     const totalPages = Math.ceil(total / limit)
 

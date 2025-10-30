@@ -18,7 +18,16 @@ export async function POST(req: NextRequest) {
     const schema = z.object({
       transactionId: z.string().uuid(),
       revieweeId: z.string().uuid(),
-      rating: z.number().int().min(1).max(5),
+      rating: z.union([
+        z.number().int().min(1).max(5),
+        z.string().transform((val) => {
+          const num = parseInt(val)
+          if (isNaN(num) || num < 1 || num > 5) {
+            throw new Error("Rating must be between 1 and 5")
+          }
+          return num
+        })
+      ]),
       comment: z.string().max(1000).optional()
     })
 

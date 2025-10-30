@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DisputeWithRelations } from "@/lib/types"
+import { apiRequest, getErrorMessage } from "@/lib/api-client"
 
 export function ResolveDisputeDialog({ dispute }: { dispute: DisputeWithRelations }) {
   const [open, setOpen] = useState(false)
@@ -20,20 +21,15 @@ export function ResolveDisputeDialog({ dispute }: { dispute: DisputeWithRelation
     setError("")
 
     try {
-      const res = await fetch(`/api/admin/disputes/${dispute.id}/resolve`, {
+      await apiRequest(`/api/admin/disputes/${dispute.id}/resolve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resolution, action })
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error?.message || "Failed to resolve dispute")
-      }
-
       window.location.reload()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
       setLoading(false)
     }
   }

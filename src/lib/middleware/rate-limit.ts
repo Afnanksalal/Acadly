@@ -60,8 +60,14 @@ export async function applyRateLimit(request: NextRequest): Promise<NextResponse
   const { pathname } = request.nextUrl
   const ip = request.ip ?? request.headers.get("x-forwarded-for") ?? "127.0.0.1"
 
-  // Skip rate limiting for health checks and static files
-  if (pathname === "/api/health" || pathname.startsWith("/_next/")) {
+  // Skip rate limiting for health checks, static files, and fast read operations
+  if (
+    pathname === "/api/health" || 
+    pathname.startsWith("/_next/") ||
+    (pathname === "/api/messages" && request.method === "GET") || // Fast chat message fetching
+    (pathname === "/api/profile" && request.method === "GET") ||   // Fast profile checks
+    pathname === "/api/categories"  // Fast category listing
+  ) {
     return null
   }
 

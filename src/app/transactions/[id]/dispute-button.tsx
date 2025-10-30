@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { apiRequest, getErrorMessage } from "@/lib/api-client"
 
 export function DisputeButton({ transactionId }: { transactionId: string }) {
   const [open, setOpen] = useState(false)
@@ -23,9 +24,8 @@ export function DisputeButton({ transactionId }: { transactionId: string }) {
     setError("")
 
     try {
-      const res = await fetch("/api/disputes", {
+      await apiRequest("/api/disputes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           transactionId,
           subject,
@@ -34,12 +34,6 @@ export function DisputeButton({ transactionId }: { transactionId: string }) {
         })
       })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error?.message || "Failed to create dispute")
-      }
-
       setSuccess(true)
       setTimeout(() => {
         setOpen(false)
@@ -47,7 +41,8 @@ export function DisputeButton({ transactionId }: { transactionId: string }) {
       }, 2000)
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
