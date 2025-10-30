@@ -1,8 +1,8 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { apiRequest, getErrorMessage } from "@/lib/api-client"
+import { apiRequest } from "@/lib/api-client"
 
 type Message = {
   id: string
@@ -24,107 +24,162 @@ export function ChatMessages({
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [newMessage, setNewMessage] = useState("")
   const [sending, setSending] = useState(false)
-  const [shouldScroll, setShouldScroll] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+  const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const scrollToBottom = () => {
+  // Ensure we're on the client side
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Reset messages when chatId changes (navigation between chats)
+  useEffect(() => {
+    setMessages(initialMessages)
+    setLastFetchTime(Date.now())
+  }, [chatId, initialMessages])
+
+  const scrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
     }
-  }
+  }, [])
 
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    // Only scroll if we explicitly set shouldScroll (when user sends a message)
-    if (shouldScroll) {
-      scrollToBottom()
-      setShouldScroll(false)
-    }
-  }, [messages, shouldScroll])
+    scrollToBottom()
+  }, [messages.length, scrollToBottom])
 
-  // Real-time message updates using optimized polling
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    
-    const fetchNewMessages = async () => {
-      try {
-        // Only fetch if we don't have the latest messages
-        const lastMessageTime = messages.length > 0 
-          ? new Date(messages[messages.length - 1].createdAt).getTime()
-          : 0
+  // Deduplicate messages by ID
+  const deduplicateMessages = useCallback((newMessages: Message[], existingMessages: Message[]) => {
+    const existingIds = new Set(existingMessages.map(m => m.id))
+    return newMessages.filter(msg => !existingIds.has(msg.id))
+  }, [])
+
+  // Fetch new messages function
+  const fetchNewMessages = useCallback(async () => {
+    if (!isClient) return
+
+    try {
+      const res = await fetch(`/api/messages?chatId=${chatId}&after=${lastFetchTime}`, {
+        cache: 'no-store'
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        const newMessages = data.success ? data.data : data
         
-        const res = await fetch(`/api/messages?chatId=${chatId}&after=${lastMessageTime}`, {
-          cache: 'no-store'
-        })
-        
-        if (res.ok) {
-          const newMessages = await res.json()
-          if (newMessages.length > 0) {
-            setMessages(prev => [...prev, ...newMessages])
-          }
+        if (Array.isArray(newMessages) && newMessages.length > 0) {
+          setMessages(prev => {
+            const uniqueNewMessages = deduplicateMessages(newMessages, prev)
+            if (uniqueNewMessages.length > 0) {
+              setLastFetchTime(Date.now())
+              return [...prev, ...uniqueNewMessages]
+            }
+            return prev
+          })
         }
-      } catch (error) {
-        console.error("Failed to fetch messages:", error)
       }
+    } catch (error) {
+      console.error("Failed to fetch messages:", error)
     }
+  }, [chatId, lastFetchTime, isClient, deduplicateMessages])
 
-    // Faster polling for better real-time feel, but only when tab is active
-    if (typeof document !== 'undefined' && !document.hidden) {
-      interval = setInterval(fetchNewMessages, 1000) // 1 second for real-time feel
+  // Real-time polling with proper cleanup
+  useEffect(() => {
+    if (!isClient) return
+
+    const startPolling = () => {
+      // Clear any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+      
+      // Start new polling
+      intervalRef.current = setInterval(fetchNewMessages, 3000) // 3 seconds for stability
     }
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        clearInterval(interval)
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current)
+          intervalRef.current = null
+        }
       } else {
         fetchNewMessages() // Immediate fetch when tab becomes visible
-        interval = setInterval(fetchNewMessages, 1000)
+        startPolling()
       }
     }
+
+    // Start polling after component is ready
+    const timeoutId = setTimeout(() => {
+      if (!document.hidden) {
+        startPolling()
+      }
+    }, 2000) // Longer delay for stability
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      clearInterval(interval)
+      clearTimeout(timeoutId)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [chatId, messages])
+  }, [isClient, fetchNewMessages])
 
-  async function sendMessage(e: React.FormEvent) {
+  const sendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || sending) return
 
+    const messageText = newMessage.trim()
     setSending(true)
-    
-    // Optimistically add the message immediately for instant feedback
-    const optimisticMessage = {
-      id: `temp-${Date.now()}`,
-      text: newMessage.trim(),
-      senderId: currentUserId,
-      createdAt: new Date().toISOString(),
-      sender: { email: "You" }
-    }
-    setMessages(prev => [...prev, optimisticMessage])
-    setNewMessage("")
-    setShouldScroll(true)
+    setNewMessage("") // Clear input immediately
     
     try {
-      await apiRequest("/api/messages", {
+      const response = await apiRequest("/api/messages", {
         method: "POST",
         body: JSON.stringify({
           chatId,
-          text: newMessage.trim()
+          text: messageText
         })
       })
+
+      // Add the real message to state immediately
+      if (response) {
+        const realMessage: Message = {
+          id: response.id || `msg-${Date.now()}`,
+          text: messageText,
+          senderId: currentUserId,
+          createdAt: new Date().toISOString(),
+          sender: { email: "You" }
+        }
+        
+        setMessages(prev => {
+          // Check if message already exists to avoid duplicates
+          const exists = prev.some(m => m.id === realMessage.id || 
+            (m.text === realMessage.text && m.senderId === realMessage.senderId))
+          
+          if (!exists) {
+            return [...prev, realMessage]
+          }
+          return prev
+        })
+        
+        setLastFetchTime(Date.now()) // Update fetch time to avoid duplicate polling
+      }
     } catch (error) {
       console.error("Failed to send message:", error)
-      // Remove the optimistic message on error
-      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id))
-      setNewMessage(newMessage.trim()) // Restore the message text
+      // Restore the message text on error
+      setNewMessage(messageText)
     } finally {
       setSending(false)
     }
-  }
+  }, [newMessage, sending, chatId, currentUserId])
 
   return (
     <div className="flex flex-col h-[70vh] min-h-[500px] max-h-[700px]">
@@ -146,7 +201,10 @@ export function ChatMessages({
                 }`}>
                   <p className="text-sm break-words">{msg.text}</p>
                   <p className={`text-xs mt-1 ${isOwn ? "text-white/70" : "text-muted-foreground"}`}>
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {isClient 
+                      ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : new Date(msg.createdAt).toISOString().slice(11, 16)
+                    }
                   </p>
                 </div>
               </div>

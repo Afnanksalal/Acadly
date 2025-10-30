@@ -3,6 +3,7 @@ import { supabaseServer } from "@/lib/supabase-server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChatMessages } from "./chat-messages"
+import { ErrorBoundary } from "@/components/error-boundary"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -15,18 +16,35 @@ export default async function ChatDetailPage({ params }: { params: { id: string 
   const profile = await prisma.profile.findUnique({ where: { id: user.id } })
   if (!profile?.verified) redirect("/dashboard")
 
-  const chat = await prisma.chat.findUnique({
-    where: { id: params.id },
-    include: {
-      listing: true,
-      buyer: true,
-      seller: true,
-      messages: {
-        orderBy: { createdAt: "asc" },
-        include: { sender: true }
+  let chat
+  try {
+    chat = await prisma.chat.findUnique({
+      where: { id: params.id },
+      include: {
+        listing: true,
+        buyer: true,
+        seller: true,
+        messages: {
+          orderBy: { createdAt: "asc" },
+          include: { sender: true }
+        }
       }
-    }
-  })
+    })
+  } catch (error) {
+    console.error("Error fetching chat:", error)
+    return (
+      <main className="max-w-4xl mx-auto p-6">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-lg mb-4">Error loading chat</p>
+            <Link href="/chats">
+              <Button>Back to Messages</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </main>
+    )
+  }
 
   if (!chat) {
     return (
@@ -78,14 +96,21 @@ export default async function ChatDetailPage({ params }: { params: { id: string 
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <ChatMessages 
-            chatId={chat.id} 
-            initialMessages={chat.messages.map(m => ({
-              ...m,
-              createdAt: m.createdAt.toISOString()
-            }))} 
-            currentUserId={user.id}
-          />
+          <ErrorBoundary>
+            <ChatMessages 
+              chatId={chat.id} 
+              initialMessages={chat.messages.map(m => ({
+                id: m.id,
+                text: m.text,
+                senderId: m.senderId,
+                createdAt: m.createdAt.toISOString(),
+                sender: {
+                  email: m.sender?.email || null
+                }
+              }))} 
+              currentUserId={user.id}
+            />
+          </ErrorBoundary>
         </CardContent>
       </Card>
     </main>

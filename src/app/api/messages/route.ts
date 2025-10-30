@@ -16,11 +16,23 @@ export async function GET(request: NextRequest) {
 
     // If 'after' parameter is provided, only get newer messages (for real-time updates)
     if (after) {
-      const afterDate = new Date(parseInt(after))
+      const afterTimestamp = parseInt(after)
+      
+      // Validate timestamp
+      if (isNaN(afterTimestamp) || afterTimestamp < 0) {
+        return validationErrorResponse("Invalid after timestamp")
+      }
+      
+      const afterDate = new Date(afterTimestamp)
+      
+      // Don't fetch messages older than 24 hours to prevent abuse
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const searchAfter = afterDate > oneDayAgo ? afterDate : oneDayAgo
+      
       const newMessages = await prisma.message.findMany({
         where: { 
           chatId,
-          createdAt: { gt: afterDate }
+          createdAt: { gt: searchAfter }
         },
         include: {
           sender: {
@@ -34,7 +46,7 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: { createdAt: "asc" },
-        take: 50, // Limit to prevent large responses
+        take: 20, // Reduced limit for real-time updates
       })
 
       return successResponse(newMessages)
