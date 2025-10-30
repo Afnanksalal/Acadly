@@ -11,10 +11,10 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <span className="text-2xl">🎓</span>
-              <span className="text-xl font-bold">collegemart</span>
+              <span className="text-xl font-bold">Acadly</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Your trusted campus marketplace for buying and selling textbooks, electronics, and services.
+              Connect, trade, and thrive in your academic community. Your trusted platform for campus commerce.
             </p>
           </div>
 
@@ -67,8 +67,8 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Connect</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="mailto:support@collegemart.com" className="text-muted-foreground hover:text-primary transition-colors">
-                  support@collegemart.com
+                <a href="mailto:support@acadly.in" className="text-muted-foreground hover:text-primary transition-colors">
+                  support@acadly.in
                 </a>
               </li>
               <li className="flex gap-3 pt-2">
@@ -89,7 +89,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} collegemart. All rights reserved.
+            © {currentYear} Acadly. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>Made with ❤️ for students</span>

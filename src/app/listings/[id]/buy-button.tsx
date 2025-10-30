@@ -120,7 +120,7 @@ export function BuyButton({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: "collegemart",
+        name: "Acadly",
         description: title,
         order_id: order.id,
         handler: function () {

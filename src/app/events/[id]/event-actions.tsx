@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export function EventActions({ eventId, currentStatus }: { eventId: string; currentStatus: string }) {
+  // Use currentStatus for conditional rendering
+  const canCancel = currentStatus === "UPCOMING"
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -53,7 +55,7 @@ export function EventActions({ eventId, currentStatus }: { eventId: string; curr
         <Button
           variant="destructive"
           onClick={handleCancel}
-          disabled={loading}
+          disabled={loading || !canCancel}
         >
           {loading ? "Cancelling..." : "🚫 Cancel Event"}
         </Button>

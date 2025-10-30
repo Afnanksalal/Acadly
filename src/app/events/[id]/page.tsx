@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { supabaseServer } from "@/lib/supabase-server"
-import { redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,18 +28,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   })
 
   if (!event) {
-    return (
-      <main className="max-w-4xl mx-auto p-6">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-lg mb-4">Event not found</p>
-            <Link href="/events">
-              <Button>Back to Events</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </main>
-    )
+    notFound()
   }
 
   const isCreator = user?.id === event.creatorId

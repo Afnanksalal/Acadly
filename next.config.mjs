@@ -13,6 +13,14 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  eslint: {
+    // Ignore build errors on production builds
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    // Ignore build errors on production builds
+    ignoreBuildErrors: false,
+  },
 }
 
 export default nextConfig

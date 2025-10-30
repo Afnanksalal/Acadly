@@ -1,65 +1,120 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
-import { z } from "zod"
+import { withVerifiedAuth } from "@/lib/auth"
+import { successResponse, errorResponse, validationErrorResponse, notFoundResponse } from "@/lib/api-response"
+import { sendMessageSchema, validateAndSanitizeBody, validatePagination } from "@/lib/validation"
 
-export async function GET(req: NextRequest) {
-  const chatId = new URL(req.url).searchParams.get("chatId")
-  if (!chatId) return NextResponse.json({ error: "chatId required" }, { status: 400 })
-  const messages = await prisma.message.findMany({ where: { chatId }, orderBy: { createdAt: "asc" } })
-  return NextResponse.json(messages)
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const chatId = searchParams.get("chatId")
+
+    if (!chatId) {
+      return validationErrorResponse("chatId is required")
+    }
+
+    // Pagination
+    const { page, limit, skip } = validatePagination({
+      page: parseInt(searchParams.get("page") || "1"),
+      limit: parseInt(searchParams.get("limit") || "50"),
+    })
+
+    // Get messages with pagination (most recent first, then reverse for display)
+    const [messages, total] = await Promise.all([
+      prisma.message.findMany({
+        where: { chatId },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              avatarUrl: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.message.count({ where: { chatId } }),
+    ])
+
+    // Reverse to show oldest first
+    messages.reverse()
+
+    const totalPages = Math.ceil(total / limit)
+
+    return successResponse(
+      messages,
+      200,
+      {
+        page,
+        limit,
+        total,
+        totalPages,
+      }
+    )
+  } catch (error) {
+    console.error("Error fetching messages:", error)
+    return errorResponse(error, 500)
+  }
 }
 
-export async function POST(req: NextRequest) {
-  const supabase = supabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Login required" } }, { status: 401 })
+export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
+  try {
+    const body = await request.json()
+    const data = validateAndSanitizeBody(sendMessageSchema)(body)
 
-  const body = await req.json()
-  const schema = z.object({
-    chatId: z.string().uuid(),
-    senderId: z.string().uuid(),
-    content: z.string().min(1).max(4000).optional(),
-    text: z.string().min(1).max(4000).optional(),
-  })
-  const parsed = schema.safeParse(body)
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
-  const { chatId, senderId, content, text } = parsed.data
-  const messageText = content || text || ""
-  
-  if (!messageText) {
-    return NextResponse.json({ error: { code: "INVALID_INPUT", message: "Message text required" } }, { status: 400 })
-  }
-
-  if (senderId !== user.id) {
-    return NextResponse.json({ error: { code: "FORBIDDEN", message: "Sender mismatch" } }, { status: 403 })
-  }
-
-  const profile = await prisma.profile.findUnique({ where: { id: user.id } })
-  if (!profile || !profile.verified) {
-    return NextResponse.json({ error: { code: "NOT_VERIFIED", message: "Verification required" } }, { status: 403 })
-  }
-
-  const chat = await prisma.chat.findUnique({ where: { id: chatId } })
-  if (!chat || (chat.buyerId !== user.id && chat.sellerId !== user.id)) {
-    return NextResponse.json({ error: { code: "FORBIDDEN", message: "Not a chat participant" } }, { status: 403 })
-  }
-
-  // Create message and update chat in a transaction
-  const result = await prisma.$transaction(async (tx) => {
-    const msg = await tx.message.create({ 
-      data: { chatId, senderId, text: messageText },
-      include: { sender: true }
+    // Verify chat exists and user is a participant
+    const chat = await prisma.chat.findUnique({
+      where: { id: data.chatId },
+      include: {
+        listing: true,
+      },
     })
-    
-    // Touch the chat to trigger @updatedAt
-    await tx.chat.update({ 
-      where: { id: chatId }, 
-      data: { listingId: chat.listingId } // Update with same value to trigger @updatedAt
+
+    if (!chat) {
+      return notFoundResponse("Chat not found")
+    }
+
+    if (chat.buyerId !== user.id && chat.sellerId !== user.id) {
+      return validationErrorResponse("You are not a participant in this chat")
+    }
+
+    // Create message and update chat in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({
+        data: {
+          chatId: data.chatId,
+          senderId: user.id,
+          text: data.text,
+          readStatus: "SENT",
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      })
+
+      // Update chat timestamp
+      await tx.chat.update({
+        where: { id: data.chatId },
+        data: { updatedAt: new Date() },
+      })
+
+      return message
     })
-    
-    return msg
-  })
-  
-  return NextResponse.json(result, { status: 201 })
-}
+
+    return successResponse(result, 201)
+  } catch (error) {
+    console.error("Error creating message:", error)
+    return errorResponse(error, 500)
+  }
+})

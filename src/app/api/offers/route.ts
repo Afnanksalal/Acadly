@@ -1,53 +1,207 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { withVerifiedAuth } from "@/lib/auth"
+import { successResponse, errorResponse, validationErrorResponse, notFoundResponse } from "@/lib/api-response"
+import { createOfferSchema, validateAndSanitizeBody } from "@/lib/validation"
 import { z } from "zod"
 
-export async function POST(req: NextRequest) {
-  const supabase = supabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Login required" } }, { status: 401 })
+export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
+  try {
+    const body = await request.json()
+    const data = validateAndSanitizeBody(createOfferSchema)(body)
 
-  const schema = z.object({
-    chatId: z.string().uuid(),
-    proposerId: z.string().uuid(),
-    price: z.union([z.number(), z.string()]),
-    expiresAt: z.string().datetime().optional(),
-  })
-  const parsed = schema.safeParse(await req.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
-  const { chatId, proposerId, price, expiresAt } = parsed.data
+    // Verify chat exists and user is a participant
+    const chat = await prisma.chat.findUnique({
+      where: { id: data.chatId },
+      include: {
+        listing: true,
+      },
+    })
 
-  if (proposerId !== user.id) return NextResponse.json({ error: { code: "FORBIDDEN", message: "User mismatch" } }, { status: 403 })
-  const profile = await prisma.profile.findUnique({ where: { id: user.id } })
-  if (!profile || !profile.verified) return NextResponse.json({ error: { code: "NOT_VERIFIED", message: "Verification required" } }, { status: 403 })
+    if (!chat) {
+      return notFoundResponse("Chat not found")
+    }
 
-  const chat = await prisma.chat.findUnique({ where: { id: chatId } })
-  if (!chat || (chat.buyerId !== user.id && chat.sellerId !== user.id)) {
-    return NextResponse.json({ error: { code: "FORBIDDEN", message: "Not a chat participant" } }, { status: 403 })
+    if (chat.buyerId !== user.id && chat.sellerId !== user.id) {
+      return validationErrorResponse("You are not a participant in this chat")
+    }
+
+    // Check if there's already an active offer
+    const activeOffer = await prisma.offer.findFirst({
+      where: {
+        chatId: data.chatId,
+        status: { in: ["PROPOSED", "COUNTERED"] },
+      },
+    })
+
+    if (activeOffer) {
+      return validationErrorResponse("There is already an active offer in this chat")
+    }
+
+    // Set expiration (24 hours from now)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+    const offer = await prisma.offer.create({
+      data: {
+        chatId: data.chatId,
+        proposerId: user.id,
+        price: data.price,
+        status: "PROPOSED",
+        expiresAt,
+      },
+      include: {
+        proposer: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            avatarUrl: true,
+          },
+        },
+        chat: {
+          include: {
+            listing: true,
+          },
+        },
+      },
+    })
+
+    return successResponse(offer, 201)
+  } catch (error) {
+    console.error("Error creating offer:", error)
+    return errorResponse(error, 500)
   }
+})
 
-  const offer = await prisma.offer.create({ data: { chatId, proposerId, price: price, expiresAt: expiresAt ? new Date(expiresAt) : undefined } })
-  return NextResponse.json(offer, { status: 201 })
-}
+const updateOfferSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["ACCEPTED", "DECLINED", "CANCELLED"]),
+  counterPrice: z.number().positive().optional(),
+})
 
-export async function PUT(req: NextRequest) {
-  const supabase = supabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Login required" } }, { status: 401 })
+export const PUT = withVerifiedAuth(async (request: NextRequest, user) => {
+  try {
+    const body = await request.json()
+    const data = validateAndSanitizeBody(updateOfferSchema)(body)
 
-  const schema = z.object({ id: z.string().uuid(), status: z.enum(["PROPOSED","COUNTERED","ACCEPTED","DECLINED","EXPIRED","CANCELLED"]) })
-  const parsed = schema.safeParse(await req.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
-  const { id, status } = parsed.data
+    // Get offer with relations
+    const offer = await prisma.offer.findUnique({
+      where: { id: data.id },
+      include: {
+        chat: {
+          include: {
+            listing: true,
+          },
+        },
+        proposer: true,
+      },
+    })
 
-  // Only chat participants can update an offer status
-  const offer = await prisma.offer.findUnique({ where: { id }, include: { chat: true } })
-  if (!offer) return NextResponse.json({ error: { code: "NOT_FOUND", message: "Offer not found" } }, { status: 404 })
-  if (offer.chat.buyerId !== user.id && offer.chat.sellerId !== user.id) {
-    return NextResponse.json({ error: { code: "FORBIDDEN", message: "Not a chat participant" } }, { status: 403 })
+    if (!offer) {
+      return notFoundResponse("Offer not found")
+    }
+
+    // Check if user can update this offer
+    if (offer.chat.buyerId !== user.id && offer.chat.sellerId !== user.id) {
+      return validationErrorResponse("You are not a participant in this chat")
+    }
+
+    // Check if offer is still active
+    if (!["PROPOSED", "COUNTERED"].includes(offer.status)) {
+      return validationErrorResponse("This offer is no longer active")
+    }
+
+    // Check if offer has expired
+    if (offer.expiresAt && offer.expiresAt < new Date()) {
+      await prisma.offer.update({
+        where: { id: data.id },
+        data: { status: "EXPIRED" },
+      })
+      return validationErrorResponse("This offer has expired")
+    }
+
+    let updatedOffer
+
+    if (data.status === "ACCEPTED") {
+      // Only the non-proposer can accept
+      if (offer.proposerId === user.id) {
+        return validationErrorResponse("You cannot accept your own offer")
+      }
+
+      updatedOffer = await prisma.offer.update({
+        where: { id: data.id },
+        data: { status: "ACCEPTED" },
+        include: {
+          proposer: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              avatarUrl: true,
+            },
+          },
+          chat: {
+            include: {
+              listing: true,
+            },
+          },
+        },
+      })
+    } else if (data.status === "DECLINED") {
+      // Only the non-proposer can decline
+      if (offer.proposerId === user.id) {
+        return validationErrorResponse("You cannot decline your own offer")
+      }
+
+      updatedOffer = await prisma.offer.update({
+        where: { id: data.id },
+        data: { status: "DECLINED" },
+        include: {
+          proposer: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              avatarUrl: true,
+            },
+          },
+          chat: {
+            include: {
+              listing: true,
+            },
+          },
+        },
+      })
+    } else if (data.status === "CANCELLED") {
+      // Only the proposer can cancel
+      if (offer.proposerId !== user.id) {
+        return validationErrorResponse("You can only cancel your own offers")
+      }
+
+      updatedOffer = await prisma.offer.update({
+        where: { id: data.id },
+        data: { status: "CANCELLED" },
+        include: {
+          proposer: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              avatarUrl: true,
+            },
+          },
+          chat: {
+            include: {
+              listing: true,
+            },
+          },
+        },
+      })
+    }
+
+    return successResponse(updatedOffer)
+  } catch (error) {
+    console.error("Error updating offer:", error)
+    return errorResponse(error, 500)
   }
-
-  const updated = await prisma.offer.update({ where: { id }, data: { status } })
-  return NextResponse.json(updated)
-}
+})

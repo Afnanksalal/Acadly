@@ -15,7 +15,7 @@ export async function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <span className="text-2xl">🎓</span>
-          <span className="text-xl font-bold">collegemart</span>
+          <span className="text-xl font-bold">Acadly</span>
         </Link>
         
         {/* Desktop Navigation */}

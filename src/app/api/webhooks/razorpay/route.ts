@@ -26,7 +26,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Safe to parse after signature verification
-    const event = JSON.parse(text)
+    let event
+    try {
+      event = JSON.parse(text)
+    } catch (parseError) {
+      console.error("Failed to parse webhook payload:", parseError)
+      return new NextResponse("Invalid JSON payload", { status: 400 })
+    }
+
     console.log("Razorpay webhook event:", event.event)
 
     // Handle different payment events
@@ -46,30 +53,37 @@ export async function POST(req: NextRequest) {
         
         // Generate pickup code and mark listing as sold
         if (updated.count > 0) {
-          const tx = await prisma.transaction.findFirst({ 
-            where: { razorpayOrderId: orderId },
-            include: { listing: true }
+          const transactions = await prisma.transaction.findMany({ 
+            where: { razorpayOrderId: orderId, status: "PAID" },
+            include: { listing: true, pickup: true }
           })
           
-          if (tx) {
-            // Generate pickup code
-            await prisma.pickup.upsert({
-              where: { transactionId: tx.id },
-              create: {
-                transactionId: tx.id,
-                pickupCode: Math.floor(100000 + Math.random() * 900000).toString(),
-                status: "GENERATED"
-              },
-              update: {}
-            })
-            
-            // Mark listing as sold (no longer active)
-            await prisma.listing.update({
-              where: { id: tx.listingId },
-              data: { isActive: false }
-            })
-            
-            console.log(`Listing ${tx.listingId} marked as sold`)
+          for (const tx of transactions) {
+            try {
+              // Generate pickup code if not exists
+              if (!tx.pickup) {
+                await prisma.pickup.create({
+                  data: {
+                    transactionId: tx.id,
+                    pickupCode: Math.floor(100000 + Math.random() * 900000).toString(),
+                    status: "GENERATED"
+                  }
+                })
+                console.log(`Pickup code generated for transaction ${tx.id}`)
+              }
+              
+              // Mark listing as sold (no longer active)
+              if (tx.listing.isActive) {
+                await prisma.listing.update({
+                  where: { id: tx.listingId },
+                  data: { isActive: false }
+                })
+                console.log(`Listing ${tx.listingId} marked as sold`)
+              }
+            } catch (error) {
+              console.error(`Error processing transaction ${tx.id}:`, error)
+              // Continue processing other transactions
+            }
           }
         }
       }
@@ -91,30 +105,36 @@ export async function POST(req: NextRequest) {
         
         // Generate pickup code and mark listing as sold (fallback)
         if (updated.count > 0) {
-          const tx = await prisma.transaction.findFirst({ 
-            where: { razorpayOrderId: orderId },
+          const transactions = await prisma.transaction.findMany({ 
+            where: { razorpayOrderId: orderId, status: "PAID" },
             include: { listing: true, pickup: true }
           })
           
-          if (tx) {
-            // Generate pickup code if not exists
-            if (!tx.pickup) {
-              await prisma.pickup.create({
-                data: {
-                  transactionId: tx.id,
-                  pickupCode: Math.floor(100000 + Math.random() * 900000).toString(),
-                  status: "GENERATED"
-                }
-              })
-            }
-            
-            // Mark listing as sold
-            if (tx.listing.isActive) {
-              await prisma.listing.update({
-                where: { id: tx.listingId },
-                data: { isActive: false }
-              })
-              console.log(`Listing ${tx.listingId} marked as sold (fallback)`)
+          for (const tx of transactions) {
+            try {
+              // Generate pickup code if not exists
+              if (!tx.pickup) {
+                await prisma.pickup.create({
+                  data: {
+                    transactionId: tx.id,
+                    pickupCode: Math.floor(100000 + Math.random() * 900000).toString(),
+                    status: "GENERATED"
+                  }
+                })
+                console.log(`Pickup code generated for transaction ${tx.id} (fallback)`)
+              }
+              
+              // Mark listing as sold
+              if (tx.listing.isActive) {
+                await prisma.listing.update({
+                  where: { id: tx.listingId },
+                  data: { isActive: false }
+                })
+                console.log(`Listing ${tx.listingId} marked as sold (fallback)`)
+              }
+            } catch (error) {
+              console.error(`Error processing transaction ${tx.id} (fallback):`, error)
+              // Continue processing other transactions
             }
           }
         }

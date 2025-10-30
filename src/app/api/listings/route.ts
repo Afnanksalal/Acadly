@@ -1,49 +1,134 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { z } from "zod"
-import { supabaseServer } from "@/lib/supabase-server"
+import { withVerifiedAuth } from "@/lib/auth"
+import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
+import { validatePagination, createListingSchema, validateAndSanitizeBody, validateImageUrl } from "@/lib/validation"
 
-export async function GET() {
-  const items = await prisma.listing.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" } })
-  return NextResponse.json(items)
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    
+    // Pagination
+    const { page, limit, skip } = validatePagination({
+      page: parseInt(searchParams.get("page") || "1"),
+      limit: parseInt(searchParams.get("limit") || "20"),
+    })
+
+    // Filters
+    const categoryId = searchParams.get("categoryId")
+    const type = searchParams.get("type") as "PRODUCT" | "SERVICE" | null
+    const search = searchParams.get("search")
+    const userId = searchParams.get("userId")
+    const minPrice = searchParams.get("minPrice")
+    const maxPrice = searchParams.get("maxPrice")
+
+    // Build where clause
+    const where: any = { isActive: true }
+
+    if (categoryId) where.categoryId = categoryId
+    if (type) where.type = type
+    if (userId) where.userId = userId
+    if (minPrice) where.price = { ...where.price, gte: parseFloat(minPrice) }
+    if (maxPrice) where.price = { ...where.price, lte: parseFloat(maxPrice) }
+    
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ]
+    }
+
+    // Get listings with pagination
+    const [listings, total] = await Promise.all([
+      prisma.listing.findMany({
+        where,
+        include: {
+          category: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              avatarUrl: true,
+              ratingAvg: true,
+              ratingCount: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.listing.count({ where }),
+    ])
+
+    const totalPages = Math.ceil(total / limit)
+
+    return successResponse(
+      listings,
+      200,
+      {
+        page,
+        limit,
+        total,
+        totalPages,
+      }
+    )
+  } catch (error) {
+    console.error("Error fetching listings:", error)
+    return errorResponse(error, 500)
+  }
 }
 
-export async function POST(req: NextRequest) {
-  const supabase = supabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Login required" } }, { status: 401 })
+export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
+  try {
+    const body = await request.json()
+    const data = validateAndSanitizeBody(createListingSchema)(body)
 
-  const schema = z.object({
-    userId: z.string().uuid(),
-    title: z.string().min(3).max(120),
-    description: z.string().max(4000).default(""),
-    price: z.union([z.number(), z.string()]),
-    categoryId: z.string().uuid(),
-    images: z.array(z.string().url()).default([]),
-    type: z.enum(["PRODUCT", "SERVICE"]).default("PRODUCT"),
-    requiresApproval: z.boolean().optional()
-  })
-  const parsed = schema.safeParse(await req.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
-  const data = parsed.data
-  if (data.userId !== user.id) {
-    return NextResponse.json({ error: { code: "FORBIDDEN", message: "User mismatch" } }, { status: 403 })
+    // Validate image URLs
+    if (data.images.some(url => !validateImageUrl(url))) {
+      return validationErrorResponse("All images must be valid image URLs")
+    }
+
+    // Verify category exists
+    const category = await prisma.category.findUnique({
+      where: { id: data.categoryId },
+    })
+
+    if (!category) {
+      return validationErrorResponse("Invalid category")
+    }
+
+    // Create listing
+    const listing = await prisma.listing.create({
+      data: {
+        userId: user.id,
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        categoryId: data.categoryId,
+        images: data.images,
+        type: data.type,
+        requiresApproval: false, // Auto-approve for now
+      },
+      include: {
+        category: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            avatarUrl: true,
+            ratingAvg: true,
+            ratingCount: true,
+          },
+        },
+      },
+    })
+
+    return successResponse(listing, 201)
+  } catch (error) {
+    console.error("Error creating listing:", error)
+    return errorResponse(error, 500)
   }
-  const profile = await prisma.profile.findUnique({ where: { id: user.id } })
-  if (!profile || !profile.verified) {
-    return NextResponse.json({ error: { code: "NOT_VERIFIED", message: "Verification required" } }, { status: 403 })
-  }
-  const listing = await prisma.listing.create({
-    data: {
-      userId: data.userId,
-      title: data.title,
-      description: data.description,
-      price: data.price,
-      categoryId: data.categoryId,
-      images: data.images,
-      type: data.type,
-      requiresApproval: data.requiresApproval ?? false,
-    },
-  })
-  return NextResponse.json(listing, { status: 201 })
-}
+})

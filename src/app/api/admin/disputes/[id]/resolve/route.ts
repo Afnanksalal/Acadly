@@ -1,70 +1,147 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { withAdminAuth } from "@/lib/auth"
+import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
+import { refundForDispute } from "@/lib/refund"
 import { z } from "zod"
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+const resolveDisputeSchema = z.object({
+  resolution: z.string().min(10, "Resolution must be at least 10 characters").max(1000, "Resolution too long"),
+  action: z.enum(["RESOLVED", "REJECTED"]),
+  refundPercentage: z.number().min(0).max(1).optional(), // 0 to 1 (0% to 100%)
+  refundAmount: z.number().positive().optional(), // Specific amount in rupees
+})
+
+export const POST = withAdminAuth(async (request: NextRequest, user) => {
   try {
-    const supabase = supabaseServer()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Login required" } }, { status: 401 })
+    const url = new URL(request.url)
+    const disputeId = url.pathname.split("/")[4] // /api/admin/disputes/[id]/resolve
+
+    if (!disputeId) {
+      return validationErrorResponse("Dispute ID is required")
     }
 
-    const profile = await prisma.profile.findUnique({ where: { id: user.id } })
-    if (profile?.role !== "ADMIN") {
-      return NextResponse.json({ error: { code: "FORBIDDEN", message: "Admin access required" } }, { status: 403 })
-    }
+    const body = await request.json()
+    const parsed = resolveDisputeSchema.safeParse(body)
 
-    const schema = z.object({
-      resolution: z.string().min(10).max(1000),
-      action: z.enum(["RESOLVED", "REJECTED"])
-    })
-
-    const parsed = schema.safeParse(await req.json())
     if (!parsed.success) {
-      return NextResponse.json({ error: { code: "INVALID_INPUT", message: parsed.error.flatten() } }, { status: 400 })
+      return validationErrorResponse("Invalid input data", parsed.error.errors)
     }
 
-    const { resolution, action } = parsed.data
+    const { resolution, action, refundPercentage, refundAmount } = parsed.data
 
-    const dispute = await prisma.dispute.update({ 
-      where: { id: params.id }, 
-      data: { 
-        status: action,
-        resolution,
-        resolvedAt: new Date(),
-        resolvedBy: user.id
-      },
+    // Get dispute with transaction details
+    const dispute = await prisma.dispute.findUnique({
+      where: { id: disputeId },
       include: {
         transaction: {
           include: {
             buyer: true,
             seller: true,
-            listing: true
-          }
-        }
-      }
+            listing: true,
+          },
+        },
+      },
     })
 
+    if (!dispute) {
+      return notFoundResponse("Dispute not found")
+    }
+
+    if (dispute.status !== "OPEN" && dispute.status !== "IN_REVIEW") {
+      return validationErrorResponse("Dispute has already been resolved")
+    }
+
+    let refundResult = null
+
+    // Process refund if resolving in favor of buyer
+    if (action === "RESOLVED" && (refundPercentage !== undefined || refundAmount !== undefined)) {
+      if (dispute.transaction.status !== "PAID") {
+        return validationErrorResponse("Cannot refund unpaid transaction")
+      }
+
+      if (refundPercentage !== undefined) {
+        refundResult = await refundForDispute(disputeId, refundPercentage)
+      } else if (refundAmount !== undefined) {
+        const transactionAmount = Number(dispute.transaction.amount)
+        const percentage = Math.min(refundAmount / transactionAmount, 1)
+        refundResult = await refundForDispute(disputeId, percentage)
+      }
+
+      if (refundResult && !refundResult.success) {
+        return errorResponse(new Error(`Refund failed: ${refundResult.error}`), 500)
+      }
+    }
+
+    // Update dispute status
+    const updatedDispute = await prisma.dispute.update({
+      where: { id: disputeId },
+      data: {
+        status: action,
+        resolution,
+        resolvedAt: new Date(),
+        resolvedBy: user.id,
+        refundAmount: refundResult?.amount || null,
+      },
+      include: {
+        transaction: {
+          include: {
+            buyer: {
+              select: {
+                id: true,
+                username: true,
+                name: true,
+                email: true,
+                avatarUrl: true,
+              },
+            },
+            seller: {
+              select: {
+                id: true,
+                username: true,
+                name: true,
+                email: true,
+                avatarUrl: true,
+              },
+            },
+            listing: {
+              select: {
+                id: true,
+                title: true,
+                price: true,
+                images: true,
+              },
+            },
+          },
+        },
+        reporter: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    })
+
+    // Log admin action
     await prisma.adminAction.create({
       data: {
-        disputeId: params.id,
+        disputeId,
         adminId: user.id,
-        action: `${action}: ${resolution}`
-      }
+        action: `${action}: ${resolution}${refundResult ? ` | Refund: ₹${refundResult.amount}` : ""}`,
+      },
     })
 
-    return NextResponse.json({ 
-      dispute,
-      message: "Dispute resolved successfully" 
+    return successResponse({
+      dispute: updatedDispute,
+      refund: refundResult,
+      message: `Dispute ${action.toLowerCase()} successfully${refundResult ? " with refund processed" : ""}`,
     })
-
   } catch (error) {
-    console.error("Resolve dispute error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to resolve dispute" } 
-    }, { status: 500 })
+    console.error("Error resolving dispute:", error)
+    return errorResponse(error, 500)
   }
-}
+})

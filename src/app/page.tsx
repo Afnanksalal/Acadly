@@ -11,15 +11,15 @@ export default async function HomePage() {
     <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-10 md:space-y-16">
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center animate-fade-in">
         <div className="space-y-4 md:space-y-6">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Buy & sell within your campus</h1>
-          <p className="text-base md:text-lg text-muted-foreground">Textbooks, calculators, electronics, services—trusted by verified students.</p>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Connect, Trade, and Thrive in Your Academic Community</h1>
+          <p className="text-base md:text-lg text-muted-foreground">Your trusted platform for campus commerce. Buy and sell textbooks, electronics, and services with verified students.</p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link className="px-6 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-all hover-lift text-center" href="/listings">Browse Listings</Link>
             <Link className="px-6 py-3 rounded-lg border-2 border-border font-medium hover:border-primary transition-all text-center" href="/auth/signup">Get Started</Link>
           </div>
         </div>
         <Card className="hidden md:block animate-scale-in">
-          <CardHeader><CardTitle className="text-xl">Why collegemart?</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-xl">Why Acadly?</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-lg border border-border p-4 hover:border-primary transition-all hover-lift">✓ Verified users only</div>
             <div className="rounded-lg border border-border p-4 hover:border-primary transition-all hover-lift">💬 In-app offers & chat</div>

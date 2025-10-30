@@ -31,27 +31,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: { code: "INVALID_ACTION", message: "Cannot chat with yourself" } }, { status: 400 })
   }
 
-  // Check if chat already exists
-  const existingChat = await prisma.chat.findFirst({
-    where: {
-      listingId,
-      buyerId: user.id,
-      sellerId: listing.userId
-    }
-  })
+  try {
+    // Use upsert to handle race conditions
+    const chat = await prisma.chat.upsert({
+      where: {
+        listingId_buyerId_sellerId: {
+          listingId,
+          buyerId: user.id,
+          sellerId: listing.userId,
+        },
+      },
+      update: {
+        updatedAt: new Date(),
+      },
+      create: {
+        listingId,
+        buyerId: user.id,
+        sellerId: listing.userId,
+      },
+    })
 
-  if (existingChat) {
-    return NextResponse.json({ chatId: existingChat.id })
+    return NextResponse.json({ 
+      success: true,
+      data: { chatId: chat.id },
+    })
+  } catch (error) {
+    console.error("Error creating/finding chat:", error)
+    return NextResponse.json({ 
+      error: { 
+        code: "SERVER_ERROR", 
+        message: "Failed to create chat" 
+      } 
+    }, { status: 500 })
   }
-
-  // Create new chat
-  const chat = await prisma.chat.create({
-    data: {
-      listingId,
-      buyerId: user.id,
-      sellerId: listing.userId
-    }
-  })
-
-  return NextResponse.json({ chatId: chat.id })
 }

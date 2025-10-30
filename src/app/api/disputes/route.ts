@@ -24,6 +24,19 @@ export async function POST(req: NextRequest) {
       evidence: z.array(z.string().url()).max(5).optional()
     })
 
+    // Custom evidence validation
+    const validateEvidence = (urls: string[]) => {
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+      return urls.every(url => {
+        try {
+          const urlObj = new URL(url)
+          return imageExtensions.some(ext => urlObj.pathname.toLowerCase().includes(ext))
+        } catch {
+          return false
+        }
+      })
+    }
+
     const parsed = schema.safeParse(await req.json())
     if (!parsed.success) {
       return NextResponse.json({ 
@@ -32,6 +45,13 @@ export async function POST(req: NextRequest) {
     }
 
     const { transactionId, subject, description, reason, evidence } = parsed.data
+
+    // Validate evidence URLs if provided
+    if (evidence && evidence.length > 0 && !validateEvidence(evidence)) {
+      return NextResponse.json({ 
+        error: { code: "INVALID_EVIDENCE", message: "Evidence must be valid image URLs" } 
+      }, { status: 400 })
+    }
 
     // Verify transaction exists and user is a participant
     const transaction = await prisma.transaction.findUnique({
