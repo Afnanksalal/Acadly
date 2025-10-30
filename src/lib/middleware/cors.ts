@@ -8,7 +8,7 @@ export function applyCorsHeaders(request: NextRequest, response: NextResponse): 
     ? [
         "https://acadly.in",
         "https://www.acadly.in",
-        "https://acadly.vercel.app",
+        "https://acadlyy.vercel.app",
         // Add your Vercel preview URLs pattern
         /https:\/\/.*\.vercel\.app$/,
       ]
