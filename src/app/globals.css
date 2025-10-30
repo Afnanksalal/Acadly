@@ -4,16 +4,20 @@
 
 @layer base {
   :root {
-    /* Colors */
-    --background: 255 11% 6%;
-    --foreground: 0 0% 100%;
-    --primary: 124 58 237; /* #7c3aed */
-    --secondary: 109 40 217; /* #6d28d9 */
-    --muted: 31 31 46; /* #1f1f2e */
-    --muted-foreground: 161 161 170; /* #a1a1aa */
-    --border: 46 46 62; /* #2e2e3e */
-    --input: 46 46 62; /* #2e2e3e */
-    --ring: 139 92 246; /* #8b5cf6 */
+    /* Dark Purple Theme Colors */
+    --background: 255 11% 6%; /* Dark background #0b0b12 */
+    --foreground: 0 0% 100%; /* White text */
+    --primary: 262 83% 58%; /* Purple #7c3aed */
+    --primary-foreground: 0 0% 100%; /* White on purple */
+    --secondary: 258 90% 66%; /* Lighter purple #8b5cf6 */
+    --secondary-foreground: 0 0% 100%; /* White on secondary */
+    --muted: 240 5% 26%; /* Dark muted #1f1f2e */
+    --muted-foreground: 240 5% 65%; /* Light gray text */
+    --border: 240 6% 25%; /* Border color #2e2e3e */
+    --input: 240 6% 25%; /* Input background */
+    --ring: 258 90% 66%; /* Focus ring purple */
+    --destructive: 0 84% 60%; /* Red for errors */
+    --destructive-foreground: 0 0% 100%;
 
     /* Radius */
     --radius-lg: 0.75rem;
