@@ -94,8 +94,8 @@ export function ReviewButton({
                     type="button"
                     onClick={() => setRating(star)}
                     className={`text-4xl transition-colors ${
-                      star <= rating ? "text-yellow-500" : "text-gray-300"
-                    } hover:text-yellow-400`}
+                      star <= rating ? "text-secondary" : "text-gray-300"
+                    } hover:text-primary`}
                     disabled={loading}
                   >
                     ★

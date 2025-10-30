@@ -5,7 +5,7 @@ export function Alert({ children, className, variant = "default" }: { children: 
   const styles = {
     default: "bg-muted/50 border-border text-foreground",
     success: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
-    warning: "bg-amber-500/10 border-amber-500/30 text-amber-400",
+    warning: "bg-secondary/10 border-secondary/30 text-secondary",
     destructive: "bg-red-500/10 border-red-500/30 text-red-400",
   }
   return (

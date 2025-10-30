@@ -94,7 +94,7 @@ export default async function ProfilePage() {
                 <div className="pt-4 border-t border-border">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-bold">{profile.ratingAvg.toFixed(1)}</span>
-                    <span className="text-yellow-500">★</span>
+                    <span className="text-secondary">★</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Based on {profile.ratingCount} {profile.ratingCount === 1 ? "review" : "reviews"}
@@ -116,7 +116,7 @@ export default async function ProfilePage() {
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex">
                         {[...Array(5)].map((_, i) => (
-                          <span key={i} className={i < review.rating ? "text-yellow-500" : "text-gray-300"}>
+                          <span key={i} className={i < review.rating ? "text-secondary" : "text-gray-300"}>
                             ★
                           </span>
                         ))}

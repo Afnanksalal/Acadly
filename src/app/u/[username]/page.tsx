@@ -95,7 +95,7 @@ export default async function PublicProfilePage({ params }: { params: { username
                   <div className="text-right">
                     <div className="flex items-center gap-2">
                       <span className="text-3xl font-bold">{profile.ratingAvg.toFixed(1)}</span>
-                      <span className="text-yellow-500 text-2xl">★</span>
+                      <span className="text-secondary text-2xl">★</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {profile.ratingCount} {profile.ratingCount === 1 ? "review" : "reviews"}
@@ -193,7 +193,7 @@ export default async function PublicProfilePage({ params }: { params: { username
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex">
                         {[...Array(5)].map((_: any, i: number) => (
-                          <span key={i} className={i < review.rating ? "text-yellow-500" : "text-gray-300"}>
+                          <span key={i} className={i < review.rating ? "text-secondary" : "text-gray-300"}>
                             ★
                           </span>
                         ))}

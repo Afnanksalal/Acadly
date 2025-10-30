@@ -88,7 +88,7 @@ export default async function DashboardPage() {
       </div>
 
       {gate ? (
-        <Card className="border-amber-500/50 bg-amber-500/5">
+        <Card className="border-secondary/50 bg-secondary/5">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
               <div className="text-4xl">⏳</div>

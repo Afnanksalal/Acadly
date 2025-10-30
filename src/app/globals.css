@@ -5,18 +5,30 @@
 @layer base {
   :root {
     /* Dark Purple Theme Colors */
-    --background: 255 11% 6%; /* Dark background #0b0b12 */
-    --foreground: 0 0% 100%; /* White text */
-    --primary: 262 83% 58%; /* Purple #7c3aed */
-    --primary-foreground: 0 0% 100%; /* White on purple */
-    --secondary: 258 90% 66%; /* Lighter purple #8b5cf6 */
-    --secondary-foreground: 0 0% 100%; /* White on secondary */
-    --muted: 240 5% 26%; /* Dark muted #1f1f2e */
-    --muted-foreground: 240 5% 65%; /* Light gray text */
-    --border: 240 6% 25%; /* Border color #2e2e3e */
-    --input: 240 6% 25%; /* Input background */
-    --ring: 258 90% 66%; /* Focus ring purple */
-    --destructive: 0 84% 60%; /* Red for errors */
+    --background: 255 11% 6%;
+    /* Dark background #0b0b12 */
+    --foreground: 0 0% 100%;
+    /* White text */
+    --primary: 262 83% 58%;
+    /* Purple #7c3aed */
+    --primary-foreground: 0 0% 100%;
+    /* White on purple */
+    --secondary: 258 90% 66%;
+    /* Lighter purple #8b5cf6 */
+    --secondary-foreground: 0 0% 100%;
+    /* White on secondary */
+    --muted: 240 5% 26%;
+    /* Dark muted #1f1f2e */
+    --muted-foreground: 240 5% 65%;
+    /* Light gray text */
+    --border: 240 6% 25%;
+    /* Border color #2e2e3e */
+    --input: 240 6% 25%;
+    /* Input background */
+    --ring: 258 90% 66%;
+    /* Focus ring purple */
+    --destructive: 0 84% 60%;
+    /* Red for errors */
     --destructive-foreground: 0 0% 100%;
 
     /* Radius */
@@ -26,7 +38,7 @@
   }
 }
 
-html { 
+html {
   color-scheme: dark;
   scroll-behavior: smooth;
 }
@@ -46,6 +58,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -57,6 +70,7 @@ body {
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -68,6 +82,7 @@ body {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -109,9 +124,12 @@ body {
 
 /* Skeleton loading */
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }

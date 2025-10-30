@@ -144,8 +144,8 @@ export default async function OrdersPage() {
                           Sold on {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                         {order.status === "PAID" && order.pickup && order.pickup.status === "GENERATED" && (
-                          <div className="mt-3 p-3 bg-amber-500/10 rounded-md">
-                            <p className="text-sm font-medium text-amber-600">⏳ Waiting for buyer pickup</p>
+                          <div className="mt-3 p-3 bg-secondary/10 rounded-md">
+                            <p className="text-sm font-medium text-secondary">⏳ Waiting for buyer pickup</p>
                             <p className="text-xs text-muted-foreground mt-1">Ask buyer for their code to confirm</p>
                           </div>
                         )}

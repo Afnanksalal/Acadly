@@ -87,7 +87,7 @@ export function ReviewsTabs({
                       <div className="flex items-center gap-3 mb-3">
                         <div className="flex">
                           {[...Array(5)].map((_, i) => (
-                            <span key={i} className={`text-xl ${i < review.rating ? "text-yellow-500" : "text-gray-300"}`}>
+                            <span key={i} className={`text-xl ${i < review.rating ? "text-secondary" : "text-gray-300"}`}>
                               ★
                             </span>
                           ))}
@@ -153,7 +153,7 @@ export function ReviewsTabs({
                       <div className="flex items-center gap-3 mb-3">
                         <div className="flex">
                           {[...Array(5)].map((_, i) => (
-                            <span key={i} className={`text-xl ${i < review.rating ? "text-yellow-500" : "text-gray-300"}`}>
+                            <span key={i} className={`text-xl ${i < review.rating ? "text-secondary" : "text-gray-300"}`}>
                               ★
                             </span>
                           ))}

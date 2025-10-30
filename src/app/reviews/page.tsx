@@ -84,7 +84,7 @@ export default async function ReviewsPage() {
                 <div className="text-6xl font-bold text-primary">{profile.ratingAvg.toFixed(1)}</div>
                 <div className="flex items-center justify-center gap-1 mt-2">
                   {[...Array(5)].map((_, i) => (
-                    <span key={i} className={`text-2xl ${i < Math.round(profile.ratingAvg) ? "text-yellow-500" : "text-gray-300"}`}>
+                    <span key={i} className={`text-2xl ${i < Math.round(profile.ratingAvg) ? "text-secondary" : "text-gray-300"}`}>
                       ★
                     </span>
                   ))}

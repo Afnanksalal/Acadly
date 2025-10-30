@@ -120,7 +120,7 @@ export function PickupCodeDisplay({
       )}
 
       {isSeller && (
-        <Card className="border-amber-500/50 bg-amber-500/5">
+        <Card className="border-secondary/50 bg-secondary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               📦 Confirm Pickup

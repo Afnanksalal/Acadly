@@ -175,7 +175,7 @@ export default async function TransactionPage({
                     <span className="text-sm font-medium">Your Review:</span>
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
-                        <span key={i} className={i < userReview.rating ? "text-yellow-500" : "text-gray-300"}>
+                        <span key={i} className={i < userReview.rating ? "text-secondary" : "text-gray-300"}>
                           ★
                         </span>
                       ))}
