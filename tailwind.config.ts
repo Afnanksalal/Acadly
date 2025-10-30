@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
-  darkMode: "class",
+  darkMode: ["class"],
   content: [
     "./src/pages/**/*.{ts,tsx}",
     "./src/components/**/*.{ts,tsx}",
@@ -13,25 +13,25 @@ const config: Config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#7c3aed", // violet-600
-          foreground: "#ffffff"
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--foreground))"
         },
         secondary: {
-          DEFAULT: "#6d28d9",
-          foreground: "#ffffff"
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--foreground))"
         },
         muted: {
-          DEFAULT: "#1f1f2e",
-          foreground: "#a1a1aa"
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))"
         },
-        border: "#2e2e3e",
-        input: "#2e2e3e",
-        ring: "#8b5cf6"
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))"
       },
       borderRadius: {
-        lg: "0.75rem",
-        md: "0.5rem",
-        sm: "0.375rem",
+        lg: "var(--radius-lg)",
+        md: "var(--radius-md)",
+        sm: "var(--radius-sm)",
       },
     },
   },

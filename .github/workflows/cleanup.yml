@@ -1,0 +1,38 @@
+# Optional: External cron job for more frequent cleanup
+# This is an alternative to Vercel Pro cron jobs for hobby accounts
+# 
+# To use this:
+# 1. Add CRON_SECRET to GitHub repository secrets
+# 2. Add VERCEL_URL to GitHub repository secrets (your deployed app URL)
+# 3. Uncomment the schedule below and adjust as needed
+# 4. Remove or disable the Vercel cron in vercel.json
+
+name: Transaction Cleanup
+
+on:
+  # Uncomment and adjust schedule as needed
+  # schedule:
+  #   - cron: '0 */6 * * *'  # Every 6 hours
+  
+  # Manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Trigger cleanup endpoint
+        run: |
+          curl -X GET "${{ secrets.VERCEL_URL }}/api/cron/cleanup" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -f || echo "Cleanup failed"
+
+# Instructions:
+# 1. Go to your GitHub repository settings
+# 2. Navigate to Secrets and variables > Actions
+# 3. Add these secrets:
+#    - CRON_SECRET: Your cron secret from .env
+#    - VERCEL_URL: Your deployed app URL (e.g., https://acadly.vercel.app)
+# 4. Uncomment the schedule section above
+# 5. Optionally disable Vercel cron by removing it from vercel.json

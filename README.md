@@ -198,6 +198,23 @@ npx prisma migrate deploy
    - Monitor API performance
    - Check cron job execution
 
+### Cron Jobs
+
+Automatic cleanup runs daily at midnight UTC via Vercel Cron:
+- Cancels expired transactions (30+ minutes old)
+- Auto-completes old transactions (7+ days)
+
+**Note**: Hobby accounts are limited to daily cron jobs. For more frequent cleanup:
+1. Upgrade to Vercel Pro for hourly cron jobs (`0 */6 * * *`)
+2. Use manual triggers as needed
+3. Set up external cron services
+
+Manual trigger:
+```bash
+curl -X GET "https://yourdomain.com/api/cron/cleanup" \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+```
+
 ## 📊 API Documentation
 
 ### Authentication

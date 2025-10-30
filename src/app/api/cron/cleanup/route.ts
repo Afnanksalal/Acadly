@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { cleanupExpiredTransactions, autoCompleteTransactions } from "@/lib/transaction-timeout"
 
+/**
+ * Cron job for cleaning up expired transactions and auto-completing old ones
+ * 
+ * Vercel Scheduling:
+ * - Hobby: Daily at midnight UTC (0 0 * * *)
+ * - Pro: Every 6 hours (0 star/6 * * *) - recommended for production
+ * 
+ * Manual trigger: GET /api/cron/cleanup with Authorization Bearer CRON_SECRET
+ */
 export async function GET(request: NextRequest) {
   try {
     // Verify cron secret to prevent unauthorized access
