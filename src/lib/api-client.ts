@@ -31,39 +31,95 @@ export class ApiError extends Error {
   }
 }
 
+// Retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelay: 1000, // 1 second
+  maxDelay: 10000, // 10 seconds
+  retryableStatuses: [408, 429, 500, 502, 503, 504]
+}
+
+// Exponential backoff with jitter
+function calculateDelay(attempt: number): number {
+  const delay = Math.min(
+    RETRY_CONFIG.baseDelay * Math.pow(2, attempt),
+    RETRY_CONFIG.maxDelay
+  )
+  // Add jitter (±25%)
+  const jitter = delay * 0.25 * (Math.random() * 2 - 1)
+  return Math.round(delay + jitter)
+}
+
 export async function apiRequest<T = any>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    })
+  let lastError: Error | null = null
+  
+  for (let attempt = 0; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+      
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Request-ID': `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          ...options.headers,
+        },
+        signal: controller.signal,
+        ...options,
+      })
 
-    const data: ApiResponse<T> = await response.json()
+      clearTimeout(timeoutId)
 
-    if (!response.ok || !data.success) {
-      const error = data.error || { code: 'UNKNOWN_ERROR', message: 'An error occurred' }
-      throw new ApiError(error.message, error.code, error.details)
-    }
+      // Check if we should retry based on status
+      if (!response.ok && RETRY_CONFIG.retryableStatuses.includes(response.status)) {
+        if (attempt < RETRY_CONFIG.maxRetries) {
+          const delay = calculateDelay(attempt)
+          console.warn(`Request failed with ${response.status}, retrying in ${delay}ms (attempt ${attempt + 1}/${RETRY_CONFIG.maxRetries})`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+          continue
+        }
+      }
 
-    return data.data as T
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error
+      const data: ApiResponse<T> = await response.json()
+
+      if (!response.ok || !data.success) {
+        const error = data.error || { code: 'UNKNOWN_ERROR', message: 'An error occurred' }
+        throw new ApiError(error.message, error.code, error.details)
+      }
+
+      return data.data as T
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error')
+      
+      // Don't retry on certain errors
+      if (error instanceof ApiError || 
+          (error instanceof Error && error.name === 'AbortError')) {
+        throw error
+      }
+      
+      // Retry on network errors
+      if (attempt < RETRY_CONFIG.maxRetries) {
+        const delay = calculateDelay(attempt)
+        console.warn(`Network error, retrying in ${delay}ms (attempt ${attempt + 1}/${RETRY_CONFIG.maxRetries}):`, error)
+        await new Promise(resolve => setTimeout(resolve, delay))
+        continue
+      }
     }
-    
-    // Handle network errors or JSON parsing errors
-    if (error instanceof Error) {
-      throw new ApiError(error.message, 'NETWORK_ERROR')
-    }
-    
-    throw new ApiError('An unexpected error occurred', 'UNKNOWN_ERROR')
   }
+  
+  // All retries exhausted
+  if (lastError instanceof ApiError) {
+    throw lastError
+  }
+  
+  if (lastError instanceof Error) {
+    throw new ApiError(lastError.message, 'NETWORK_ERROR')
+  }
+  
+  throw new ApiError('Request failed after all retries', 'RETRY_EXHAUSTED')
 }
 
 // Helper function to extract user-friendly error message

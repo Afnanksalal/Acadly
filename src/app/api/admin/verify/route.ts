@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { validationErrorResponse } from "@/lib/api-response"
 
 export async function POST(req: NextRequest) {
   const contentType = req.headers.get("content-type") || ""
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
     const form = await req.formData()
     userId = String(form.get("userId"))
   }
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 })
+  if (!userId) return validationErrorResponse("userId required")
   await prisma.profile.update({ where: { id: userId }, data: { verified: true } })
   
   // Redirect back to dashboard instead of showing JSON

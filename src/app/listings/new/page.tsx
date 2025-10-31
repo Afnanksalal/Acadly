@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { supabaseClient } from "@/lib/supabase-client"
+import { createBrowserClient } from "@supabase/ssr"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -25,10 +25,14 @@ export default function NewListingPage() {
   const [uploadingImages, setUploadingImages] = useState(false)
   const [uploadError, setUploadError] = useState("")
   const router = useRouter()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   useEffect(() => {
     // Check auth BEFORE allowing user to fill form
-    supabaseClient.auth.getUser().then(async (res) => {
+    supabase.auth.getUser().then(async (res) => {
       const id = res.data.user?.id
       
       if (!id) {
@@ -40,7 +44,8 @@ export default function NewListingPage() {
       // Check if verified
       const profileRes = await fetch('/api/profile')
       if (profileRes.ok) {
-        const { profile } = await profileRes.json()
+        const response = await profileRes.json()
+        const profile = response.data?.profile || response.profile
         if (!profile.verified) {
           setError('Please verify your account to create listings')
           return
@@ -49,8 +54,11 @@ export default function NewListingPage() {
       
       setUserId(id)
     })
-    fetch("/api/categories").then(r => r.json()).then((list: Array<{ id: string; name: string }>) => setCategories(list))
-  }, [router])
+    fetch("/api/categories").then(r => r.json()).then((response) => {
+      const list = response.data || response
+      setCategories(list)
+    })
+  }, [router, supabase.auth])
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
@@ -93,7 +101,7 @@ export default function NewListingPage() {
         }
 
         const data = await response.json()
-        return data.url
+        return data.data?.url || data.url
       })
 
       const uploadedUrls = await Promise.all(uploadPromises)

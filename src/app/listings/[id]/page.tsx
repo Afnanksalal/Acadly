@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { validateUUIDParam } from "@/lib/uuid-validation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -10,6 +11,21 @@ import { ChatButton } from "./chat-button"
 import { BuyButton } from "./buy-button"
 
 export default async function ListingDetail({ params }: { params: { id: string } }) {
+  // Validate UUID format first
+  const validation = validateUUIDParam(params.id, "listing")
+  if (!validation.isValid) {
+    return (
+      <main className="max-w-4xl mx-auto p-6">
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-semibold mb-4">{validation.error}</h1>
+          <Link href="/listings" className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+            ← Back to Listings
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
   const listing = await prisma.listing.findUnique({ 
     where: { id: params.id }, 
     include: { user: true, category: true } 
@@ -32,7 +48,7 @@ export default async function ListingDetail({ params }: { params: { id: string }
     )
   }
 
-  const supabase = supabaseServer()
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   const profile = user ? await prisma.profile.findUnique({ where: { id: user.id } }) : null
   const isOwner = user?.id === listing.userId

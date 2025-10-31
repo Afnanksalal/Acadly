@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { z } from "zod"
+import { isValidUUID } from "@/lib/uuid-validation"
 
 const updateDisputeSchema = z.object({
   status: z.enum(["OPEN", "IN_REVIEW", "RESOLVED", "REJECTED"]).optional(),
@@ -19,6 +20,10 @@ export const GET = withAdminAuth(async (request: NextRequest, user) => {
 
     if (!disputeId) {
       return validationErrorResponse("Dispute ID is required")
+    }
+
+    if (!isValidUUID(disputeId)) {
+      return validationErrorResponse("Invalid dispute ID format")
     }
 
     const dispute = await prisma.dispute.findUnique({

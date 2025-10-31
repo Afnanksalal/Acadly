@@ -1,18 +1,17 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { z } from "zod"
+import { successResponse, errorResponse, unauthorizedResponse, validationErrorResponse, notFoundResponse, forbiddenResponse } from "@/lib/api-response"
 
 export async function POST(req: NextRequest) {
   try {
     // Auth check
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
 
     // Validate input
@@ -39,18 +38,14 @@ export async function POST(req: NextRequest) {
 
     const parsed = schema.safeParse(await req.json())
     if (!parsed.success) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_INPUT", message: parsed.error.flatten() } 
-      }, { status: 400 })
+      return validationErrorResponse("Invalid input data")
     }
 
     const { transactionId, subject, description, reason, evidence } = parsed.data
 
     // Validate evidence URLs if provided
     if (evidence && evidence.length > 0 && !validateEvidence(evidence)) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_EVIDENCE", message: "Evidence must be valid image URLs" } 
-      }, { status: 400 })
+      return validationErrorResponse("Evidence must be valid image URLs")
     }
 
     // Verify transaction exists and user is a participant
@@ -60,16 +55,12 @@ export async function POST(req: NextRequest) {
     })
 
     if (!transaction) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Transaction not found" } 
-      }, { status: 404 })
+      return notFoundResponse("Transaction not found")
     }
 
     // Only buyer or seller can create dispute
     if (transaction.buyerId !== user.id && transaction.sellerId !== user.id) {
-      return NextResponse.json({ 
-        error: { code: "FORBIDDEN", message: "Only transaction participants can create disputes" } 
-      }, { status: 403 })
+      return forbiddenResponse("Only transaction participants can create disputes")
     }
 
     // Check if dispute already exists
@@ -81,9 +72,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (existingDispute) {
-      return NextResponse.json({ 
-        error: { code: "ALREADY_EXISTS", message: "An open dispute already exists for this transaction" } 
-      }, { status: 400 })
+      return validationErrorResponse("An open dispute already exists for this transaction")
     }
 
     // Create dispute
@@ -110,29 +99,25 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    return NextResponse.json({ 
+    return successResponse({ 
       dispute,
       message: "Dispute created successfully. Admin will review within 24-48 hours."
-    }, { status: 201 })
+    }, 201)
 
   } catch (error) {
     console.error("Create dispute error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to create dispute" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }
 
 // Get user's disputes
 export async function GET() {
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
 
     const disputes = await prisma.dispute.findMany({
@@ -147,12 +132,10 @@ export async function GET() {
       orderBy: { createdAt: "desc" }
     })
 
-    return NextResponse.json({ disputes })
+    return successResponse({ disputes })
 
   } catch (error) {
     console.error("Get disputes error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to fetch disputes" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }

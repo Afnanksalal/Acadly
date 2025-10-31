@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs } from "@/components/ui/tabs"
 import { Profile, Dispute, Transaction } from "@prisma/client"
@@ -10,7 +10,7 @@ type DisputeWithTransaction = Dispute & {
 
 export default async function AdminPage() {
   // Auth/role check
-  const supabase = supabaseServer()
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return (

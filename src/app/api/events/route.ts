@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { z } from "zod"
+import { successResponse, errorResponse, unauthorizedResponse, forbiddenResponse, validationErrorResponse } from "@/lib/api-response"
 
 // GET /api/events - Get all events
 export async function GET(req: NextRequest) {
@@ -56,34 +57,28 @@ export async function GET(req: NextRequest) {
       }
     }
     
-    return NextResponse.json({ events })
+    return successResponse({ events })
     
   } catch (error) {
     console.error("Get events error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to fetch events" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }
 
 // POST /api/events - Create new event
 export async function POST(req: NextRequest) {
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
     
     // Check if user is verified
     const profile = await prisma.profile.findUnique({ where: { id: user.id } })
     if (!profile || !profile.verified) {
-      return NextResponse.json({ 
-        error: { code: "NOT_VERIFIED", message: "Please verify your account to create events" } 
-      }, { status: 403 })
+      return forbiddenResponse("Please verify your account to create events")
     }
     
     const schema = z.object({
@@ -100,13 +95,7 @@ export async function POST(req: NextRequest) {
     const parsed = schema.safeParse(await req.json())
     if (!parsed.success) {
       const firstError = parsed.error.errors[0]
-      return NextResponse.json({ 
-        error: { 
-          code: "INVALID_INPUT", 
-          message: firstError.message,
-          details: parsed.error.flatten() 
-        } 
-      }, { status: 400 })
+      return validationErrorResponse(firstError.message)
     }
     
     const data = parsed.data
@@ -115,15 +104,11 @@ export async function POST(req: NextRequest) {
     
     // Validate times
     if (startTime < new Date()) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_TIME", message: "Event start time must be in the future" } 
-      }, { status: 400 })
+      return validationErrorResponse("Event start time must be in the future")
     }
     
     if (endTime && endTime <= startTime) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_TIME", message: "Event end time must be after start time" } 
-      }, { status: 400 })
+      return validationErrorResponse("Event end time must be after start time")
     }
     
     const event = await prisma.event.create({
@@ -153,18 +138,13 @@ export async function POST(req: NextRequest) {
     
     console.log('Event created:', { id: event.id, title: event.title, creator: user.id })
     
-    return NextResponse.json({ 
+    return successResponse({ 
       event,
       message: "Event created successfully" 
-    }, { status: 201 })
+    }, 201)
     
   } catch (error) {
     console.error("Create event error:", error)
-    return NextResponse.json({ 
-      error: { 
-        code: "SERVER_ERROR", 
-        message: "Failed to create event. Please try again." 
-      } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }

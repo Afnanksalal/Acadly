@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { successResponse, errorResponse, notFoundResponse } from "@/lib/api-response"
 
 // GET /api/profile/[username] - Get public profile by username
 export async function GET(
@@ -54,17 +55,13 @@ export async function GET(
     })
 
     if (!profile) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Profile not found" } 
-      }, { status: 404 })
+      return notFoundResponse("Profile not found")
     }
 
-    return NextResponse.json({ profile })
+    return successResponse({ profile })
 
   } catch (error) {
     console.error("Get public profile error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to fetch profile" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }

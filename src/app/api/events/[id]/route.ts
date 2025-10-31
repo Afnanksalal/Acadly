@@ -1,13 +1,21 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { z } from "zod"
+import { validateUUIDForAPI } from "@/lib/uuid-validation"
+import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse, forbiddenResponse, validationErrorResponse } from "@/lib/api-response"
 
 // GET /api/events/[id] - Get single event
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Validate UUID format
+  const validation = validateUUIDForAPI(params.id, "event")
+  if (!validation.isValid) {
+    return validation.response
+  }
+
   try {
     const event = await prisma.event.findUnique({
       where: { id: params.id },
@@ -25,9 +33,7 @@ export async function GET(
     })
     
     if (!event) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Event not found" } 
-      }, { status: 404 })
+      return notFoundResponse("Event not found")
     }
     
     // Auto-update status
@@ -48,13 +54,11 @@ export async function GET(
       event.status = newStatus as any
     }
     
-    return NextResponse.json({ event })
+    return successResponse({ event })
     
   } catch (error) {
     console.error("Get event error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to fetch event" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }
 
@@ -63,28 +67,28 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Validate UUID format
+  const validation = validateUUIDForAPI(params.id, "event")
+  if (!validation.isValid) {
+    return validation.response
+  }
+
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
     
     const event = await prisma.event.findUnique({ where: { id: params.id } })
     
     if (!event) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Event not found" } 
-      }, { status: 404 })
+      return notFoundResponse("Event not found")
     }
     
     if (event.creatorId !== user.id) {
-      return NextResponse.json({ 
-        error: { code: "FORBIDDEN", message: "Only event creator can update this event" } 
-      }, { status: 403 })
+      return forbiddenResponse("Only event creator can update this event")
     }
     
     const schema = z.object({
@@ -102,12 +106,7 @@ export async function PUT(
     const parsed = schema.safeParse(await req.json())
     if (!parsed.success) {
       const firstError = parsed.error.errors[0]
-      return NextResponse.json({ 
-        error: { 
-          code: "INVALID_INPUT", 
-          message: firstError.message 
-        } 
-      }, { status: 400 })
+      return validationErrorResponse(firstError.message)
     }
     
     const data = parsed.data
@@ -124,9 +123,7 @@ export async function PUT(
     if (data.startTime) {
       const startTime = new Date(data.startTime)
       if (startTime < new Date() && event.status === "UPCOMING") {
-        return NextResponse.json({ 
-          error: { code: "INVALID_TIME", message: "Cannot reschedule to past time" } 
-        }, { status: 400 })
+        return validationErrorResponse("Cannot reschedule to past time")
       }
       updateData.startTime = startTime
       if (data.status !== "CANCELLED") {
@@ -155,16 +152,14 @@ export async function PUT(
     
     console.log('Event updated:', { id: updatedEvent.id, changes: Object.keys(updateData) })
     
-    return NextResponse.json({ 
+    return successResponse({ 
       event: updatedEvent,
       message: "Event updated successfully" 
     })
     
   } catch (error) {
     console.error("Update event error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to update event" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }
 
@@ -173,28 +168,28 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Validate UUID format
+  const validation = validateUUIDForAPI(params.id, "event")
+  if (!validation.isValid) {
+    return validation.response
+  }
+
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
     
     const event = await prisma.event.findUnique({ where: { id: params.id } })
     
     if (!event) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Event not found" } 
-      }, { status: 404 })
+      return notFoundResponse("Event not found")
     }
     
     if (event.creatorId !== user.id) {
-      return NextResponse.json({ 
-        error: { code: "FORBIDDEN", message: "Only event creator can cancel this event" } 
-      }, { status: 403 })
+      return forbiddenResponse("Only event creator can cancel this event")
     }
     
     // Soft delete - mark as cancelled and inactive
@@ -208,14 +203,12 @@ export async function DELETE(
     
     console.log('Event cancelled:', { id: cancelledEvent.id })
     
-    return NextResponse.json({ 
+    return successResponse({ 
       message: "Event cancelled successfully" 
     })
     
   } catch (error) {
     console.error("Cancel event error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to cancel event" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }

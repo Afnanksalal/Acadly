@@ -1,15 +1,31 @@
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { validateUUIDParam } from "@/lib/uuid-validation"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { EventActions } from "./event-actions"
 
 export default async function EventDetailPage({ params }: { params: { id: string } }) {
-  const supabase = supabaseServer()
+  // Validate UUID format first
+  const validation = validateUUIDParam(params.id, "event")
+  if (!validation.isValid) {
+    return (
+      <main className="max-w-4xl mx-auto p-6">
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-semibold mb-4">{validation.error}</h1>
+          <Link href="/events" className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+            ← Back to Events
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   const event = await (prisma as any).event.findUnique({

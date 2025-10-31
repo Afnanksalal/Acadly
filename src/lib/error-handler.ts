@@ -43,11 +43,50 @@ export class ConflictError extends Error {
   }
 }
 
+// Error tracking for monitoring
+const errorStats = {
+  count: 0,
+  lastReset: Date.now(),
+  errors: new Map<string, number>()
+}
+
+function trackError(errorCode: string): void {
+  errorStats.count++
+  errorStats.errors.set(errorCode, (errorStats.errors.get(errorCode) || 0) + 1)
+  
+  // Reset stats every hour
+  if (Date.now() - errorStats.lastReset > 3600000) {
+    errorStats.count = 0
+    errorStats.errors.clear()
+    errorStats.lastReset = Date.now()
+  }
+}
+
+export function getErrorStats() {
+  return {
+    totalErrors: errorStats.count,
+    errorsByType: Object.fromEntries(errorStats.errors),
+    since: new Date(errorStats.lastReset).toISOString()
+  }
+}
+
 export function handleApiError(error: unknown): NextResponse {
-  console.error("API Error:", error)
+  // Enhanced error logging with context
+  const errorId = `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  console.error(`[${errorId}] API Error:`, {
+    error: error instanceof Error ? {
+      name: error.name,
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    } : error,
+    timestamp: new Date().toISOString(),
+    errorId
+  })
 
   // Zod validation errors
   if (error instanceof ZodError) {
+    trackError("VALIDATION_ERROR")
+    
     const fieldErrors = error.errors.map(e => ({
       field: e.path.join("."),
       message: e.message,
@@ -65,6 +104,7 @@ export function handleApiError(error: unknown): NextResponse {
           code: "VALIDATION_ERROR",
           message: mainMessage,
           details: fieldErrors,
+          errorId
         },
       },
       { status: 400 }

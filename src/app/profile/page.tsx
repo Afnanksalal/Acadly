@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +8,7 @@ import Link from "next/link"
 import { ProfileEditForm } from "./profile-edit-form"
 
 export default async function ProfilePage() {
-  const supabase = supabaseServer()
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) redirect("/auth/login")

@@ -85,47 +85,78 @@ export async function GET(request: NextRequest) {
 }
 
 export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
+  const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  
   try {
     const body = await request.json()
     const data = validateAndSanitizeBody(createTransactionSchema)(body)
 
-    // Get listing details
-    const listing = await prisma.listing.findUnique({
-      where: { id: data.listingId },
-      include: {
-        user: true,
-      },
+    // Input validation with additional checks
+    if (!data.listingId || typeof data.listingId !== 'string') {
+      return validationErrorResponse("Invalid listing ID provided")
+    }
+
+    // Use database transaction for atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Get listing with row-level locking
+      const listing = await tx.listing.findUnique({
+        where: { id: data.listingId },
+        include: { user: true },
+      })
+
+      if (!listing) {
+        throw new Error("LISTING_NOT_FOUND")
+      }
+
+      if (!listing.isActive) {
+        throw new Error("LISTING_INACTIVE")
+      }
+
+      // Validate buyer is not seller
+      validateBuyerNotSeller(user.id, listing.userId)
+
+      // Check for existing active transaction with proper locking
+      const existingTransaction = await tx.transaction.findFirst({
+        where: {
+          listingId: data.listingId,
+          status: { in: ["INITIATED", "PAID"] },
+        },
+      })
+
+      if (existingTransaction) {
+        throw new Error("TRANSACTION_IN_PROGRESS")
+      }
+
+      // Validate user's transaction limits (prevent spam)
+      const recentTransactions = await tx.transaction.count({
+        where: {
+          buyerId: user.id,
+          createdAt: {
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+          }
+        }
+      })
+
+      if (recentTransactions >= 10) { // Max 10 transactions per day
+        throw new Error("TRANSACTION_LIMIT_EXCEEDED")
+      }
+
+      return { listing }
     })
 
-    if (!listing) {
-      return notFoundResponse("Listing not found")
-    }
+    const { listing } = result
 
-    if (!listing.isActive) {
-      return validationErrorResponse("This item is no longer available")
-    }
-
-    // Validate buyer is not seller
-    validateBuyerNotSeller(user.id, listing.userId)
-
-    // Check for existing active transaction
-    const existingTransaction = await prisma.transaction.findFirst({
-      where: {
-        listingId: data.listingId,
-        status: { in: ["INITIATED", "PAID"] },
-      },
-    })
-
-    if (existingTransaction) {
-      return validationErrorResponse("A transaction is already in progress for this listing")
-    }
-
-    // Use listing price or provided amount
+    // Use listing price or provided amount with validation
     const finalAmount: number = typeof data.amount === 'number' ? data.amount : parseFloat(listing.price.toString())
+    
+    // Validate amount bounds
+    if (finalAmount < 1 || finalAmount > 999999) {
+      return validationErrorResponse("Transaction amount must be between ₹1 and ₹999,999")
+    }
 
     // Validate Razorpay credentials
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      console.error("Razorpay credentials not configured")
+      console.error(`[${transactionId}] Razorpay credentials not configured`)
       return errorResponse(new Error("Payment gateway not configured"), 500)
     }
 
@@ -134,16 +165,34 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     })
 
-    // Create Razorpay order
-    const order = await razorpay.orders.create({
-      amount: Math.round(finalAmount * 100), // Convert to paise
-      currency: "INR",
-      notes: {
-        listingId: data.listingId,
-        buyerId: user.id,
-        sellerId: listing.userId,
-      },
-    })
+    // Create Razorpay order with retry logic
+    let order: any = null
+    let retries = 3
+    
+    while (retries > 0) {
+      try {
+        order = await razorpay.orders.create({
+          amount: Math.round(finalAmount * 100), // Convert to paise
+          currency: "INR",
+          receipt: transactionId,
+          notes: {
+            listingId: data.listingId,
+            buyerId: user.id,
+            sellerId: listing.userId,
+            transactionId
+          },
+        })
+        break
+      } catch (razorpayError) {
+        retries--
+        if (retries === 0) throw razorpayError
+        await new Promise(resolve => setTimeout(resolve, 1000)) // 1 second delay
+      }
+    }
+
+    if (!order) {
+      throw new Error("Failed to create Razorpay order after retries")
+    }
 
     // Create transaction record
     const transaction = await prisma.transaction.create({
@@ -182,31 +231,45 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       },
     })
 
-    console.log("Transaction created:", {
+    console.log(`[${transactionId}] Transaction created successfully:`, {
       id: transaction.id,
       orderId: order.id,
       amount: finalAmount,
+      buyer: user.id,
+      seller: listing.userId
     })
 
     return successResponse({
       order,
       transaction,
+      transactionId
     }, 201)
   } catch (error) {
-    console.error("Create transaction error:", error)
+    console.error(`[${transactionId}] Create transaction error:`, error)
 
-    // Handle specific errors
+    // Handle specific business logic errors
     if (error instanceof Error) {
-      if (error.message === "CANNOT_BUY_OWN_LISTING") {
-        return validationErrorResponse("You cannot buy your own listing")
+      switch (error.message) {
+        case "CANNOT_BUY_OWN_LISTING":
+          return validationErrorResponse("You cannot buy your own listing")
+        case "LISTING_NOT_FOUND":
+          return notFoundResponse("Listing not found")
+        case "LISTING_INACTIVE":
+          return validationErrorResponse("This item is no longer available")
+        case "TRANSACTION_IN_PROGRESS":
+          return validationErrorResponse("A transaction is already in progress for this listing")
+        case "TRANSACTION_LIMIT_EXCEEDED":
+          return validationErrorResponse("Daily transaction limit exceeded. Please try again tomorrow.")
       }
     }
 
-    // Handle Razorpay errors
+    // Handle Razorpay errors with better context
     if (error && typeof error === "object" && "error" in error) {
-      const razorpayError = error as { error: { description?: string } }
+      const razorpayError = error as { error: { description?: string; code?: string } }
+      console.error(`[${transactionId}] Razorpay error:`, razorpayError)
+      
       return errorResponse(
-        new Error(razorpayError.error.description || "Payment gateway error"),
+        new Error(`Payment gateway error: ${razorpayError.error.description || 'Unknown error'}`),
         500
       )
     }

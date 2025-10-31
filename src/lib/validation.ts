@@ -73,12 +73,64 @@ export function validateImageUrl(url: string): boolean {
 // Input validation middleware
 export function validateAndSanitizeBody<T>(schema: z.ZodSchema<T>) {
   return (body: unknown): T => {
+    // Production safeguards
+    if (body === null || body === undefined) {
+      throw new z.ZodError([{
+        code: z.ZodIssueCode.invalid_type,
+        expected: 'object',
+        received: 'null',
+        path: [],
+        message: 'Request body is required'
+      }])
+    }
+
+    // Size limit check (prevent DoS)
+    const bodyStr = JSON.stringify(body)
+    if (bodyStr.length > 1024 * 1024) { // 1MB limit
+      throw new z.ZodError([{
+        code: z.ZodIssueCode.too_big,
+        maximum: 1024 * 1024,
+        type: 'string',
+        inclusive: true,
+        path: [],
+        message: 'Request body too large'
+      }])
+    }
+
     // Optimized validation for better performance
     if (typeof body === "object" && body !== null) {
+      // Simple prototype pollution check - only for obvious attacks
+      const bodyStr = JSON.stringify(body)
+      if (bodyStr.includes('"__proto__":') || bodyStr.includes('"constructor":{"prototype"')) {
+        throw new z.ZodError([{
+          code: z.ZodIssueCode.custom,
+          path: [],
+          message: 'Invalid object properties detected'
+        }])
+      }
+
       const sanitized = Object.entries(body).reduce((acc, [key, value]) => {
+        // Prevent key injection - skip dangerous keys
+        if (typeof key !== 'string' || key.length > 100 || key === '__proto__') {
+          return acc
+        }
+
         if (typeof value === "string" && value.length > 0) {
           // Only sanitize non-empty strings to reduce processing
           acc[key] = sanitizeInputSync(value)
+        } else if (Array.isArray(value)) {
+          // Handle arrays with size limits
+          if (value.length > 100) {
+            throw new z.ZodError([{
+              code: z.ZodIssueCode.too_big,
+              maximum: 100,
+              type: 'array',
+              inclusive: true,
+              path: [key],
+              message: 'Array too large'
+            }])
+          }
+          acc[key] = value
         } else {
           acc[key] = value
         }

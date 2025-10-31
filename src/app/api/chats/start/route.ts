@@ -1,34 +1,35 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
+import { successResponse, errorResponse, unauthorizedResponse, forbiddenResponse, validationErrorResponse, notFoundResponse } from "@/lib/api-response"
 
 export async function POST(req: NextRequest) {
-  const supabase = supabaseServer()
+  const supabase = createRouteHandlerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
-    return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Login required" } }, { status: 401 })
+    return unauthorizedResponse("Login required")
   }
 
   const profile = await prisma.profile.findUnique({ where: { id: user.id } })
   if (!profile?.verified) {
-    return NextResponse.json({ error: { code: "UNVERIFIED", message: "Account verification required" } }, { status: 403 })
+    return forbiddenResponse("Account verification required")
   }
 
   const { listingId } = await req.json()
   
   if (!listingId) {
-    return NextResponse.json({ error: { code: "INVALID_INPUT", message: "listingId required" } }, { status: 400 })
+    return validationErrorResponse("listingId required")
   }
 
   const listing = await prisma.listing.findUnique({ where: { id: listingId } })
   
   if (!listing) {
-    return NextResponse.json({ error: { code: "NOT_FOUND", message: "Listing not found" } }, { status: 404 })
+    return notFoundResponse("Listing not found")
   }
 
   if (listing.userId === user.id) {
-    return NextResponse.json({ error: { code: "INVALID_ACTION", message: "Cannot chat with yourself" } }, { status: 400 })
+    return validationErrorResponse("Cannot chat with yourself")
   }
 
   try {
@@ -51,17 +52,9 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    return NextResponse.json({ 
-      success: true,
-      data: { chatId: chat.id },
-    })
+    return successResponse({ chatId: chat.id })
   } catch (error) {
     console.error("Error creating/finding chat:", error)
-    return NextResponse.json({ 
-      error: { 
-        code: "SERVER_ERROR", 
-        message: "Failed to create chat" 
-      } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }

@@ -1,22 +1,31 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
+import { validateUUIDForAPI } from "@/lib/uuid-validation"
+import { successResponse, unauthorizedResponse, forbiddenResponse, notFoundResponse } from "@/lib/api-response"
 
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = supabaseServer()
+  // Validate UUID format
+  const validation = validateUUIDForAPI(params.id, "user")
+  if (!validation.isValid) {
+    return validation.response
+  }
+
+  const supabase = createRouteHandlerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Login required" } }, { status: 401 })
+  if (!user) return unauthorizedResponse("Login required")
+  
   const me = await prisma.profile.findUnique({ where: { id: user.id } })
-  if (!me || me.role !== "ADMIN") return NextResponse.json({ error: { code: "FORBIDDEN", message: "Admin only" } }, { status: 403 })
+  if (!me || me.role !== "ADMIN") return forbiddenResponse("Admin only")
 
   const targetId = params.id
   const target = await prisma.profile.findUnique({ where: { id: targetId } })
-  if (!target) return NextResponse.json({ error: { code: "NOT_FOUND", message: "User not found" } }, { status: 404 })
+  if (!target) return notFoundResponse("User not found")
 
   await prisma.profile.update({ where: { id: targetId }, data: { verified: false } })
   await prisma.adminAction.create({ data: { adminId: me.id, disputeId: (await ensureAdminLogDispute(me.id)).id, action: `DISABLED_USER:${targetId}` } })
 
-  return NextResponse.json({ ok: true })
+  return successResponse({ ok: true })
 }
 
 async function ensureAdminLogDispute(adminId: string) {

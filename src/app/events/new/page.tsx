@@ -7,12 +7,16 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { supabaseClient } from "@/lib/supabase-client"
+import { createBrowserClient } from "@supabase/ssr"
 import { apiRequest, getErrorMessage } from "@/lib/api-client"
 import Image from "next/image"
 
 export default function NewEventPage() {
   const router = useRouter()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState("")
@@ -32,7 +36,7 @@ export default function NewEventPage() {
 
   useEffect(() => {
     // Check auth and verification
-    supabaseClient.auth.getUser().then(async (res) => {
+    supabase.auth.getUser().then(async (res) => {
       if (!res.data.user) {
         router.push('/auth/login?redirect=/events/new')
         return
@@ -40,13 +44,14 @@ export default function NewEventPage() {
       
       const profileRes = await fetch('/api/profile')
       if (profileRes.ok) {
-        const { profile } = await profileRes.json()
+        const response = await profileRes.json()
+        const profile = response.data?.profile || response.profile
         if (!profile.verified) {
           setError('Please verify your account to create events')
         }
       }
     })
-  }, [router])
+  }, [router, supabase.auth])
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -73,7 +78,7 @@ export default function NewEventPage() {
 
       console.log('Attempting upload:', { fileName, filePath, bucket: 'images' })
 
-      const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('images')
         .upload(filePath, file, { 
           cacheControl: '3600', 
@@ -88,7 +93,7 @@ export default function NewEventPage() {
 
       console.log('Upload successful:', uploadData)
 
-      const { data: { publicUrl } } = supabaseClient.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('images')
         .getPublicUrl(filePath)
 

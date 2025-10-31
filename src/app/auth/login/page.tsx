@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { supabaseClient } from "@/lib/supabase-client"
+import { createBrowserClient } from "@supabase/ssr"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -14,6 +14,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   async function onLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -23,7 +27,7 @@ export default function LoginPage() {
     }
     setLoading(true)
     setError("")
-    const { error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password })
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (loginError) {
       setError(loginError.message)

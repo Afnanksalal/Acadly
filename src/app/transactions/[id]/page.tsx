@@ -1,14 +1,16 @@
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { validateUUIDParam } from "@/lib/uuid-validation"
 import Link from "next/link"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { PickupCodeDisplay } from "./pickup-code-display"
 import { DisputeButton } from "./dispute-button"
 import { ReviewButton } from "./review-button"
+import { AutoRefresh } from "./auto-refresh"
 
 export default async function TransactionPage({ 
   params,
@@ -17,7 +19,22 @@ export default async function TransactionPage({
   params: { id: string }
   searchParams: { success?: string }
 }) {
-  const supabase = supabaseServer()
+  // Validate UUID format first
+  const validation = validateUUIDParam(params.id, "transaction")
+  if (!validation.isValid) {
+    return (
+      <main className="max-w-4xl mx-auto p-6">
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-semibold mb-4">{validation.error}</h1>
+          <Link href="/orders" className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+            ← Back to Orders
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) redirect("/auth/login")
@@ -75,11 +92,17 @@ export default async function TransactionPage({
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-6">
+      <AutoRefresh 
+        transactionId={transaction.id}
+        hasPickup={!!transaction.pickup}
+        isPaid={transaction.status === "PAID"}
+      />
+      
       {showSuccess && transaction.status === "PAID" && (
         <Alert variant="success">
           <AlertTitle>🎉 Payment Successful!</AlertTitle>
           <AlertDescription>
-            Your payment has been processed successfully. {isBuyer && "Your pickup code is displayed below."}
+            Your payment has been processed successfully. {isBuyer && "Your pickup code will be generated shortly."}
           </AlertDescription>
         </Alert>
       )}
@@ -135,13 +158,29 @@ export default async function TransactionPage({
           </div>
 
           {/* Pickup Code Section */}
-          {transaction.status === "PAID" && transaction.pickup && (
-            <PickupCodeDisplay
-              pickup={transaction.pickup}
-              isBuyer={isBuyer}
-              isSeller={isSeller}
-              transactionId={transaction.id}
-            />
+          {transaction.status === "PAID" && (
+            <>
+              {transaction.pickup ? (
+                <PickupCodeDisplay
+                  pickup={transaction.pickup}
+                  isBuyer={isBuyer}
+                  isSeller={isSeller}
+                  transactionId={transaction.id}
+                />
+              ) : (
+                <Card className="border-secondary/50 bg-secondary/5">
+                  <CardContent className="py-6">
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">⏳</div>
+                      <p className="font-medium">Generating pickup code...</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Your pickup code will appear here shortly
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
 
           {/* Actions */}

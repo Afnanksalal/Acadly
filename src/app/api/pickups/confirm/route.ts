@@ -1,30 +1,25 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { withVerifiedAuth } from "@/lib/auth"
+import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
+import { validateAndSanitizeBody } from "@/lib/validation"
+import { z } from "zod"
 
-export async function POST(req: NextRequest) {
+const confirmPickupSchema = z.object({
+  transactionId: z.string().uuid("Invalid transaction ID"),
+  pickupCode: z.string().length(6, "Pickup code must be 6 digits").regex(/^\d+$/, "Pickup code must contain only numbers")
+})
+
+export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
   try {
-    const supabase = supabaseServer()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
-    }
+    const body = await request.json()
+    const data = validateAndSanitizeBody(confirmPickupSchema)(body)
 
-    const { transactionId, pickupCode } = await req.json()
-    
-    if (!transactionId || !pickupCode) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_INPUT", message: "Transaction ID and pickup code required" } 
-      }, { status: 400 })
-    }
-
-    // Get transaction and verify user is the seller
+    // Get transaction with pickup details
     const transaction = await prisma.transaction.findUnique({
-      where: { id: transactionId },
-      include: { 
+      where: { id: data.transactionId },
+      include: {
+        pickup: true,
         listing: true,
         buyer: true,
         seller: true
@@ -32,66 +27,61 @@ export async function POST(req: NextRequest) {
     })
 
     if (!transaction) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Transaction not found" } 
-      }, { status: 404 })
+      return notFoundResponse("Transaction not found")
     }
 
+    // Check if user is the seller (only seller can confirm pickup)
     if (transaction.sellerId !== user.id) {
-      return NextResponse.json({ 
-        error: { code: "FORBIDDEN", message: "Only seller can confirm pickup" } 
-      }, { status: 403 })
+      return validationErrorResponse("Only the seller can confirm pickup")
     }
 
-    // Get pickup record
-    const pickup = await prisma.pickup.findUnique({
-      where: { transactionId }
-    })
-
-    if (!pickup) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Pickup code not generated yet" } 
-      }, { status: 404 })
+    // Check if transaction is paid
+    if (transaction.status !== "PAID") {
+      return validationErrorResponse("Transaction must be paid to confirm pickup")
     }
 
-    if (pickup.status === "CONFIRMED") {
-      return NextResponse.json({ 
-        error: { code: "ALREADY_CONFIRMED", message: "Pickup already confirmed" } 
-      }, { status: 400 })
+    // Check if pickup exists
+    if (!transaction.pickup) {
+      return validationErrorResponse("No pickup code found for this transaction")
+    }
+
+    // Check if already confirmed
+    if (transaction.pickup.status === "CONFIRMED") {
+      return validationErrorResponse("Pickup already confirmed")
     }
 
     // Verify pickup code
-    if (pickup.pickupCode !== pickupCode) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_CODE", message: "Invalid pickup code" } 
-      }, { status: 400 })
+    if (transaction.pickup.pickupCode !== data.pickupCode) {
+      return validationErrorResponse("Invalid pickup code")
     }
 
-    // Update pickup status and transaction
-    const [updatedPickup, updatedTransaction] = await prisma.$transaction([
-      prisma.pickup.update({
-        where: { transactionId },
-        data: { 
+    // Confirm pickup in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Update pickup status
+      const updatedPickup = await tx.pickup.update({
+        where: { id: transaction.pickup!.id },
+        data: {
           status: "CONFIRMED",
           confirmedAt: new Date()
         }
-      }),
-      prisma.transaction.update({
-        where: { id: transactionId },
-        data: { status: "PAID" } // Keep as PAID, pickup is confirmed
       })
-    ])
 
-    return NextResponse.json({ 
-      pickup: updatedPickup,
-      transaction: updatedTransaction,
-      message: "Pickup confirmed successfully! Transaction completed."
-    }, { status: 200 })
+      // Mark listing as sold
+      await tx.listing.update({
+        where: { id: transaction.listingId },
+        data: { isActive: false }
+      })
+
+      return updatedPickup
+    })
+
+    return successResponse({
+      pickup: result,
+      message: "Pickup confirmed successfully"
+    })
 
   } catch (error) {
-    console.error("Confirm pickup error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to confirm pickup" } 
-    }, { status: 500 })
+    console.error("Error confirming pickup:", error)
+    return errorResponse(error, 500)
   }
-}
+})

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
-import { supabaseServer } from "@/lib/supabase-server"
+import { NextRequest } from "next/server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { createClient } from "@supabase/supabase-js"
+import { successResponse, errorResponse, unauthorizedResponse, validationErrorResponse } from "@/lib/api-response"
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -8,13 +9,11 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 export async function POST(req: NextRequest) {
   try {
     // Auth check
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
 
     // Get form data
@@ -22,23 +21,17 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File
     
     if (!file) {
-      return NextResponse.json({ 
-        error: { code: "NO_FILE", message: "No file provided" } 
-      }, { status: 400 })
+      return validationErrorResponse("No file provided")
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ 
-        error: { code: "FILE_TOO_LARGE", message: "File size must be less than 5MB" } 
-      }, { status: 400 })
+      return validationErrorResponse("File size must be less than 5MB")
     }
 
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_TYPE", message: "Only JPEG, PNG, WebP, and GIF images are allowed" } 
-      }, { status: 400 })
+      return validationErrorResponse("Only JPEG, PNG, WebP, and GIF images are allowed")
     }
 
     // Create Supabase admin client for storage
@@ -75,13 +68,7 @@ export async function POST(req: NextRequest) {
         message = "Storage permissions not set. Please configure storage policies."
       }
       
-      return NextResponse.json({ 
-        error: { 
-          code: "UPLOAD_FAILED", 
-          message,
-          details: error.message 
-        } 
-      }, { status: 500 })
+      return errorResponse(new Error(message), 500)
     }
 
     // Get public URL
@@ -89,45 +76,37 @@ export async function POST(req: NextRequest) {
       .from('images')
       .getPublicUrl(fileName)
 
-    return NextResponse.json({ 
+    return successResponse({ 
       url: publicUrl,
       filename: fileName 
-    }, { status: 200 })
+    })
 
   } catch (error) {
     console.error('Upload error:', error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Internal server error" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }
 
 // Delete image
 export async function DELETE(req: NextRequest) {
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
 
     const { searchParams } = new URL(req.url)
     const filename = searchParams.get('filename')
     
     if (!filename) {
-      return NextResponse.json({ 
-        error: { code: "NO_FILENAME", message: "Filename required" } 
-      }, { status: 400 })
+      return validationErrorResponse("Filename required")
     }
 
     // Verify user owns the file (filename starts with user ID)
     if (!filename.startsWith(user.id)) {
-      return NextResponse.json({ 
-        error: { code: "FORBIDDEN", message: "Cannot delete other users' files" } 
-      }, { status: 403 })
+      return errorResponse(new Error("Cannot delete other users' files"), 403)
     }
 
     const supabaseAdmin = createClient(
@@ -141,17 +120,13 @@ export async function DELETE(req: NextRequest) {
 
     if (error) {
       console.error('Delete error:', error)
-      return NextResponse.json({ 
-        error: { code: "DELETE_FAILED", message: "Failed to delete image" } 
-      }, { status: 500 })
+      return errorResponse(new Error("Failed to delete image"), 500)
     }
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    return successResponse({ success: true })
 
   } catch (error) {
     console.error('Delete error:', error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Internal server error" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }

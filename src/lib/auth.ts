@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { supabaseServer } from "./supabase-server"
+import { createRouteHandlerSupabaseClient } from "./supabase-route-handler"
 import { prisma } from "./prisma"
 import { unauthorizedResponse, forbiddenResponse } from "./api-response"
 
@@ -12,37 +12,70 @@ export interface AuthUser {
   verified: boolean
 }
 
+// Session cache to reduce database calls
+const sessionCache = new Map<string, { user: AuthUser; expires: number }>()
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user }, error } = await supabase.auth.getUser()
 
     if (error || !user) {
       return null
     }
 
-    // Get profile from database
-    const profile = await prisma.profile.findUnique({
-      where: { id: user.id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        username: true,
-        role: true,
-        verified: true,
-      },
-    })
+    // Check cache first
+    const cached = sessionCache.get(user.id)
+    if (cached && cached.expires > Date.now()) {
+      return cached.user
+    }
+
+    // Get profile from database with retry logic
+    let retries = 3
+    let profile = null
+    
+    while (retries > 0 && !profile) {
+      try {
+        profile = await prisma.profile.findUnique({
+          where: { id: user.id },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            username: true,
+            role: true,
+            verified: true,
+          },
+        })
+        break
+      } catch (dbError) {
+        retries--
+        if (retries === 0) throw dbError
+        await new Promise(resolve => setTimeout(resolve, 100)) // Brief delay
+      }
+    }
 
     if (!profile) {
       return null
     }
+
+    // Cache the result
+    sessionCache.set(user.id, {
+      user: profile,
+      expires: Date.now() + CACHE_DURATION
+    })
 
     return profile
   } catch (error) {
     console.error("Error getting current user:", error)
     return null
   }
+}
+
+// Clear cache when user data changes
+export function clearUserCache(userId: string): void {
+  sessionCache.delete(userId)
 }
 
 export async function requireAuth(): Promise<AuthUser> {

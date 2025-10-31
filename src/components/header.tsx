@@ -1,11 +1,11 @@
 import Link from "next/link"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { prisma } from "@/lib/prisma"
 import { LogoutButton } from "./logout-button"
 import { MobileNav } from "./mobile-nav"
 
 export async function Header() {
-  const supabase = supabaseServer()
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   const profile = user ? await prisma.profile.findUnique({ where: { id: user.id } }) : null
   
@@ -21,7 +21,7 @@ export async function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <Link href="/listings" className="text-sm font-medium hover:text-primary transition-colors">
-            Listings
+            Browse
           </Link>
           
           {user ? (
@@ -32,8 +32,8 @@ export async function Header() {
               <Link href="/chats" className="text-sm font-medium hover:text-primary transition-colors">
                 Messages
               </Link>
-              <Link href="/listings" className="text-sm font-medium hover:text-primary transition-colors">
-                Listings
+              <Link href="/listings/new" className="text-sm font-medium hover:text-primary transition-colors">
+                Sell
               </Link>
               <Link href="/events" className="text-sm font-medium hover:text-primary transition-colors">
                 Events

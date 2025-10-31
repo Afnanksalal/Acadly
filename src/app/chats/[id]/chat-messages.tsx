@@ -68,8 +68,8 @@ export function ChatMessages({
       })
       
       if (res.ok) {
-        const data = await res.json()
-        const newMessages = data.success ? data.data : data
+        const response = await res.json()
+        const newMessages = response.success ? response.data : response
         
         if (Array.isArray(newMessages) && newMessages.length > 0) {
           setMessages(prev => {
@@ -87,9 +87,21 @@ export function ChatMessages({
     }
   }, [chatId, lastFetchTime, isClient, deduplicateMessages])
 
-  // Real-time polling with proper cleanup
+  // Enhanced real-time polling with adaptive intervals and connection management
   useEffect(() => {
     if (!isClient) return
+
+    let consecutiveFailures = 0
+    const maxFailures = 3
+    let currentInterval = 3000 // Start with 3 seconds
+    
+    const adaptiveInterval = () => {
+      // Increase interval on failures, decrease on success
+      if (consecutiveFailures > 0) {
+        return Math.min(currentInterval * Math.pow(2, consecutiveFailures), 30000) // Max 30 seconds
+      }
+      return 3000 // Normal interval
+    }
 
     const startPolling = () => {
       // Clear any existing interval
@@ -97,8 +109,29 @@ export function ChatMessages({
         clearInterval(intervalRef.current)
       }
       
-      // Start new polling
-      intervalRef.current = setInterval(fetchNewMessages, 3000) // 3 seconds for stability
+      // Adaptive polling with failure handling
+      const poll = async () => {
+        try {
+          await fetchNewMessages()
+          consecutiveFailures = 0 // Reset on success
+          currentInterval = 3000
+        } catch (error) {
+          consecutiveFailures++
+          console.warn(`Chat polling failed (${consecutiveFailures}/${maxFailures}):`, error)
+          
+          if (consecutiveFailures >= maxFailures) {
+            console.error("Chat polling disabled due to repeated failures")
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current)
+              intervalRef.current = null
+            }
+            return
+          }
+        }
+      }
+      
+      // Start polling with adaptive interval
+      intervalRef.current = setInterval(poll, adaptiveInterval())
     }
 
     const handleVisibilityChange = () => {
@@ -108,19 +141,40 @@ export function ChatMessages({
           intervalRef.current = null
         }
       } else {
+        // Reset failure count when tab becomes visible
+        consecutiveFailures = 0
         fetchNewMessages() // Immediate fetch when tab becomes visible
         startPolling()
       }
     }
 
+    const handleOnline = () => {
+      console.log("Connection restored, resuming chat polling")
+      consecutiveFailures = 0
+      if (!document.hidden) {
+        startPolling()
+      }
+    }
+
+    const handleOffline = () => {
+      console.log("Connection lost, pausing chat polling")
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+
     // Start polling after component is ready
     const timeoutId = setTimeout(() => {
-      if (!document.hidden) {
+      if (!document.hidden && navigator.onLine) {
         startPolling()
       }
     }, 2000) // Longer delay for stability
 
+    // Event listeners
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
 
     return () => {
       clearTimeout(timeoutId)
@@ -129,6 +183,8 @@ export function ChatMessages({
         intervalRef.current = null
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
     }
   }, [isClient, fetchNewMessages])
 

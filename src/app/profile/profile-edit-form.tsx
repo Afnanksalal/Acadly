@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabaseClient } from "@/lib/supabase-client"
+import { createBrowserClient } from "@supabase/ssr"
 import { apiRequest, getErrorMessage } from "@/lib/api-client"
 import Image from "next/image"
 
@@ -25,6 +25,10 @@ type Profile = {
 
 export function ProfileEditForm({ profile }: { profile: Profile }) {
   const router = useRouter()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState("")
@@ -72,7 +76,7 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
       console.log('Uploading image:', { fileName, filePath, size: file.size })
 
       // Upload to Supabase storage
-      const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('images')
         .upload(filePath, file, { 
           cacheControl: '3600',
@@ -87,7 +91,7 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
       console.log('Upload successful:', uploadData)
 
       // Get public URL
-      const { data: { publicUrl } } = supabaseClient.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('images')
         .getPublicUrl(filePath)
 

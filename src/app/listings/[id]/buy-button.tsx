@@ -78,7 +78,14 @@ export function BuyButton({
         throw new Error(data.error?.message || "Failed to create order")
       }
 
-      const { order, transaction } = await res.json()
+      const response = await res.json()
+      console.log('Transaction API response:', response) // Debug log
+      const { order, transaction } = response.data || response
+
+      if (!order || !transaction) {
+        console.error('Missing order or transaction in response:', response)
+        throw new Error("Invalid response from server")
+      }
 
       // Load Razorpay script (check if already loaded)
       const loadRazorpayScript = () => {
@@ -115,6 +122,12 @@ export function BuyButton({
         return
       }
 
+      // Validate order object
+      if (!order.amount || !order.currency || !order.id) {
+        console.error('Invalid order object:', order)
+        throw new Error("Invalid payment order received")
+      }
+
       // Initialize Razorpay
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -123,9 +136,34 @@ export function BuyButton({
         name: "Acadly",
         description: title,
         order_id: order.id,
-        handler: function () {
-          // Payment successful
-          router.push(`/transactions/${transaction.id}?success=true`)
+        handler: async function (response: RazorpayResponse) {
+          try {
+            // Verify payment and generate pickup code
+            const verifyRes = await fetch("/api/webhooks/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                transactionId: transaction.id
+              })
+            })
+
+            if (verifyRes.ok) {
+              // Auto-generate pickup code after successful payment
+              await fetch(`/api/transactions/${transaction.id}/generate-pickup`, {
+                method: "POST"
+              })
+            }
+
+            // Redirect to transaction page
+            router.push(`/transactions/${transaction.id}?success=true`)
+          } catch (error) {
+            console.error("Payment verification error:", error)
+            // Still redirect to transaction page
+            router.push(`/transactions/${transaction.id}?success=true`)
+          }
         },
         prefill: {
           name: "",

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { withVerifiedAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse, notFoundResponse } from "@/lib/api-response"
 import { sendMessageSchema, validateAndSanitizeBody, validatePagination } from "@/lib/validation"
+import { isValidUUID } from "@/lib/uuid-validation"
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +13,11 @@ export async function GET(request: NextRequest) {
 
     if (!chatId) {
       return validationErrorResponse("chatId is required")
+    }
+
+    // Validate UUID format
+    if (!isValidUUID(chatId)) {
+      return validationErrorResponse("Invalid chat ID format")
     }
 
     // If 'after' parameter is provided, only get newer messages (for real-time updates)

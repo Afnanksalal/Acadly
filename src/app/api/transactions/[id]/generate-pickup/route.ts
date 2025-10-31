@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withAuth } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
+import { isValidUUID } from "@/lib/uuid-validation"
 
 export const POST = withAuth(async (request: NextRequest, user) => {
   try {
@@ -10,6 +11,10 @@ export const POST = withAuth(async (request: NextRequest, user) => {
 
     if (!transactionId) {
       return validationErrorResponse("Transaction ID is required")
+    }
+
+    if (!isValidUUID(transactionId)) {
+      return validationErrorResponse("Invalid transaction ID format")
     }
 
     // Get transaction with relations

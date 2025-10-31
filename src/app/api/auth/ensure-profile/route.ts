@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { prisma } from "@/lib/prisma"
+import { successResponse, unauthorizedResponse } from "@/lib/api-response"
 
 export async function POST() {
-  const supabase = supabaseServer()
+  const supabase = createRouteHandlerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Login required" } }, { status: 401 })
+  if (!user) return unauthorizedResponse("Login required")
 
   const email = user.email ?? ""
   let profile = await prisma.profile.findUnique({ where: { id: user.id } })
@@ -15,5 +15,5 @@ export async function POST() {
     profile = await prisma.profile.update({ where: { id: user.id }, data: { email } })
   }
 
-  return NextResponse.json({ ok: true, profile })
+  return successResponse({ ok: true, profile })
 }

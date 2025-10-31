@@ -48,12 +48,14 @@ class MemoryRateLimit {
   }
 }
 
-// Memory-based rate limiters as fallback
+// Enhanced memory-based rate limiters with sliding window
 const memoryLimits = {
-  api: new MemoryRateLimit(100, 60 * 1000), // 100 requests per minute
-  auth: new MemoryRateLimit(5, 60 * 1000), // 5 auth requests per minute
-  upload: new MemoryRateLimit(10, 60 * 1000), // 10 uploads per minute
-  payment: new MemoryRateLimit(3, 60 * 1000), // 3 payment requests per minute
+  api: new MemoryRateLimit(200, 60 * 1000), // 200 requests per minute (increased for production)
+  auth: new MemoryRateLimit(10, 60 * 1000), // 10 auth requests per minute (increased)
+  upload: new MemoryRateLimit(20, 60 * 1000), // 20 uploads per minute (increased)
+  payment: new MemoryRateLimit(5, 60 * 1000), // 5 payment requests per minute (increased)
+  chat: new MemoryRateLimit(60, 60 * 1000), // 60 chat messages per minute
+  search: new MemoryRateLimit(100, 60 * 1000), // 100 search requests per minute
 }
 
 export async function applyRateLimit(request: NextRequest): Promise<NextResponse | null> {
@@ -71,14 +73,25 @@ export async function applyRateLimit(request: NextRequest): Promise<NextResponse
     return null
   }
 
-  // Determine rate limit type
+  // Determine rate limit type with more granular controls
   let limiter = memoryLimits.api
+  let rateLimitType = "api"
+  
   if (pathname.includes("/auth/") || pathname.includes("/login") || pathname.includes("/signup")) {
     limiter = memoryLimits.auth
+    rateLimitType = "auth"
   } else if (pathname.includes("/upload")) {
     limiter = memoryLimits.upload
-  } else if (pathname.includes("/payment") || pathname.includes("/webhook")) {
+    rateLimitType = "upload"
+  } else if (pathname.includes("/payment") || pathname.includes("/webhook") || pathname.includes("/transactions")) {
     limiter = memoryLimits.payment
+    rateLimitType = "payment"
+  } else if (pathname.includes("/messages") || pathname.includes("/chats")) {
+    limiter = memoryLimits.chat
+    rateLimitType = "chat"
+  } else if (pathname.includes("/listings") && pathname.includes("search")) {
+    limiter = memoryLimits.search
+    rateLimitType = "search"
   }
 
   try {

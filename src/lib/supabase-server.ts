@@ -1,21 +1,39 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-export function supabaseServer() {
+export function createServerSupabaseClient() {
   const cookieStore = cookies()
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-  return createServerClient(url, key, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value
+  
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options })
+          } catch (error) {
+            // Handle cookie setting errors gracefully
+            console.warn(`Failed to set cookie ${name}:`, error)
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: "", ...options, maxAge: 0 })
+          } catch (error) {
+            // Handle cookie removal errors gracefully
+            console.warn(`Failed to remove cookie ${name}:`, error)
+          }
+        },
       },
-      set(name: string, value: string, options: CookieOptions) {
-        cookieStore.set(name, value, options)
-      },
-      remove(name: string, options: CookieOptions) {
-        cookieStore.set(name, "", { ...options, maxAge: 0 })
-      },
-    },
-  })
+    }
+  )
+}
+
+// For backward compatibility
+export function supabaseServer() {
+  return createServerSupabaseClient()
 }

@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { ReviewsTabs } from "./reviews-tabs"
 
 export default async function ReviewsPage() {
-  const supabase = supabaseServer()
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) redirect("/auth/login")

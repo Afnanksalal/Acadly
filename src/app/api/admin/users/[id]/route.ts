@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { z } from "zod"
+import { isValidUUID } from "@/lib/uuid-validation"
 
 const updateUserSchema = z.object({
   verified: z.boolean().optional(),
@@ -19,6 +20,10 @@ export const GET = withAdminAuth(async (request: NextRequest, user) => {
 
     if (!userId) {
       return validationErrorResponse("User ID is required")
+    }
+
+    if (!isValidUUID(userId)) {
+      return validationErrorResponse("Invalid user ID format")
     }
 
     const targetUser = await prisma.profile.findUnique({

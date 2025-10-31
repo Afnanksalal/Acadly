@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the token with Supabase
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: token,
       type: "signup",
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify the token with Supabase
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: token,
       type: "signup",

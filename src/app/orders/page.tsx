@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 export default async function OrdersPage() {
-  const supabase = supabaseServer()
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) redirect("/auth/login")

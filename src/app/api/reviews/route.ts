@@ -1,18 +1,17 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { z } from "zod"
+import { successResponse, errorResponse, unauthorizedResponse, validationErrorResponse, notFoundResponse, forbiddenResponse } from "@/lib/api-response"
 
 // POST /api/reviews - Create a review
 export async function POST(req: NextRequest) {
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
 
     const schema = z.object({
@@ -33,9 +32,7 @@ export async function POST(req: NextRequest) {
 
     const parsed = schema.safeParse(await req.json())
     if (!parsed.success) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_INPUT", message: parsed.error.flatten() } 
-      }, { status: 400 })
+      return validationErrorResponse("Invalid input data")
     }
 
     const { transactionId, revieweeId, rating, comment } = parsed.data
@@ -47,23 +44,17 @@ export async function POST(req: NextRequest) {
     })
 
     if (!transaction) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Transaction not found" } 
-      }, { status: 404 })
+      return notFoundResponse("Transaction not found")
     }
 
     // Only buyer or seller can review
     if (transaction.buyerId !== user.id && transaction.sellerId !== user.id) {
-      return NextResponse.json({ 
-        error: { code: "FORBIDDEN", message: "Only transaction participants can leave reviews" } 
-      }, { status: 403 })
+      return forbiddenResponse("Only transaction participants can leave reviews")
     }
 
     // Transaction must be completed (pickup confirmed)
     if (transaction.status !== "PAID" || transaction.pickup?.status !== "CONFIRMED") {
-      return NextResponse.json({ 
-        error: { code: "TRANSACTION_NOT_COMPLETED", message: "Transaction must be completed before reviewing" } 
-      }, { status: 400 })
+      return validationErrorResponse("Transaction must be completed before reviewing")
     }
 
     // Verify reviewee is the other party
@@ -71,9 +62,7 @@ export async function POST(req: NextRequest) {
                          (transaction.sellerId === user.id && transaction.buyerId === revieweeId)
     
     if (!validReviewee) {
-      return NextResponse.json({ 
-        error: { code: "INVALID_REVIEWEE", message: "You can only review the other party in the transaction" } 
-      }, { status: 400 })
+      return validationErrorResponse("You can only review the other party in the transaction")
     }
 
     // Check if review already exists
@@ -87,9 +76,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (existingReview) {
-      return NextResponse.json({ 
-        error: { code: "ALREADY_REVIEWED", message: "You have already reviewed this transaction" } 
-      }, { status: 400 })
+      return validationErrorResponse("You have already reviewed this transaction")
     }
 
     // Create review
@@ -128,29 +115,25 @@ export async function POST(req: NextRequest) {
       } 
     })
 
-    return NextResponse.json({ 
+    return successResponse({ 
       review,
       message: "Review submitted successfully" 
-    }, { status: 201 })
+    }, 201)
 
   } catch (error) {
     console.error("Create review error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to create review" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }
 
 // GET /api/reviews - Get user's reviews
 export async function GET(req: NextRequest) {
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
 
     const { searchParams } = new URL(req.url)
@@ -205,12 +188,10 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" }
     })
 
-    return NextResponse.json({ reviews })
+    return successResponse({ reviews })
 
   } catch (error) {
     console.error("Get reviews error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to fetch reviews" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }

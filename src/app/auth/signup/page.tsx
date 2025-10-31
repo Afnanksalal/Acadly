@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { supabaseClient } from "@/lib/supabase-client"
+import { createBrowserClient } from "@supabase/ssr"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -15,6 +15,10 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   async function onSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -28,7 +32,7 @@ export default function SignupPage() {
     }
     setLoading(true)
     setError("")
-    const { error: signUpError, data } = await supabaseClient.auth.signUp({ email, password })
+    const { error: signUpError, data } = await supabase.auth.signUp({ email, password })
     setLoading(false)
     if (signUpError) {
       setError(signUpError.message)

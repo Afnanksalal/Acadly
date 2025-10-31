@@ -1,18 +1,17 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { z } from "zod"
+import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 
 // GET /api/profile - Get current user's profile
 export async function GET() {
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
 
     const profile = await prisma.profile.findUnique({
@@ -21,100 +20,78 @@ export async function GET() {
         _count: {
           select: {
             listings: true,
-            purchases: true,
             sales: true,
-            reviewsReceived: true
+            purchases: true
           }
         }
       }
     })
 
     if (!profile) {
-      return NextResponse.json({ 
-        error: { code: "NOT_FOUND", message: "Profile not found" } 
-      }, { status: 404 })
+      return notFoundResponse("Profile not found")
     }
 
-    return NextResponse.json({ profile })
+    return successResponse({ profile })
 
   } catch (error) {
     console.error("Get profile error:", error)
-    return NextResponse.json({ 
-      error: { code: "SERVER_ERROR", message: "Failed to fetch profile" } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }
 
 // PUT /api/profile - Update current user's profile
 export async function PUT(req: NextRequest) {
   try {
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      return NextResponse.json({ 
-        error: { code: "UNAUTHENTICATED", message: "Login required" } 
-      }, { status: 401 })
+      return unauthorizedResponse("Login required")
     }
 
-    // Parse request body
     let body
     try {
       body = await req.json()
     } catch (error) {
       console.error("JSON parsing error:", error)
-      return NextResponse.json({ 
-        error: { code: "INVALID_JSON", message: "Invalid request body" } 
-      }, { status: 400 })
+      return validationErrorResponse("Invalid request body")
     }
 
-    // Validation schema
     const schema = z.object({
-      name: z.string().min(1, "Name is required").max(100, "Name is too long").optional(),
-      username: z.string()
-        .min(3, "Username must be at least 3 characters")
-        .max(30, "Username is too long")
-        .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores")
-        .optional(),
-      phone: z.string()
-        .regex(/^[0-9]{10}$/, "Phone must be exactly 10 digits")
-        .optional()
-        .nullable(),
-      department: z.string().max(100, "Department name is too long").optional().nullable(),
-      year: z.string().max(20, "Year is too long").optional().nullable(),
-      class: z.string().max(50, "Class name is too long").optional().nullable(),
-      bio: z.string().max(500, "Bio is too long (max 500 characters)").optional().nullable(),
-      avatarUrl: z.string().url("Invalid image URL").optional().nullable()
+      username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/).optional(),
+      name: z.string().min(1).max(100).optional(),
+      bio: z.string().max(500).optional(),
+      department: z.string().max(100).optional(),
+      year: z.enum(["1", "2", "3", "4", "Graduate", "Faculty"]).optional(),
+      avatarUrl: z.string().url().optional().nullable(),
+      phone: z.string().regex(/^\+?[\d\s\-\(\)]+$/).optional().nullable(),
+      location: z.string().max(100).optional().nullable(),
+      socialLinks: z.object({
+        instagram: z.string().url().optional().nullable(),
+        linkedin: z.string().url().optional().nullable(),
+        twitter: z.string().url().optional().nullable()
+      }).optional()
     })
 
     const parsed = schema.safeParse(body)
     if (!parsed.success) {
       const firstError = parsed.error.errors[0]
-      return NextResponse.json({ 
-        error: { 
-          code: "INVALID_INPUT", 
-          message: firstError.message,
-          details: parsed.error.flatten() 
-        } 
-      }, { status: 400 })
+      return validationErrorResponse(`${firstError.path.join('.')}: ${firstError.message}`)
     }
 
     const data = parsed.data
 
-    // Check if username is already taken (if username is being updated)
+    // Check username uniqueness if provided
     if (data.username) {
       const existingUser = await prisma.profile.findUnique({
         where: { username: data.username }
       })
       
       if (existingUser && existingUser.id !== user.id) {
-        return NextResponse.json({ 
-          error: { code: "USERNAME_TAKEN", message: "Username is already taken" } 
-        }, { status: 400 })
+        return validationErrorResponse("Username is already taken")
       }
     }
 
-    // Update profile
     const profile = await prisma.profile.update({
       where: { id: user.id },
       data,
@@ -122,9 +99,8 @@ export async function PUT(req: NextRequest) {
         _count: {
           select: {
             listings: true,
-            purchases: true,
             sales: true,
-            reviewsReceived: true
+            purchases: true
           }
         }
       }
@@ -132,33 +108,23 @@ export async function PUT(req: NextRequest) {
 
     console.log('Profile updated successfully:', { userId: user.id, fields: Object.keys(data) })
 
-    return NextResponse.json({ 
+    return successResponse({ 
       profile,
       message: "Profile updated successfully" 
-    }, { status: 200 })
+    })
 
   } catch (error) {
     console.error("Update profile error:", error)
     
-    // Handle Prisma errors
     if (error && typeof error === 'object' && 'code' in error) {
       if (error.code === 'P2002') {
-        return NextResponse.json({ 
-          error: { code: "DUPLICATE", message: "This value is already in use" } 
-        }, { status: 400 })
+        return validationErrorResponse("This value is already in use")
       }
       if (error.code === 'P2025') {
-        return NextResponse.json({ 
-          error: { code: "NOT_FOUND", message: "Profile not found" } 
-        }, { status: 404 })
+        return notFoundResponse("Profile not found")
       }
     }
     
-    return NextResponse.json({ 
-      error: { 
-        code: "SERVER_ERROR", 
-        message: error instanceof Error ? error.message : "Failed to update profile" 
-      } 
-    }, { status: 500 })
+    return errorResponse(error, 500)
   }
 }

@@ -4,6 +4,7 @@ import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { processRefund, processPartialRefund } from "@/lib/refund"
 import { z } from "zod"
+import { isValidUUID } from "@/lib/uuid-validation"
 
 const refundSchema = z.object({
   amount: z.union([
@@ -36,6 +37,10 @@ export const POST = withAdminAuth(async (request: NextRequest, user) => {
 
     if (!transactionId) {
       return validationErrorResponse("Transaction ID is required")
+    }
+
+    if (!isValidUUID(transactionId)) {
+      return validationErrorResponse("Invalid transaction ID format")
     }
 
     const body = await request.json()

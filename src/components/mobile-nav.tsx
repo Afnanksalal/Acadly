@@ -90,7 +90,7 @@ export function MobileNav({
           <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
             <Link href="/" onClick={closeMenu} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <span className="text-2xl">🎓</span>
-              <span className="font-bold text-lg">collegemart</span>
+              <span className="font-bold text-lg">Acadly</span>
             </Link>
             <button
               onClick={closeMenu}

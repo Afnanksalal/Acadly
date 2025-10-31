@@ -2,7 +2,7 @@ import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 
 export const POST = withAuth(async (request: NextRequest, user) => {
   try {
@@ -20,7 +20,7 @@ export const POST = withAuth(async (request: NextRequest, user) => {
     }
 
     // Send verification email using Supabase
-    const supabase = supabaseServer()
+    const supabase = createRouteHandlerSupabaseClient()
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: profile.email,

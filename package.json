@@ -6,23 +6,33 @@
     "node": ">=18.17.0"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
-    "type-check": "tsc --noEmit",
+    "lint": "next lint --fix",
+    "lint:check": "next lint",
+    "type-check": "tsc --noEmit --incremental",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "test": "echo \"No tests specified\" && exit 0",
+    "analyze": "ANALYZE=true npm run build",
+    "clean": "powershell -Command \"Remove-Item -Recurse -Force .next, out, dist, build -ErrorAction SilentlyContinue\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "node prisma/seed.cjs",
     "prisma:reset": "prisma migrate reset",
+    "prisma:push": "prisma db push",
+    "db:reset": "prisma migrate reset --force",
+    "db:seed": "npm run prisma:seed",
     "vercel-build": "prisma generate && next build",
     "deploy:preview": "vercel",
     "deploy:production": "vercel --prod",
+    "health-check": "curl -f http://localhost:3000/api/health || exit 1",
     "cleanup": "curl -X GET \"$VERCEL_URL/api/cron/cleanup\" -H \"Authorization: Bearer $CRON_SECRET\"",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "precommit": "npm run lint:check && npm run type-check && npm run format:check"
   },
   "prisma": {
     "seed": "node prisma/seed.cjs"

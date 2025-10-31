@@ -1,14 +1,32 @@
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabase-server"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChatMessages } from "./chat-messages"
 import { ErrorBoundary } from "@/components/error-boundary"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { validateUUIDParam } from "@/lib/uuid-validation"
 
 export default async function ChatDetailPage({ params }: { params: { id: string } }) {
-  const supabase = supabaseServer()
+  // Validate UUID format first
+  const validation = validateUUIDParam(params.id, "chat")
+  if (!validation.isValid) {
+    return (
+      <main className="max-w-4xl mx-auto p-6">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-lg mb-4">{validation.error}</p>
+            <Link href="/chats">
+              <Button>Back to Messages</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </main>
+    )
+  }
+
+  const supabase = createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) redirect("/auth/login")
