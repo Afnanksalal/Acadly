@@ -1,230 +1,172 @@
 import { NextRequest } from "next/server"
-import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse } from "@/lib/api-response"
-import { logAdminAction } from "@/lib/admin-logger"
+import { prisma } from "@/lib/prisma"
+import { monitor } from "@/lib/monitoring"
+import { getErrorStats } from "@/lib/error-handler"
 
-// Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
-export const GET = withAdminAuth(async (request: NextRequest, user) => {
-  await logAdminAction({
-    adminId: user.id,
-    action: "VIEW_SYSTEM_MONITOR",
-    request
-  })
-
+export const GET = withAdminAuth(async (request: NextRequest) => {
   try {
-    const now = new Date()
-    const last5min = new Date(now.getTime() - 5 * 60 * 1000)
-    const last1hour = new Date(now.getTime() - 60 * 60 * 1000)
-    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const { searchParams } = new URL(request.url)
+    const timeWindow = parseInt(searchParams.get("timeWindow") || "3600000") // Default 1 hour
 
-    // Real application metrics only - no fake database performance data
-    const appMetrics = await Promise.all([
-      // Active user sessions
-      prisma.userSession.count({
-        where: { isActive: true }
-      }),
+    // Get performance metrics
+    const performanceMetrics = monitor.getPerformanceSummary(timeWindow)
+    const businessMetrics = monitor.getMetricsSummary()
+    const errorStats = getErrorStats()
 
-      // Recent activity
-      prisma.auditLog.count({
+    // Database health metrics
+    const dbStart = Date.now()
+    const [
+      totalUsers,
+      activeUsers,
+      totalListings,
+      activeListings,
+      totalTransactions,
+      recentTransactions,
+      pendingDisputes,
+      unreadNotifications
+    ] = await Promise.all([
+      prisma.profile.count(),
+      prisma.profile.count({
         where: {
-          createdAt: { gte: last24h }
-        }
-      }),
-
-      // Error count from audit logs
-      prisma.auditLog.count({
-        where: {
-          action: { contains: "ERROR" },
-          createdAt: { gte: last24h }
-        }
-      })
-    ])
-
-    // API performance metrics from audit logs
-    const apiMetrics = await Promise.all([
-      // Recent API errors from audit logs
-      prisma.auditLog.findMany({
-        where: {
-          action: { contains: "ERROR" },
-          createdAt: { gte: last24h }
-        },
-        select: {
-          action: true,
-          resource: true,
-          createdAt: true
-        },
-        orderBy: { createdAt: "desc" },
-        take: 10
-      }),
-      
-      // Request volume by resource type
-      prisma.auditLog.groupBy({
-        by: ["resource"],
-        _count: true,
-        where: {
-          createdAt: { gte: last24h }
-        }
-      }).then(results => results.sort((a, b) => b._count - a._count))
-    ])
-
-    // User session analytics
-    const sessionMetrics = await Promise.all([
-      // Active sessions by device type
-      prisma.userSession.findMany({
-        where: {
-          isActive: true,
-          device: { not: {} as any }
-        },
-        select: { device: true }
-      }).then(sessions => {
-        const deviceMap = new Map()
-        sessions.forEach(session => {
-          if (session.device && typeof session.device === 'object') {
-            const device = session.device as any
-            const deviceType = device.type || 'unknown'
-            deviceMap.set(deviceType, (deviceMap.get(deviceType) || 0) + 1)
+          updatedAt: {
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
           }
-        })
-        return Array.from(deviceMap.entries()).map(([device_type, session_count]) => ({
-          device_type,
-          session_count
-        })).sort((a, b) => b.session_count - a.session_count)
+        }
       }),
-
-      // Session duration distribution
-      prisma.userSession.findMany({
-        where: { createdAt: { gte: last24h } },
-        select: { createdAt: true, lastActivity: true }
-      }).then(sessions => {
-        const durationMap = new Map()
-        sessions.forEach(session => {
-          const duration = (session.lastActivity.getTime() - session.createdAt.getTime()) / 1000
-          let bucket: string
-          if (duration < 300) bucket = '0-5min'
-          else if (duration < 1800) bucket = '5-30min'
-          else if (duration < 3600) bucket = '30-60min'
-          else bucket = '60min+'
-
-          durationMap.set(bucket, (durationMap.get(bucket) || 0) + 1)
-        })
-        return Array.from(durationMap.entries()).map(([duration_bucket, session_count]) => ({
-          duration_bucket,
-          session_count
-        })).sort((a, b) => b.session_count - a.session_count)
-      }),
-
-      // Geographic distribution of active sessions
-      prisma.userSession.findMany({
+      prisma.listing.count(),
+      prisma.listing.count({ where: { isActive: true } }),
+      prisma.transaction.count(),
+      prisma.transaction.count({
         where: {
-          isActive: true,
-          location: { not: {} as any }
-        },
-        select: { location: true }
-      }).then(sessions => {
-        const countryMap = new Map()
-        sessions.forEach(session => {
-          if (session.location && typeof session.location === 'object') {
-            const location = session.location as any
-            const country = location.country || 'Unknown'
-            countryMap.set(country, (countryMap.get(country) || 0) + 1)
+          createdAt: {
+            gte: new Date(Date.now() - timeWindow)
           }
-        })
-        return Array.from(countryMap.entries()).map(([country, active_sessions]) => ({
-          country,
-          active_sessions
-        })).sort((a, b) => b.active_sessions - a.active_sessions).slice(0, 10)
-      })
-    ])
-
-    // Remove system resource metrics - these require external monitoring tools
-
-    // Error tracking from audit logs
-    const errorMetrics = await Promise.all([
-      // Error rate by type
-      prisma.auditLog.groupBy({
-        by: ["action"],
-        _count: true,
-        where: {
-          action: { contains: "ERROR" },
-          createdAt: { gte: last24h }
         }
       }),
-      
-      // Recent critical errors
-      prisma.auditLog.findMany({
-        where: {
-          action: { contains: "CRITICAL" },
-          createdAt: { gte: last24h }
-        },
-        orderBy: { createdAt: "desc" },
-        take: 5
-      })
+      prisma.dispute.count({ where: { status: "OPEN" } }),
+      prisma.notification.count({ where: { isRead: false } })
     ])
+    const dbResponseTime = Date.now() - dbStart
 
-    // Security metrics from audit logs
-    const securityMetrics = await Promise.all([
-      // Failed login attempts
-      prisma.auditLog.count({
-        where: {
-          action: "LOGIN_FAILED",
-          createdAt: { gte: last24h }
-        }
-      }),
-      
-      // Suspicious activities
-      prisma.auditLog.findMany({
-        where: {
-          action: { in: ["SUSPICIOUS_ACTIVITY", "SECURITY_VIOLATION"] },
-          createdAt: { gte: last24h }
-        },
-        orderBy: { createdAt: "desc" },
-        take: 10
-      }),
-      
-      // IP-based activity
-      prisma.auditLog.groupBy({
-        by: ["ipAddress"],
-        _count: true,
-        where: {
-          createdAt: { gte: last24h },
-          ipAddress: { not: null }
-        }
-      }).then(results => results.sort((a, b) => b._count - a._count).slice(0, 10))
-    ])
-
-    const monitoring = {
-      timestamp: now,
-      application: {
-        activeSessions: appMetrics[0],
-        recentActivity: appMetrics[1],
-        errorCount: appMetrics[2]
+    // System health indicators
+    const systemHealth = {
+      database: {
+        responseTime: dbResponseTime,
+        status: dbResponseTime < 500 ? "healthy" : dbResponseTime < 2000 ? "slow" : "critical"
       },
       api: {
-        errors: apiMetrics[0],
-        requestVolume: apiMetrics[1]
-      },
-      sessions: {
-        byDevice: sessionMetrics[0],
-        durationDistribution: sessionMetrics[1],
-        geographic: sessionMetrics[2]
+        ...performanceMetrics,
+        status: performanceMetrics.successRate > 95 ? "healthy" : 
+                performanceMetrics.successRate > 90 ? "degraded" : "critical"
       },
       errors: {
-        byType: errorMetrics[0],
-        critical: errorMetrics[1]
-      },
-      security: {
-        failedLogins: securityMetrics[0],
-        suspiciousActivities: securityMetrics[1],
-        topIPs: securityMetrics[2]
+        ...errorStats,
+        status: errorStats.totalErrors < 10 ? "healthy" : 
+                errorStats.totalErrors < 50 ? "warning" : "critical"
       }
     }
 
-    return successResponse(monitoring)
+    // Business metrics
+    const businessHealth = {
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        activityRate: totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0
+      },
+      listings: {
+        total: totalListings,
+        active: activeListings,
+        activeRate: totalListings > 0 ? Math.round((activeListings / totalListings) * 100) : 0
+      },
+      transactions: {
+        total: totalTransactions,
+        recent: recentTransactions,
+        recentRate: Math.round((recentTransactions / Math.max(1, timeWindow / (24 * 60 * 60 * 1000))) * 100) / 100
+      },
+      support: {
+        pendingDisputes,
+        unreadNotifications,
+        disputeRate: totalTransactions > 0 ? Math.round((pendingDisputes / totalTransactions) * 10000) / 100 : 0
+      }
+    }
+
+    // Overall system status
+    const criticalIssues = [
+      systemHealth.database.status === "critical",
+      systemHealth.api.status === "critical", 
+      systemHealth.errors.status === "critical"
+    ].filter(Boolean).length
+
+    const overallStatus = criticalIssues > 0 ? "critical" :
+                         Object.values(systemHealth).some(s => s.status === "degraded" || s.status === "warning") ? "degraded" :
+                         "healthy"
+
+    const monitoringData = {
+      timestamp: new Date().toISOString(),
+      timeWindow,
+      overallStatus,
+      systemHealth,
+      businessHealth,
+      businessMetrics,
+      alerts: generateAlerts(systemHealth, businessHealth),
+      recommendations: generateRecommendations(systemHealth, businessHealth)
+    }
+
+    return successResponse(monitoringData)
   } catch (error) {
     console.error("Error fetching system monitoring data:", error)
     return errorResponse(error, 500)
   }
 })
+
+function generateAlerts(systemHealth: any, businessHealth: any): string[] {
+  const alerts: string[] = []
+
+  if (systemHealth.database.status === "critical") {
+    alerts.push("🔴 Database response time is critically slow")
+  }
+  
+  if (systemHealth.api.successRate < 90) {
+    alerts.push("🔴 API success rate is below 90%")
+  }
+  
+  if (systemHealth.errors.totalErrors > 50) {
+    alerts.push("🔴 High error rate detected")
+  }
+  
+  if (businessHealth.support.pendingDisputes > 10) {
+    alerts.push("⚠️ High number of pending disputes")
+  }
+  
+  if (businessHealth.users.activityRate < 10) {
+    alerts.push("⚠️ Low user activity rate")
+  }
+
+  return alerts
+}
+
+function generateRecommendations(systemHealth: any, businessHealth: any): string[] {
+  const recommendations: string[] = []
+
+  if (systemHealth.database.responseTime > 1000) {
+    recommendations.push("Consider optimizing database queries or upgrading database resources")
+  }
+  
+  if (systemHealth.api.averageResponseTime > 2000) {
+    recommendations.push("API response times are slow - consider caching or performance optimization")
+  }
+  
+  if (businessHealth.listings.activeRate < 50) {
+    recommendations.push("Low active listing rate - consider user engagement campaigns")
+  }
+  
+  if (businessHealth.support.disputeRate > 5) {
+    recommendations.push("High dispute rate - review transaction and user verification processes")
+  }
+
+  return recommendations
+}

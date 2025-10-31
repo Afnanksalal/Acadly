@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { DollarSign, TrendingUp, CreditCard, RefreshCw } from 'lucide-react'
 
-const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444']
+
 
 interface FinancialData {
   revenue: {
@@ -86,12 +86,12 @@ export function FinancialOverview() {
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="animate-pulse">
-              <CardHeader className="p-4 sm:p-6">
-                <div className="h-4 bg-muted rounded w-32"></div>
+              <CardHeader className="p-3 sm:p-4">
+                <div className="h-4 bg-muted rounded w-24 sm:w-32"></div>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0">
-                <div className="h-8 bg-muted rounded w-24 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-20"></div>
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <div className="h-6 sm:h-8 bg-muted rounded w-20 sm:w-24 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-16 sm:w-20"></div>
               </CardContent>
             </Card>
           ))}
@@ -134,12 +134,12 @@ export function FinancialOverview() {
       
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-primary" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-primary flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-primary">{formatCurrency(data.revenue.total)}</div>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-primary truncate">{formatCurrency(data.revenue.total)}</div>
             <p className="text-xs text-muted-foreground">
               {formatPercentage(data.revenue.growthRate)} from last period
             </p>
@@ -147,35 +147,35 @@ export function FinancialOverview() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Platform Commission</CardTitle>
-            <TrendingUp className="h-4 w-4 text-secondary" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Platform Commission</CardTitle>
+            <TrendingUp className="h-4 w-4 text-secondary flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-secondary">{formatCurrency(platformCommission)}</div>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-secondary truncate">{formatCurrency(platformCommission)}</div>
             <p className="text-xs text-muted-foreground">5% platform fee</p>
           </CardContent>
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Successful Transactions</CardTitle>
-            <CreditCard className="h-4 w-4 text-green-400" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Successful Transactions</CardTitle>
+            <CreditCard className="h-4 w-4 text-green-400 flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-green-400">{data.revenue.transactions.toLocaleString()}</div>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-400">{data.revenue.transactions.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">{data.health.successRate.toFixed(1)}% success rate</p>
           </CardContent>
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Refunds Issued</CardTitle>
-            <RefreshCw className="h-4 w-4 text-yellow-400" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Refunds Issued</CardTitle>
+            <RefreshCw className="h-4 w-4 text-yellow-400 flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-yellow-400">{data.refunds.count}</div>
-            <p className="text-xs text-muted-foreground">{formatCurrency(data.refunds.total)} total</p>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-400">{data.refunds.count}</div>
+            <p className="text-xs text-muted-foreground truncate">{formatCurrency(data.refunds.total)} total</p>
           </CardContent>
         </Card>
       </div>
@@ -189,24 +189,25 @@ export function FinancialOverview() {
         <CardContent className="p-4 sm:p-6 pt-0">
           <ResponsiveContainer width="100%" height={350}>
             <AreaChart data={data.revenue.dailyBreakdown}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(262 30% 25%)" />
               <XAxis 
                 dataKey="date" 
-                tick={{ fontSize: 12, fill: '#64748b' }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fontSize: 12, fill: 'hsl(240 5% 65%)' }}
+                axisLine={{ stroke: 'hsl(262 30% 25%)' }}
                 tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               />
               <YAxis 
-                tick={{ fontSize: 12, fill: '#64748b' }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fontSize: 12, fill: 'hsl(240 5% 65%)' }}
+                axisLine={{ stroke: 'hsl(262 30% 25%)' }}
                 tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: '#ffffff', 
-                  border: '1px solid #e2e8f0',
+                  backgroundColor: 'hsl(240 6% 8%)', 
+                  border: '1px solid hsl(262 30% 25%)',
                   borderRadius: '8px',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.2)',
+                  color: 'hsl(0 0% 98%)'
                 }}
                 formatter={(value: any, name: string) => [
                   name === 'revenue' ? formatCurrency(value) : value,
@@ -217,17 +218,17 @@ export function FinancialOverview() {
               <Area 
                 type="monotone" 
                 dataKey="revenue" 
-                stroke="#10b981" 
-                fill="#10b981" 
-                fillOpacity={0.1}
+                stroke="hsl(142 76% 36%)" 
+                fill="hsl(142 76% 36%)" 
+                fillOpacity={0.2}
                 strokeWidth={3}
               />
               <Area 
                 type="monotone" 
                 dataKey="transactions" 
-                stroke="#8b5cf6" 
-                fill="#8b5cf6" 
-                fillOpacity={0.1}
+                stroke="hsl(262 83% 58%)" 
+                fill="hsl(262 83% 58%)" 
+                fillOpacity={0.2}
                 strokeWidth={2}
                 yAxisId="right"
               />
@@ -298,23 +299,23 @@ export function FinancialOverview() {
             <div className="space-y-4">
               {/* Commission Breakdown */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-violet-50 rounded-lg border border-violet-200">
+                <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
                   <div>
-                    <div className="font-medium text-violet-900">Platform Commission</div>
-                    <div className="text-sm text-violet-600">5% of total revenue</div>
+                    <div className="font-medium text-primary">Platform Commission</div>
+                    <div className="text-sm text-muted-foreground">5% of total revenue</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-violet-900">{formatCurrency(platformCommission)}</div>
+                    <div className="font-bold text-primary">{formatCurrency(platformCommission)}</div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                   <div>
-                    <div className="font-medium text-green-900">Seller Earnings</div>
-                    <div className="text-sm text-green-600">95% of total revenue</div>
+                    <div className="font-medium text-green-400">Seller Earnings</div>
+                    <div className="text-sm text-muted-foreground">95% of total revenue</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-green-900">{formatCurrency(sellerEarnings)}</div>
+                    <div className="font-bold text-green-400">{formatCurrency(sellerEarnings)}</div>
                   </div>
                 </div>
               </div>
@@ -326,12 +327,12 @@ export function FinancialOverview() {
                 </div>
                 <div className="flex rounded-lg overflow-hidden h-3">
                   <div 
-                    className="bg-violet-500" 
+                    className="bg-primary" 
                     style={{ width: '5%' }}
                     title={`Platform: ${formatCurrency(platformCommission)}`}
                   ></div>
                   <div 
-                    className="bg-green-500" 
+                    className="bg-green-400" 
                     style={{ width: '95%' }}
                     title={`Sellers: ${formatCurrency(sellerEarnings)}`}
                   ></div>

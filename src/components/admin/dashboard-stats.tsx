@@ -88,13 +88,13 @@ export function DashboardStats() {
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {[...Array(8)].map((_, i) => (
           <Card key={i} className="animate-pulse">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-              <div className="h-4 bg-muted rounded w-24"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+              <div className="h-4 bg-muted rounded w-20 sm:w-24"></div>
               <div className="h-4 w-4 bg-muted rounded"></div>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="h-8 bg-muted rounded w-16 mb-2"></div>
-              <div className="h-3 bg-muted rounded w-32"></div>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="h-6 sm:h-8 bg-muted rounded w-12 sm:w-16 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-24 sm:w-32"></div>
             </CardContent>
           </Card>
         ))}
@@ -139,25 +139,25 @@ export function DashboardStats() {
       {/* KPI Cards */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Revenue (30d)</CardTitle>
-            <DollarSign className="h-4 w-4 text-primary" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Revenue (30d)</CardTitle>
+            <DollarSign className="h-4 w-4 text-primary flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-primary">{formatCurrency(data.kpis.revenue30d.total)}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-primary truncate">{formatCurrency(data.kpis.revenue30d.total)}</div>
+            <p className="text-xs text-muted-foreground line-clamp-2">
               {data.kpis.revenue30d.transactions} transactions • Avg: {formatCurrency(data.kpis.revenue30d.average)}
             </p>
           </CardContent>
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Active Users (24h)</CardTitle>
-            <Users className="h-4 w-4 text-secondary" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Active Users (24h)</CardTitle>
+            <Users className="h-4 w-4 text-secondary flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-secondary">{data.kpis.activeUsers24h.toLocaleString()}</div>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-secondary">{data.kpis.activeUsers24h.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               {data.kpis.newUsers7d} new users this week
             </p>
@@ -165,12 +165,12 @@ export function DashboardStats() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-primary" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Active Listings</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-primary flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-primary">{data.kpis.activeListings.toLocaleString()}</div>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">{data.kpis.activeListings.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Available for purchase
             </p>
@@ -178,15 +178,15 @@ export function DashboardStats() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">System Health</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">System Health</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className={`text-xl sm:text-2xl font-bold ${getHealthStatusColor(data.systemHealth.score)}`}>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className={`text-lg sm:text-xl lg:text-2xl font-bold ${getHealthStatusColor(data.systemHealth.score)}`}>
               {data.systemHealth.score}%
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground truncate">
               Status: {data.systemHealth.status}
             </p>
           </CardContent>
@@ -257,30 +257,31 @@ export function DashboardStats() {
             <CardContent className="p-4 sm:p-6 pt-0">
               <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={data.trends.userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(262 30% 25%)" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12, fill: '#64748b' }}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    tick={{ fontSize: 11, fill: 'hsl(240 5% 65%)' }}
+                    axisLine={{ stroke: 'hsl(262 30% 25%)' }}
                   />
                   <YAxis 
-                    tick={{ fontSize: 12, fill: '#64748b' }}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    tick={{ fontSize: 11, fill: 'hsl(240 5% 65%)' }}
+                    axisLine={{ stroke: 'hsl(262 30% 25%)' }}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e2e8f0',
+                      backgroundColor: 'hsl(240 6% 8%)', 
+                      border: '1px solid hsl(262 30% 25%)',
                       borderRadius: '8px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.2)',
+                      color: 'hsl(0 0% 98%)'
                     }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="new_users" 
-                    stroke="#8b5cf6" 
-                    fill="#8b5cf6" 
-                    fillOpacity={0.1}
+                    stroke="hsl(262 83% 58%)" 
+                    fill="hsl(262 83% 58%)" 
+                    fillOpacity={0.2}
                     strokeWidth={3}
                   />
                 </AreaChart>
@@ -297,31 +298,32 @@ export function DashboardStats() {
             <CardContent className="p-4 sm:p-6 pt-0">
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={data.trends.revenueGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(262 30% 25%)" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12, fill: '#64748b' }}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    tick={{ fontSize: 11, fill: 'hsl(240 5% 65%)' }}
+                    axisLine={{ stroke: 'hsl(262 30% 25%)' }}
                   />
                   <YAxis 
-                    tick={{ fontSize: 12, fill: '#64748b' }}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    tick={{ fontSize: 11, fill: 'hsl(240 5% 65%)' }}
+                    axisLine={{ stroke: 'hsl(262 30% 25%)' }}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e2e8f0',
+                      backgroundColor: 'hsl(240 6% 8%)', 
+                      border: '1px solid hsl(262 30% 25%)',
                       borderRadius: '8px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.2)',
+                      color: 'hsl(0 0% 98%)'
                     }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="#10b981" 
+                    stroke="hsl(142 76% 36%)" 
                     strokeWidth={3}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+                    dot={{ fill: 'hsl(142 76% 36%)', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: 'hsl(142 76% 36%)', strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -337,27 +339,28 @@ export function DashboardStats() {
             <CardContent className="p-4 sm:p-6 pt-0">
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={data.trends.listingActivity}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(262 30% 25%)" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12, fill: '#64748b' }}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    tick={{ fontSize: 11, fill: 'hsl(240 5% 65%)' }}
+                    axisLine={{ stroke: 'hsl(262 30% 25%)' }}
                   />
                   <YAxis 
-                    tick={{ fontSize: 12, fill: '#64748b' }}
-                    axisLine={{ stroke: '#e2e8f0' }}
+                    tick={{ fontSize: 11, fill: 'hsl(240 5% 65%)' }}
+                    axisLine={{ stroke: 'hsl(262 30% 25%)' }}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e2e8f0',
+                      backgroundColor: 'hsl(240 6% 8%)', 
+                      border: '1px solid hsl(262 30% 25%)',
                       borderRadius: '8px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.2)',
+                      color: 'hsl(0 0% 98%)'
                     }}
                   />
                   <Bar 
                     dataKey="new_listings" 
-                    fill="#06b6d4" 
+                    fill="hsl(258 90% 66%)" 
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -380,11 +383,11 @@ export function DashboardStats() {
               <div className="space-y-3">
                 {data.topPerformers.categories.slice(0, 5).map((category, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{category.category}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{category.category}</p>
                       <p className="text-xs text-muted-foreground">{category.sales} sales</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right ml-2 flex-shrink-0">
                       <p className="font-semibold text-sm text-primary">{formatCurrency(category.revenue)}</p>
                     </div>
                   </div>
@@ -403,11 +406,11 @@ export function DashboardStats() {
               <div className="space-y-3">
                 {data.topPerformers.sellers.slice(0, 5).map((seller, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{seller.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{seller.name}</p>
                       <p className="text-xs text-muted-foreground">{seller.sales} sales</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right ml-2 flex-shrink-0">
                       <p className="font-semibold text-sm text-primary">{formatCurrency(seller.revenue)}</p>
                     </div>
                   </div>
@@ -426,13 +429,13 @@ export function DashboardStats() {
               <div className="space-y-3">
                 {data.topPerformers.activeUsers.slice(0, 5).map((user, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{user.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{user.name}</p>
                       <p className="text-xs text-muted-foreground">{user.sessions} sessions</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right ml-2 flex-shrink-0">
                       <p className="text-xs text-muted-foreground">
-                        Last seen: {new Date(user.last_seen).toLocaleDateString()}
+                        {new Date(user.last_seen).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -457,16 +460,16 @@ export function DashboardStats() {
                 className="p-3 sm:p-4 border border-primary/10 rounded-lg hover:bg-muted/50 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/20"
                 onClick={() => window.location.href = action.url}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-sm">{action.title}</h4>
+                <div className="flex items-start justify-between mb-2 gap-2">
+                  <h4 className="font-medium text-sm flex-1 min-w-0">{action.title}</h4>
                   <Badge 
                     variant={action.priority === 'HIGH' ? 'destructive' : 'outline'}
-                    className="text-xs"
+                    className="text-xs flex-shrink-0"
                   >
                     {action.priority}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">{action.description}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">{action.description}</p>
               </div>
             ))}
           </div>

@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(total / limit)
 
-    return successResponse(
+    const response = successResponse(
       listings,
       200,
       {
@@ -77,6 +77,12 @@ export async function GET(request: NextRequest) {
         totalPages,
       }
     )
+
+    // Add caching headers for listings (cache for 2 minutes)
+    response.headers.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=300')
+    response.headers.set('Vary', 'Accept-Encoding')
+    
+    return response
   } catch (error) {
     console.error("Error fetching listings:", error)
     return errorResponse(error, 500)

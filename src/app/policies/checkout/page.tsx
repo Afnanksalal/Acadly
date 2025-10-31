@@ -26,7 +26,7 @@ export default function CheckoutPolicyPage() {
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold">2. Platform Fees</h2>
             <p className="text-muted-foreground">
-              Currently, collegemart does not charge any platform commission or service fees. Sellers receive 100% of the
+              Currently, Acadly does not charge any platform commission or service fees. Sellers receive 100% of the
               listing price.
             </p>
           </section>
@@ -99,7 +99,7 @@ export default function CheckoutPolicyPage() {
             <h2 className="text-2xl font-semibold">8. Contact</h2>
             <p className="text-muted-foreground">
               For questions about payments or refunds, contact us at{" "}
-              <a href="mailto:payments@collegemart.com" className="text-primary underline">payments@collegemart.com</a>
+              <a href="mailto:payments@acadly.in" className="text-primary underline">payments@acadly.in</a>
             </p>
           </section>
         </CardContent>

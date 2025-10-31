@@ -100,7 +100,7 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-semibold">9. Contact Us</h2>
             <p className="text-muted-foreground">
               If you have questions about this privacy policy, contact us at{" "}
-              <a href="mailto:privacy@collegemart.com" className="text-primary underline">privacy@collegemart.com</a>
+              <a href="mailto:privacy@acadly.in" className="text-primary underline">privacy@acadly.in</a>
             </p>
           </section>
         </CardContent>

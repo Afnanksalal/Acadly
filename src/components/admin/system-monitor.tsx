@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Server, Database, Cpu, HardDrive, Wifi } from 'lucide-react'
+import { Server, Cpu, HardDrive, Wifi } from 'lucide-react'
 
 interface SystemData {
   health: {
@@ -56,11 +56,7 @@ export function SystemMonitor() {
     }
   }
 
-  const getHealthColor = (score: number) => {
-    if (score >= 90) return 'text-green-400'
-    if (score >= 70) return 'text-yellow-400'
-    return 'text-red-400'
-  }
+
 
   const getUsageColor = (usage: number) => {
     if (usage >= 80) return 'text-red-400'
@@ -83,12 +79,12 @@ export function SystemMonitor() {
       
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">CPU Usage</CardTitle>
-            <Cpu className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">CPU Usage</CardTitle>
+            <Cpu className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className={`text-xl sm:text-2xl font-bold ${loading ? 'text-muted-foreground' : getUsageColor(data?.performance.cpuUsage || 0)}`}>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className={`text-lg sm:text-xl lg:text-2xl font-bold ${loading ? 'text-muted-foreground' : getUsageColor(data?.performance.cpuUsage || 0)}`}>
               {loading ? '...' : `${data?.performance.cpuUsage || 0}%`}
             </div>
             <p className="text-xs text-muted-foreground">4 cores available</p>
@@ -96,12 +92,12 @@ export function SystemMonitor() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Memory Usage</CardTitle>
-            <Server className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Memory Usage</CardTitle>
+            <Server className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className={`text-xl sm:text-2xl font-bold ${loading ? 'text-muted-foreground' : getUsageColor(data?.performance.memoryUsage || 0)}`}>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className={`text-lg sm:text-xl lg:text-2xl font-bold ${loading ? 'text-muted-foreground' : getUsageColor(data?.performance.memoryUsage || 0)}`}>
               {loading ? '...' : `${data?.performance.memoryUsage || 0}%`}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -111,12 +107,12 @@ export function SystemMonitor() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Disk Usage</CardTitle>
-            <HardDrive className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Disk Usage</CardTitle>
+            <HardDrive className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className={`text-xl sm:text-2xl font-bold ${loading ? 'text-muted-foreground' : getUsageColor(data?.performance.diskUsage || 0)}`}>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className={`text-lg sm:text-xl lg:text-2xl font-bold ${loading ? 'text-muted-foreground' : getUsageColor(data?.performance.diskUsage || 0)}`}>
               {loading ? '...' : `${data?.performance.diskUsage || 0}%`}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -126,12 +122,12 @@ export function SystemMonitor() {
         </Card>
 
         <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-            <CardTitle className="text-sm font-medium">Network Latency</CardTitle>
-            <Wifi className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Network Latency</CardTitle>
+            <Wifi className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 pt-0">
-            <div className={`text-xl sm:text-2xl font-bold ${loading ? 'text-muted-foreground' : 
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className={`text-lg sm:text-xl lg:text-2xl font-bold ${loading ? 'text-muted-foreground' : 
               (data?.performance.networkLatency || 0) < 150 ? 'text-green-400' : 
               (data?.performance.networkLatency || 0) < 300 ? 'text-yellow-400' : 'text-red-400'
             }`}>

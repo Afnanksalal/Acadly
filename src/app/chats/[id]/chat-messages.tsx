@@ -12,11 +12,11 @@ type Message = {
   sender: { email: string | null }
 }
 
-export function ChatMessages({ 
-  chatId, 
-  initialMessages, 
-  currentUserId 
-}: { 
+export function ChatMessages({
+  chatId,
+  initialMessages,
+  currentUserId
+}: {
   chatId: string
   initialMessages: Message[]
   currentUserId: string
@@ -29,6 +29,7 @@ export function ChatMessages({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const messagesRef = useRef<Message[]>(messages)
 
   // Ensure we're on the client side
   useEffect(() => {
@@ -47,10 +48,11 @@ export function ChatMessages({
     }
   }, [])
 
-  // Scroll to bottom when new messages arrive
+  // Update messages ref and scroll to bottom when new messages arrive
   useEffect(() => {
+    messagesRef.current = messages
     scrollToBottom()
-  }, [messages.length, scrollToBottom])
+  }, [messages, scrollToBottom])
 
   // Deduplicate messages by ID
   const deduplicateMessages = useCallback((newMessages: Message[], existingMessages: Message[]) => {
@@ -66,11 +68,11 @@ export function ChatMessages({
       const res = await fetch(`/api/messages?chatId=${chatId}&after=${lastFetchTime}`, {
         cache: 'no-store'
       })
-      
+
       if (res.ok) {
         const response = await res.json()
         const newMessages = response.success ? response.data : response
-        
+
         if (Array.isArray(newMessages) && newMessages.length > 0) {
           setMessages(prev => {
             const uniqueNewMessages = deduplicateMessages(newMessages, prev)
@@ -87,64 +89,86 @@ export function ChatMessages({
     }
   }, [chatId, lastFetchTime, isClient, deduplicateMessages])
 
-  // Enhanced real-time polling with adaptive intervals and connection management
+  // Optimized real-time polling with exponential backoff and smart intervals
   useEffect(() => {
     if (!isClient) return
 
     let consecutiveFailures = 0
-    const maxFailures = 3
-    let currentInterval = 3000 // Start with 3 seconds
-    
-    const adaptiveInterval = () => {
-      // Increase interval on failures, decrease on success
+    const pollInterval = 5000 // Start with 5 seconds (reduced frequency)
+    let isPollingActive = false
+
+    const getAdaptiveInterval = () => {
+      // Exponential backoff on failures, but cap at reasonable limits
       if (consecutiveFailures > 0) {
-        return Math.min(currentInterval * Math.pow(2, consecutiveFailures), 30000) // Max 30 seconds
+        return Math.min(pollInterval * Math.pow(1.5, consecutiveFailures), 30000) // Max 30 seconds
       }
-      return 3000 // Normal interval
+
+      // Adaptive interval based on activity
+      const currentMessages = messagesRef.current
+      const timeSinceLastMessage = currentMessages.length > 0
+        ? Date.now() - new Date(currentMessages[currentMessages.length - 1].createdAt).getTime()
+        : Infinity
+
+      // More frequent polling if recent activity (within 5 minutes)
+      if (timeSinceLastMessage < 5 * 60 * 1000) {
+        return 3000 // 3 seconds for active chats
+      }
+
+      return 8000 // 8 seconds for inactive chats
     }
 
     const startPolling = () => {
-      // Clear any existing interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-      
-      // Adaptive polling with failure handling
+      if (isPollingActive || !navigator.onLine || document.hidden) return
+
+      isPollingActive = true
+
       const poll = async () => {
+        if (!isPollingActive) return
+
         try {
           await fetchNewMessages()
-          consecutiveFailures = 0 // Reset on success
-          currentInterval = 3000
+          consecutiveFailures = 0
+
+          // Schedule next poll
+          if (isPollingActive) {
+            intervalRef.current = setTimeout(poll, getAdaptiveInterval())
+          }
         } catch (error) {
           consecutiveFailures++
-          console.warn(`Chat polling failed (${consecutiveFailures}/${maxFailures}):`, error)
-          
-          if (consecutiveFailures >= maxFailures) {
+          console.warn(`Chat polling failed (${consecutiveFailures}/5):`, error)
+
+          if (consecutiveFailures >= 5) {
             console.error("Chat polling disabled due to repeated failures")
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current)
-              intervalRef.current = null
-            }
+            stopPolling()
             return
+          }
+
+          // Retry with backoff
+          if (isPollingActive) {
+            intervalRef.current = setTimeout(poll, getAdaptiveInterval())
           }
         }
       }
-      
-      // Start polling with adaptive interval
-      intervalRef.current = setInterval(poll, adaptiveInterval())
+
+      // Start first poll after a short delay
+      intervalRef.current = setTimeout(poll, 1000)
+    }
+
+    const stopPolling = () => {
+      isPollingActive = false
+      if (intervalRef.current) {
+        clearTimeout(intervalRef.current)
+        intervalRef.current = null
+      }
     }
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current)
-          intervalRef.current = null
-        }
+        stopPolling()
       } else {
-        // Reset failure count when tab becomes visible
         consecutiveFailures = 0
         fetchNewMessages() // Immediate fetch when tab becomes visible
-        startPolling()
+        setTimeout(startPolling, 500) // Small delay to avoid race conditions
       }
     }
 
@@ -152,24 +176,21 @@ export function ChatMessages({
       console.log("Connection restored, resuming chat polling")
       consecutiveFailures = 0
       if (!document.hidden) {
-        startPolling()
+        setTimeout(startPolling, 1000)
       }
     }
 
     const handleOffline = () => {
       console.log("Connection lost, pausing chat polling")
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      stopPolling()
     }
 
     // Start polling after component is ready
-    const timeoutId = setTimeout(() => {
+    const initTimeoutId = setTimeout(() => {
       if (!document.hidden && navigator.onLine) {
         startPolling()
       }
-    }, 2000) // Longer delay for stability
+    }, 2000)
 
     // Event listeners
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -177,11 +198,8 @@ export function ChatMessages({
     window.addEventListener('offline', handleOffline)
 
     return () => {
-      clearTimeout(timeoutId)
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      clearTimeout(initTimeoutId)
+      stopPolling()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
@@ -195,7 +213,7 @@ export function ChatMessages({
     const messageText = newMessage.trim()
     setSending(true)
     setNewMessage("") // Clear input immediately
-    
+
     try {
       const response = await apiRequest("/api/messages", {
         method: "POST",
@@ -214,18 +232,18 @@ export function ChatMessages({
           createdAt: new Date().toISOString(),
           sender: { email: "You" }
         }
-        
+
         setMessages(prev => {
           // Check if message already exists to avoid duplicates
-          const exists = prev.some(m => m.id === realMessage.id || 
+          const exists = prev.some(m => m.id === realMessage.id ||
             (m.text === realMessage.text && m.senderId === realMessage.senderId))
-          
+
           if (!exists) {
             return [...prev, realMessage]
           }
           return prev
         })
-        
+
         setLastFetchTime(Date.now()) // Update fetch time to avoid duplicate polling
       }
     } catch (error) {
@@ -250,14 +268,13 @@ export function ChatMessages({
             const isOwn = msg.senderId === currentUserId
             return (
               <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[70%] rounded-lg p-3 ${
-                  isOwn 
-                    ? "bg-primary text-white" 
-                    : "bg-muted"
-                }`}>
+                <div className={`max-w-[70%] rounded-lg p-3 ${isOwn
+                  ? "bg-primary text-white"
+                  : "bg-muted"
+                  }`}>
                   <p className="text-sm break-words">{msg.text}</p>
                   <p className={`text-xs mt-1 ${isOwn ? "text-white/70" : "text-muted-foreground"}`}>
-                    {isClient 
+                    {isClient
                       ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                       : new Date(msg.createdAt).toISOString().slice(11, 16)
                     }

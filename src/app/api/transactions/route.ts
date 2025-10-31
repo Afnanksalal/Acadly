@@ -119,7 +119,7 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       validateBuyerNotSeller(user.id, listing.userId)
 
       // Check for existing active transaction with proper locking
-      // Only block if there's a PAID transaction or a very recent INITIATED transaction
+      // Use more aggressive locking to prevent race conditions
       const existingTransaction = await tx.transaction.findFirst({
         where: {
           listingId: data.listingId,
@@ -128,28 +128,49 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
             { 
               status: "INITIATED",
               createdAt: {
-                gte: new Date(Date.now() - 10 * 60 * 1000) // Only block if initiated in last 10 minutes
+                gte: new Date(Date.now() - 15 * 60 * 1000) // Block if initiated in last 15 minutes
               }
             }
           ],
         },
+        orderBy: { createdAt: "desc" }
       })
 
       if (existingTransaction) {
         if (existingTransaction.status === "PAID") {
           throw new Error("ITEM_ALREADY_SOLD")
         } else {
-          throw new Error("TRANSACTION_IN_PROGRESS")
+          // Check if it's the same user trying again
+          if (existingTransaction.buyerId === user.id) {
+            // Allow the same user to retry after 5 minutes
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+            if (existingTransaction.createdAt > fiveMinutesAgo) {
+              throw new Error("TRANSACTION_IN_PROGRESS")
+            }
+          } else {
+            throw new Error("TRANSACTION_IN_PROGRESS")
+          }
         }
       }
 
-      // Clean up old cancelled/failed transactions for this listing
+      // Clean up old cancelled/failed transactions for this listing (more aggressive cleanup)
       await tx.transaction.deleteMany({
         where: {
           listingId: data.listingId,
           status: { in: ["CANCELLED", "REFUNDED"] },
           createdAt: {
-            lt: new Date(Date.now() - 24 * 60 * 60 * 1000) // Older than 24 hours
+            lt: new Date(Date.now() - 6 * 60 * 60 * 1000) // Older than 6 hours
+          }
+        }
+      })
+
+      // Also clean up very old INITIATED transactions that were never completed
+      await tx.transaction.deleteMany({
+        where: {
+          listingId: data.listingId,
+          status: "INITIATED",
+          createdAt: {
+            lt: new Date(Date.now() - 2 * 60 * 60 * 1000) // Older than 2 hours
           }
         }
       })

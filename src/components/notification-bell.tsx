@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Bell,
   X,
@@ -42,73 +42,141 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [userId])
-
-  // Load notifications from API
-  useEffect(() => {
-    if (userId) {
-      fetchNotifications()
-    }
-  }, [userId])
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
+    if (!userId) return
+    
     try {
       setLoading(true)
-      const response = await fetch('/api/notifications?limit=10')
+      
+      // Add timeout and cache control
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
+      
+      const response = await fetch('/api/notifications?limit=10', {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+      
+      clearTimeout(timeoutId)
+      
       if (response.ok) {
         const data = await response.json()
-        setNotifications(data.data?.notifications || [])
-        setUnreadCount(data.data?.unreadCount || 0)
+        if (data.success && data.data) {
+          setNotifications(data.data.notifications || [])
+          setUnreadCount(data.data.unreadCount || 0)
+        } else {
+          // Fallback for different response structure
+          setNotifications([])
+          setUnreadCount(0)
+        }
       } else {
-        // If API fails, show empty state
+        console.warn('Failed to fetch notifications:', response.status)
         setNotifications([])
         setUnreadCount(0)
       }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error)
-      // If API fails, show empty state
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn('Notification fetch timed out')
+      } else {
+        console.error('Failed to fetch notifications:', error)
+      }
+      // Gracefully handle errors
       setNotifications([])
       setUnreadCount(0)
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
+
+  useEffect(() => {
+    if (userId) {
+      fetchNotifications()
+    }
+  }, [userId, fetchNotifications])
 
   const markAsRead = async (notificationId: string) => {
+    // Optimistically update UI first
+    setNotifications(prev =>
+      prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+    )
+    setUnreadCount(prev => Math.max(0, prev - 1))
+    
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      
       const response = await fetch('/api/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationIds: [notificationId] })
+        body: JSON.stringify({ notificationIds: [notificationId] }),
+        signal: controller.signal
       })
-
-      if (response.ok) {
+      
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        // Revert optimistic update on failure
         setNotifications(prev =>
-          prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+          prev.map(n => n.id === notificationId ? { ...n, isRead: false } : n)
         )
-        setUnreadCount(prev => Math.max(0, prev - 1))
+        setUnreadCount(prev => prev + 1)
+        console.warn('Failed to mark notification as read:', response.status)
       }
     } catch (error) {
-      console.error('Failed to mark notification as read:', error)
+      // Revert optimistic update on error
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, isRead: false } : n)
+      )
+      setUnreadCount(prev => prev + 1)
+      
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Failed to mark notification as read:', error)
+      }
     }
   }
 
   const markAllAsRead = async () => {
+    const unreadNotifications = notifications.filter(n => !n.isRead)
+    
+    // Optimistically update UI first
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    setUnreadCount(0)
+    
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      
       const response = await fetch('/api/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markAll: true })
+        body: JSON.stringify({ markAll: true }),
+        signal: controller.signal
       })
-
-      if (response.ok) {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
-        setUnreadCount(0)
+      
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        // Revert optimistic update on failure
+        setNotifications(prev => prev.map(n => {
+          const wasUnread = unreadNotifications.some(un => un.id === n.id)
+          return wasUnread ? { ...n, isRead: false } : n
+        }))
+        setUnreadCount(unreadNotifications.length)
+        console.warn('Failed to mark all notifications as read:', response.status)
       }
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error)
+      // Revert optimistic update on error
+      setNotifications(prev => prev.map(n => {
+        const wasUnread = unreadNotifications.some(un => un.id === n.id)
+        return wasUnread ? { ...n, isRead: false } : n
+      }))
+      setUnreadCount(unreadNotifications.length)
+      
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Failed to mark all notifications as read:', error)
+      }
     }
   }
 

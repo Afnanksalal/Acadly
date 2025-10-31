@@ -29,10 +29,10 @@ type Review = {
   }
 }
 
-export function ReviewsTabs({ 
-  reviewsReceived, 
-  reviewsGiven 
-}: { 
+export function ReviewsTabs({
+  reviewsReceived,
+  reviewsGiven
+}: {
   reviewsReceived: Review[]
   reviewsGiven: Review[]
 }) {
@@ -44,21 +44,19 @@ export function ReviewsTabs({
       <div className="flex gap-2 border-b border-border">
         <button
           onClick={() => setActiveTab("received")}
-          className={`px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            activeTab === "received"
-              ? "bg-muted/60 border border-border border-b-transparent"
-              : "opacity-80 hover:opacity-100"
-          }`}
+          className={`px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${activeTab === "received"
+            ? "bg-muted/60 border border-border border-b-transparent"
+            : "opacity-80 hover:opacity-100"
+            }`}
         >
           Received ({reviewsReceived.length})
         </button>
         <button
           onClick={() => setActiveTab("given")}
-          className={`px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-            activeTab === "given"
-              ? "bg-muted/60 border border-border border-b-transparent"
-              : "opacity-80 hover:opacity-100"
-          }`}
+          className={`px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${activeTab === "given"
+            ? "bg-muted/60 border border-border border-b-transparent"
+            : "opacity-80 hover:opacity-100"
+            }`}
         >
           Given ({reviewsGiven.length})
         </button>
@@ -93,10 +91,10 @@ export function ReviewsTabs({
                           ))}
                         </div>
                         <Badge variant="secondary">
-                          {review.rating === 5 ? "Excellent" : 
-                           review.rating === 4 ? "Very Good" :
-                           review.rating === 3 ? "Good" :
-                           review.rating === 2 ? "Fair" : "Poor"}
+                          {review.rating === 5 ? "Excellent" :
+                            review.rating === 4 ? "Very Good" :
+                              review.rating === 3 ? "Good" :
+                                review.rating === 2 ? "Fair" : "Poor"}
                         </Badge>
                       </div>
 
@@ -114,7 +112,7 @@ export function ReviewsTabs({
 
                       {/* Transaction Link */}
                       {review.transaction.listing && (
-                        <Link 
+                        <Link
                           href={`/transactions/${review.transactionId}`}
                           className="text-sm text-primary hover:underline mt-2 inline-block"
                         >
@@ -159,10 +157,10 @@ export function ReviewsTabs({
                           ))}
                         </div>
                         <Badge variant="secondary">
-                          {review.rating === 5 ? "Excellent" : 
-                           review.rating === 4 ? "Very Good" :
-                           review.rating === 3 ? "Good" :
-                           review.rating === 2 ? "Fair" : "Poor"}
+                          {review.rating === 5 ? "Excellent" :
+                            review.rating === 4 ? "Very Good" :
+                              review.rating === 3 ? "Good" :
+                                review.rating === 2 ? "Fair" : "Poor"}
                         </Badge>
                       </div>
 
@@ -180,7 +178,7 @@ export function ReviewsTabs({
 
                       {/* Transaction Link */}
                       {review.transaction.listing && (
-                        <Link 
+                        <Link
                           href={`/transactions/${review.transactionId}`}
                           className="text-sm text-primary hover:underline mt-2 inline-block"
                         >

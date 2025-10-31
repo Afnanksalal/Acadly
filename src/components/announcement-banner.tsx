@@ -24,33 +24,76 @@ export function AnnouncementBanner() {
     // Load dismissed announcements from localStorage
     const dismissed = localStorage.getItem('dismissedAnnouncements')
     if (dismissed) {
-      setDismissedIds(JSON.parse(dismissed))
+      try {
+        setDismissedIds(JSON.parse(dismissed))
+      } catch (error) {
+        console.error('Failed to parse dismissed announcements:', error)
+        localStorage.removeItem('dismissedAnnouncements')
+      }
     }
   }, [])
 
   const fetchAnnouncements = async () => {
     try {
-      const response = await fetch('/api/announcements?priority=HIGH,URGENT&limit=3')
+      // Add cache control and timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+      
+      const response = await fetch('/api/announcements?priority=HIGH,URGENT&limit=3', {
+        signal: controller.signal,
+        cache: 'no-store', // Ensure fresh data for announcements
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+      
+      clearTimeout(timeoutId)
+      
       if (response.ok) {
         const data = await response.json()
-        setAnnouncements(data.data.announcements || [])
+        if (data.success && data.data) {
+          setAnnouncements(data.data.announcements || [])
+        }
+      } else {
+        console.warn('Failed to fetch announcements:', response.status)
       }
     } catch (error) {
-      console.error('Failed to fetch announcements:', error)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn('Announcement fetch timed out')
+      } else {
+        console.error('Failed to fetch announcements:', error)
+      }
+      // Gracefully handle errors - don't show error to user
     }
   }
 
   const dismissAnnouncement = (id: string) => {
     const newDismissed = [...dismissedIds, id]
     setDismissedIds(newDismissed)
-    localStorage.setItem('dismissedAnnouncements', JSON.stringify(newDismissed))
     
-    // Mark as viewed
+    try {
+      localStorage.setItem('dismissedAnnouncements', JSON.stringify(newDismissed))
+    } catch (error) {
+      console.error('Failed to save dismissed announcements:', error)
+    }
+    
+    // Mark as viewed (with timeout and error handling)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+    
     fetch('/api/announcements', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ announcementId: id })
-    }).catch(console.error)
+      body: JSON.stringify({ announcementId: id }),
+      signal: controller.signal
+    })
+    .then(() => clearTimeout(timeoutId))
+    .catch(error => {
+      clearTimeout(timeoutId)
+      if (error.name !== 'AbortError') {
+        console.error('Failed to mark announcement as viewed:', error)
+      }
+    })
   }
 
   const getAnnouncementStyle = (type: string, priority: string) => {

@@ -1,14 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Latest Next.js features (Turbopack compatible)
+  // Latest Next.js features (Production optimized)
   experimental: {
     serverComponentsExternalPackages: ['prisma', '@prisma/client'],
-    optimizePackageImports: ['lucide-react'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    serverMinification: true,
   },
   
   // Performance optimizations
   compress: true,
   poweredByHeader: false,
+  generateEtags: true,
   
   // Image optimization
   images: {
@@ -19,13 +21,15 @@ const nextConfig = {
       },
     ],
     formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 300, // 5 minutes
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
-  // Security headers
+  // Security headers (enhanced)
   async headers() {
     return [
       {
@@ -45,47 +49,116 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(self)',
+          },
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
           },
         ],
       },
     ]
   },
   
-  // Build optimization (remove standalone for Vercel)
-  // output: 'standalone', // Commented out for Vercel deployment
-  
   // Modern build settings
   swcMinify: true,
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+    },
+  },
   
-  // Webpack optimizations (fallback when not using Turbopack)
-  webpack: (config, { isServer }) => {
-    // Fix for server-side compatibility
+  // Webpack optimizations
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Production optimizations
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks.cacheGroups,
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+            },
+          },
+        },
+      }
+    }
+    
+    // Server-side compatibility
     if (isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         net: false,
         tls: false,
+        crypto: false,
       }
+    }
+    
+    // Bundle analyzer (only in development)
+    if (process.env.ANALYZE === 'true') {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static',
+          openAnalyzer: false,
+        })
+      )
     }
     
     return config
   },
   
-  // Build settings
+  // Build settings (strict for production)
   eslint: {
     ignoreDuringBuilds: false,
+    dirs: ['src'],
   },
   typescript: {
     ignoreBuildErrors: false,
   },
   
-  // Logging
+  // Logging (production optimized)
   logging: {
     fetches: {
-      fullUrl: true,
+      fullUrl: process.env.NODE_ENV === 'development',
     },
+  },
+  
+  // Output optimization for Vercel
+  output: process.env.NODE_ENV === 'production' ? undefined : 'standalone',
+  
+  // Redirects for SEO
+  async redirects() {
+    return [
+      {
+        source: '/home',
+        destination: '/',
+        permanent: true,
+      },
+    ]
   },
 }
 

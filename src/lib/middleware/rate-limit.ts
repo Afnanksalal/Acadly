@@ -48,32 +48,34 @@ class MemoryRateLimit {
   }
 }
 
-// Enhanced memory-based rate limiters with sliding window
+// Production-optimized rate limiters with sliding window
 const memoryLimits = {
-  api: new MemoryRateLimit(200, 60 * 1000), // 200 requests per minute (increased for production)
-  auth: new MemoryRateLimit(10, 60 * 1000), // 10 auth requests per minute (increased)
-  upload: new MemoryRateLimit(20, 60 * 1000), // 20 uploads per minute (increased)
-  payment: new MemoryRateLimit(5, 60 * 1000), // 5 payment requests per minute (increased)
-  chat: new MemoryRateLimit(60, 60 * 1000), // 60 chat messages per minute
-  search: new MemoryRateLimit(100, 60 * 1000), // 100 search requests per minute
+  api: new MemoryRateLimit(300, 60 * 1000), // 300 requests per minute for general API
+  auth: new MemoryRateLimit(15, 60 * 1000), // 15 auth requests per minute
+  upload: new MemoryRateLimit(30, 60 * 1000), // 30 uploads per minute
+  payment: new MemoryRateLimit(10, 60 * 1000), // 10 payment requests per minute
+  chat: new MemoryRateLimit(100, 60 * 1000), // 100 chat messages per minute
+  search: new MemoryRateLimit(150, 60 * 1000), // 150 search requests per minute
+  admin: new MemoryRateLimit(500, 60 * 1000), // 500 admin requests per minute
+  webhook: new MemoryRateLimit(1000, 60 * 1000), // 1000 webhook requests per minute
 }
 
 export async function applyRateLimit(request: NextRequest): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl
   const ip = request.ip ?? request.headers.get("x-forwarded-for") ?? "127.0.0.1"
 
-  // Skip rate limiting for health checks, static files, and fast read operations
+  // Skip rate limiting for health checks, static files, and optimized read operations
   if (
     pathname === "/api/health" || 
     pathname.startsWith("/_next/") ||
-    (pathname === "/api/messages" && request.method === "GET") || // Fast chat message fetching
-    (pathname === "/api/profile" && request.method === "GET") ||   // Fast profile checks
-    pathname === "/api/categories"  // Fast category listing
+    pathname.startsWith("/api/webhooks/") || // Webhooks need higher limits
+    (pathname === "/api/categories" && request.method === "GET") || // Fast category listing
+    (pathname === "/api/announcements" && request.method === "GET") // Fast announcement fetching
   ) {
     return null
   }
 
-  // Determine rate limit type with more granular controls
+  // Determine rate limit type with granular controls
   let limiter = memoryLimits.api
   let rateLimitType = "api"
   
@@ -83,13 +85,19 @@ export async function applyRateLimit(request: NextRequest): Promise<NextResponse
   } else if (pathname.includes("/upload")) {
     limiter = memoryLimits.upload
     rateLimitType = "upload"
-  } else if (pathname.includes("/payment") || pathname.includes("/webhook") || pathname.includes("/transactions")) {
+  } else if (pathname.includes("/payment") || pathname.includes("/transactions")) {
     limiter = memoryLimits.payment
     rateLimitType = "payment"
+  } else if (pathname.includes("/webhook")) {
+    limiter = memoryLimits.webhook
+    rateLimitType = "webhook"
   } else if (pathname.includes("/messages") || pathname.includes("/chats")) {
     limiter = memoryLimits.chat
     rateLimitType = "chat"
-  } else if (pathname.includes("/listings") && pathname.includes("search")) {
+  } else if (pathname.includes("/admin/")) {
+    limiter = memoryLimits.admin
+    rateLimitType = "admin"
+  } else if (pathname.includes("search") || pathname.includes("/listings")) {
     limiter = memoryLimits.search
     rateLimitType = "search"
   }

@@ -1,23 +1,26 @@
 {
   "buildCommand": "prisma generate && next build",
-  "installCommand": "npm install",
+  "installCommand": "npm ci --production=false",
   "framework": "nextjs",
   "regions": ["bom1"],
   "functions": {
     "app/api/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 25
     },
     "app/api/webhooks/**/*.ts": {
-      "maxDuration": 60
+      "maxDuration": 30
     },
     "app/api/cron/**/*.ts": {
       "maxDuration": 300
+    },
+    "app/api/health/route.ts": {
+      "maxDuration": 10
     }
   },
   "crons": [
     {
       "path": "/api/cron/cleanup",
-      "schedule": "0 0 * * *"
+      "schedule": "0 */6 * * *"
     }
   ],
   "headers": [
@@ -43,6 +46,10 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
         }
       ]
     },
@@ -50,28 +57,49 @@
       "source": "/api/(.*)",
       "headers": [
         {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
           "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
+          "value": "GET, POST, PUT, DELETE, PATCH, OPTIONS"
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Requested-With"
+          "value": "Content-Type, Authorization, X-Requested-With, X-Request-ID"
         },
         {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
+          "key": "Access-Control-Max-Age",
+          "value": "86400"
+        }
+      ]
+    },
+    {
+      "source": "/api/health",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=30, stale-while-revalidate=60"
+        }
+      ]
+    },
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/health",
+      "destination": "/api/health",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
-      "source": "/api/webhooks/razorpay",
-      "destination": "/api/webhooks/razorpay"
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
     }
   ]
 }
