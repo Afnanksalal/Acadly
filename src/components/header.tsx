@@ -3,6 +3,9 @@ import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { prisma } from "@/lib/prisma"
 import { LogoutButton } from "./logout-button"
 import { MobileNav } from "./mobile-nav"
+import { NotificationBell } from "@/components/notification-bell"
+import { AnnouncementBanner } from "@/components/announcement-banner"
+import { GraduationCap } from "lucide-react"
 
 export async function Header() {
   const supabase = createServerSupabaseClient()
@@ -10,11 +13,13 @@ export async function Header() {
   const profile = user ? await prisma.profile.findUnique({ where: { id: user.id } }) : null
   
   return (
-    <header className="w-full border-b border-border backdrop-blur-sm bg-background/95 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <>
+      <AnnouncementBanner />
+      <header className="w-full border-b border-border backdrop-blur-sm bg-background/95 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <span className="text-2xl">🎓</span>
+          <GraduationCap className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold">Acadly</span>
         </Link>
         
@@ -49,6 +54,7 @@ export async function Header() {
               </Link>
               <div className="h-8 w-px bg-border" />
               <div className="flex items-center gap-3">
+                <NotificationBell userId={user.id} />
                 <div className="hidden lg:flex flex-col items-end">
                   <span className="text-xs font-medium">{profile?.email?.split('@')[0]}</span>
                   <span className="text-xs text-muted-foreground">{profile?.role === 'ADMIN' ? 'Admin' : 'User'}</span>
@@ -61,16 +67,20 @@ export async function Header() {
               <Link href="/auth/login" className="text-sm font-medium hover:text-primary transition-colors">
                 Login
               </Link>
-              <Link href="/auth/signup" className="text-sm font-medium px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors">
+              <Link href="/auth/signup" className="text-sm font-medium px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                 Sign Up
               </Link>
             </>
           )}
         </nav>
 
-        {/* Mobile Navigation */}
-        <MobileNav user={user} profile={profile} />
-      </div>
-    </header>
+        {/* Mobile Navigation & Notification */}
+        <div className="md:hidden flex items-center gap-2">
+          {user && <NotificationBell userId={user.id} />}
+          <MobileNav user={user} profile={profile} />
+        </div>
+        </div>
+      </header>
+    </>
   )
 }

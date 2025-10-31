@@ -98,45 +98,27 @@ export const GET = withAdminAuth(async (request: NextRequest, user) => {
     }))
 
     // Get daily transaction data for chart
-    let dailyTransactions: Array<{ date: Date; count: number; revenue: number }> = []
-    
-    try {
-      const rawData = await prisma.$queryRaw`
-        SELECT 
-          DATE(created_at) as date,
-          COUNT(*) as count,
-          SUM(amount) as revenue
-        FROM transactions 
-        WHERE created_at >= ${startDate}
-          AND status = 'PAID'
-        GROUP BY DATE(created_at)
-        ORDER BY date ASC
-      ` as Array<{ date: Date; count: bigint; revenue: number }>
-
-      dailyTransactions = rawData.map(row => ({
-        date: row.date,
-        count: Number(row.count),
-        revenue: Number(row.revenue || 0),
-      }))
-    } catch (error) {
-      console.error("Error fetching daily transactions:", error)
-      // Fallback to aggregated data
-      const aggregatedData = await prisma.transaction.groupBy({
-        by: ["createdAt"],
-        where: {
-          status: "PAID",
-          createdAt: { gte: startDate },
-        },
-        _count: true,
-        _sum: { amount: true },
+    const dailyTransactions = await prisma.transaction.findMany({
+      where: {
+        status: "PAID",
+        createdAt: { gte: startDate }
+      },
+      select: { amount: true, createdAt: true },
+      orderBy: { createdAt: 'asc' }
+    }).then(transactions => {
+      const dayMap = new Map()
+      transactions.forEach(transaction => {
+        const day = transaction.createdAt.toISOString().split('T')[0]
+        const existing = dayMap.get(day) || { count: 0, revenue: 0 }
+        existing.count += 1
+        existing.revenue += Number(transaction.amount)
+        dayMap.set(day, existing)
       })
-
-      dailyTransactions = aggregatedData.map(item => ({
-        date: item.createdAt,
-        count: item._count,
-        revenue: Number(item._sum.amount || 0),
+      return Array.from(dayMap.entries()).map(([date, data]) => ({
+        date: new Date(date),
+        ...data
       }))
-    }
+    })
 
     // Get top sellers
     const topSellers = await prisma.profile.findMany({

@@ -2,13 +2,18 @@ import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse } from "@/lib/api-response"
+import { logAdminAction, ADMIN_ACTIONS } from "@/lib/admin-logger"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
 export const GET = withAdminAuth(async (request: NextRequest, user) => {
-  // Log admin dashboard access for security audit
-  console.log(`Admin dashboard accessed by user: ${user.id} (${user.email})`)
+  // Log admin dashboard access
+  await logAdminAction({
+    adminId: user.id,
+    action: ADMIN_ACTIONS.VIEW_DASHBOARD,
+    request
+  })
   try {
     const { searchParams } = new URL(request.url)
     const timeframe = searchParams.get("timeframe") || "30" // days

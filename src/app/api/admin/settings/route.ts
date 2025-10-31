@@ -64,7 +64,7 @@ const settingsSchema = z.object({
   ]).optional(),
 })
 
-// Mock settings storage (in a real app, you'd store this in database)
+// System settings would be stored in database when implemented
 let systemSettings = {
   maintenanceMode: false,
   registrationEnabled: true,
@@ -113,7 +113,7 @@ export const PUT = withAdminAuth(async (request: NextRequest, user) => {
     }
 
     // Log the admin action
-    const changedSettings = Object.keys(updates).map(key => 
+    const changedSettings = Object.keys(updates).map(key =>
       `${key}: ${updates[key as keyof typeof updates]}`
     ).join(", ")
 

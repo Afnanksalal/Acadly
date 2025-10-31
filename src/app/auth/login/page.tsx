@@ -38,13 +38,13 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-primary/5">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <p className="text-sm opacity-70">Login to your account</p>
+    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-background">
+      <Card className="w-full max-w-md hover-lift">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-2xl text-foreground">Welcome back</CardTitle>
+          <p className="text-sm text-muted-foreground">Login to your account</p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           <form onSubmit={onLogin} className="space-y-4">
             {error && (
               <Alert variant="destructive">
@@ -52,7 +52,7 @@ export default function LoginPage() {
               </Alert>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm font-medium text-foreground">Email</label>
               <Input
                 placeholder="you@college.edu"
                 type="email"
@@ -63,7 +63,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Password</label>
+              <label className="text-sm font-medium text-foreground">Password</label>
               <Input
                 placeholder="••••••••"
                 type="password"
@@ -73,12 +73,12 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button disabled={loading} className="w-full">
+            <Button disabled={loading} className="w-full" variant="primary">
               {loading ? "Logging in..." : "Login"}
             </Button>
-            <div className="text-sm text-center opacity-80">
+            <div className="text-sm text-center text-muted-foreground">
               Don&apos;t have an account?{" "}
-              <Link className="underline hover:opacity-100 transition-opacity" href="/auth/signup">
+              <Link className="text-primary hover:text-primary/80 underline transition-colors" href="/auth/signup">
                 Sign up
               </Link>
             </div>

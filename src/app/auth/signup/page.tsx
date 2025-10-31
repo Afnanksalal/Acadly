@@ -45,20 +45,20 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-primary/5">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Create your account</CardTitle>
-          <p className="text-sm opacity-70">Join the campus marketplace</p>
+    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-background">
+      <Card className="w-full max-w-md hover-lift">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-2xl text-foreground">Create your account</CardTitle>
+          <p className="text-sm text-muted-foreground">Join the campus marketplace</p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {success ? (
             <Alert variant="success" className="space-y-2">
               <AlertTitle>Check your email!</AlertTitle>
               <AlertDescription>
                 We&apos;ve sent a confirmation link to <strong>{email}</strong>. Click the link to verify your account.
               </AlertDescription>
-              <Button onClick={() => router.push("/auth/login")} className="w-full mt-4">Go to Login</Button>
+              <Button onClick={() => router.push("/auth/login")} className="w-full mt-4" variant="primary">Go to Login</Button>
             </Alert>
           ) : (
             <form onSubmit={onSignup} className="space-y-4">
@@ -68,7 +68,7 @@ export default function SignupPage() {
                 </Alert>
               )}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
+                <label className="text-sm font-medium text-foreground">Email</label>
                 <Input
                   placeholder="you@college.edu"
                   type="email"
@@ -79,7 +79,7 @@ export default function SignupPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Password</label>
+                <label className="text-sm font-medium text-foreground">Password</label>
                 <Input
                   placeholder="••••••••"
                   type="password"
@@ -88,14 +88,14 @@ export default function SignupPage() {
                   disabled={loading}
                   required
                 />
-                <p className="text-xs opacity-60">At least 6 characters</p>
+                <p className="text-xs text-muted-foreground">At least 6 characters</p>
               </div>
-              <Button disabled={loading} className="w-full">
+              <Button disabled={loading} className="w-full" variant="primary">
                 {loading ? "Creating account..." : "Sign up"}
               </Button>
-              <div className="text-sm text-center opacity-80">
+              <div className="text-sm text-center text-muted-foreground">
                 Already have an account?{" "}
-                <Link className="underline hover:opacity-100 transition-opacity" href="/auth/login">
+                <Link className="text-primary hover:text-primary/80 underline transition-colors" href="/auth/login">
                   Login
                 </Link>
               </div>

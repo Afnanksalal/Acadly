@@ -3,13 +3,18 @@ import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse } from "@/lib/api-response"
 import { validatePagination } from "@/lib/validation"
+import { logAdminAction, ADMIN_ACTIONS } from "@/lib/admin-logger"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
 export const GET = withAdminAuth(async (request: NextRequest, user) => {
-  // Log admin users access for security audit
-  console.log(`Admin users accessed by user: ${user.id} (${user.email})`)
+  // Log admin users access
+  await logAdminAction({
+    adminId: user.id,
+    action: ADMIN_ACTIONS.VIEW_USERS,
+    request
+  })
   try {
     const { searchParams } = new URL(request.url)
     

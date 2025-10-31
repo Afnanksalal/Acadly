@@ -3,6 +3,22 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LogoutButton } from "./logout-button"
+import { 
+  GraduationCap, 
+  Home, 
+  ShoppingBag, 
+  Calendar, 
+  BarChart3, 
+  Package, 
+  MessageCircle, 
+  User, 
+  Star, 
+  Crown, 
+  Plus, 
+  Key, 
+  Sparkles,
+  X
+} from "lucide-react"
 
 type Route = "/" | "/listings" | "/dashboard" | "/orders" | "/chats" | "/profile" | "/reviews" | "/events" | "/listings/new" | "/auth/login" | "/auth/signup"
 
@@ -89,7 +105,7 @@ export function MobileNav({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
             <Link href="/" onClick={closeMenu} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <span className="text-2xl">🎓</span>
+              <GraduationCap className="h-6 w-6 text-primary" />
               <span className="font-bold text-lg">Acadly</span>
             </Link>
             <button
@@ -97,9 +113,7 @@ export function MobileNav({
               className="p-2 rounded-lg hover:bg-muted active:bg-muted/80 transition-colors touch-manipulation"
               aria-label="Close menu"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5" />
             </button>
           </div>
 
@@ -107,8 +121,8 @@ export function MobileNav({
           {user && profile && (
             <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-border">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-lg">
-                  {profile.role === 'ADMIN' ? '👑' : '👤'}
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  {profile.role === 'ADMIN' ? <Crown className="h-5 w-5 text-primary" /> : <User className="h-5 w-5 text-primary" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{profile.email?.split('@')[0]}</p>
@@ -124,15 +138,15 @@ export function MobileNav({
           <nav className="flex-1 overflow-y-auto overscroll-contain p-3 pb-6">
             <div className="space-y-1">
               {/* Public Links */}
-              <NavLink href="/" onClick={closeMenu} isActive={isActive('/')} icon="🏠">
+              <NavLink href="/" onClick={closeMenu} isActive={isActive('/')} icon={<Home className="h-5 w-5" />}>
                 Home
               </NavLink>
               
-              <NavLink href="/listings" onClick={closeMenu} isActive={isActive('/listings')} icon="🛍️">
+              <NavLink href="/listings" onClick={closeMenu} isActive={isActive('/listings')} icon={<ShoppingBag className="h-5 w-5" />}>
                 Browse Listings
               </NavLink>
               
-              <NavLink href="/events" onClick={closeMenu} isActive={isActive('/events')} icon="📅">
+              <NavLink href="/events" onClick={closeMenu} isActive={isActive('/events')} icon={<Calendar className="h-5 w-5" />}>
                 Events
               </NavLink>
 
@@ -144,25 +158,27 @@ export function MobileNav({
                     My Account
                   </p>
 
-                  <NavLink href="/dashboard" onClick={closeMenu} isActive={isActive('/dashboard')} icon="📊">
+                  <NavLink href="/dashboard" onClick={closeMenu} isActive={isActive('/dashboard')} icon={<BarChart3 className="h-5 w-5" />}>
                     Dashboard
                   </NavLink>
                   
-                  <NavLink href="/orders" onClick={closeMenu} isActive={isActive('/orders')} icon="📦">
+                  <NavLink href="/orders" onClick={closeMenu} isActive={isActive('/orders')} icon={<Package className="h-5 w-5" />}>
                     My Orders
                   </NavLink>
                   
-                  <NavLink href="/chats" onClick={closeMenu} isActive={isActive('/chats')} icon="💬">
+                  <NavLink href="/chats" onClick={closeMenu} isActive={isActive('/chats')} icon={<MessageCircle className="h-5 w-5" />}>
                     Messages
                   </NavLink>
                   
-                  <NavLink href="/profile" onClick={closeMenu} isActive={isActive('/profile')} icon="👤">
+                  <NavLink href="/profile" onClick={closeMenu} isActive={isActive('/profile')} icon={<User className="h-5 w-5" />}>
                     Profile
                   </NavLink>
                   
-                  <NavLink href="/reviews" onClick={closeMenu} isActive={isActive('/reviews')} icon="⭐">
+                  <NavLink href="/reviews" onClick={closeMenu} isActive={isActive('/reviews')} icon={<Star className="h-5 w-5" />}>
                     Reviews
                   </NavLink>
+
+
 
                   {/* Divider */}
                   <div className="my-3 border-t border-border" />
@@ -173,7 +189,7 @@ export function MobileNav({
                     onClick={closeMenu}
                     className="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 transition-all font-medium shadow-sm touch-manipulation"
                   >
-                    <span className="text-lg">➕</span>
+                    <Plus className="h-5 w-5" />
                     <span>Create Listing</span>
                   </Link>
                 </>
@@ -191,7 +207,7 @@ export function MobileNav({
                     onClick={closeMenu}
                     className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg border-2 border-border hover:bg-muted active:bg-muted/80 transition-all font-medium touch-manipulation"
                   >
-                    <span className="text-lg">🔑</span>
+                    <Key className="h-5 w-5" />
                     <span>Login</span>
                   </Link>
                   
@@ -200,7 +216,7 @@ export function MobileNav({
                     onClick={closeMenu}
                     className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 transition-all font-medium shadow-sm touch-manipulation"
                   >
-                    <span className="text-lg">✨</span>
+                    <Sparkles className="h-5 w-5" />
                     <span>Sign Up</span>
                   </Link>
                 </>
@@ -231,7 +247,7 @@ function NavLink({
   href: Route
   onClick: () => void
   isActive: boolean
-  icon: string
+  icon: React.ReactNode
   children: React.ReactNode
 }) {
   return (
@@ -244,7 +260,7 @@ function NavLink({
           : 'hover:bg-muted active:bg-muted/80'
       }`}
     >
-      <span className="text-lg flex-shrink-0">{icon}</span>
+      <span className="flex-shrink-0">{icon}</span>
       <span className="flex-1">{children}</span>
       {isActive && (
         <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />

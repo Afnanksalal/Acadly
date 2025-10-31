@@ -2,13 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .hover-lift {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .chart-tooltip {
+    @apply bg-white border border-gray-200 rounded-lg shadow-lg p-3;
+  }
+  
+  .gradient-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .admin-card {
+    @apply bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200;
+  }
+  
+  .admin-card-header {
+    @apply border-b border-gray-100 bg-gray-50/50;
+  }
+}
+
 @layer base {
   :root {
-    /* Dark Purple Theme Colors */
-    --background: 255 11% 6%;
-    /* Dark background #0b0b12 */
-    --foreground: 0 0% 100%;
-    /* White text */
+    /* Dark Purple Theme Colors - Darker and More Consistent */
+    --background: 240 10% 4%;
+    /* Very dark background #0a0a0f */
+    --foreground: 0 0% 98%;
+    /* Near white text */
     --primary: 262 83% 58%;
     /* Purple #7c3aed */
     --primary-foreground: 0 0% 100%;
@@ -17,19 +39,31 @@
     /* Lighter purple #8b5cf6 */
     --secondary-foreground: 0 0% 100%;
     /* White on secondary */
-    --muted: 240 5% 26%;
-    /* Dark muted #1f1f2e */
+    --muted: 240 6% 10%;
+    /* Very dark muted #191922 */
     --muted-foreground: 240 5% 65%;
     /* Light gray text */
-    --border: 240 6% 25%;
-    /* Border color #2e2e3e */
-    --input: 240 6% 25%;
-    /* Input background */
-    --ring: 258 90% 66%;
+    --border: 262 30% 25%;
+    /* Subtle purple border */
+    --input: 240 6% 10%;
+    /* Dark input background */
+    --ring: 262 83% 58%;
     /* Focus ring purple */
     --destructive: 0 84% 60%;
     /* Red for errors */
     --destructive-foreground: 0 0% 100%;
+    
+    /* Popover colors */
+    --popover: 240 6% 8%;
+    /* Dark popover background */
+    --popover-foreground: 0 0% 98%;
+    /* Near white text */
+    
+    /* Card colors */
+    --card: 240 6% 8%;
+    /* Dark card background */
+    --card-foreground: 0 0% 98%;
+    /* Near white text on cards */
 
     /* Radius */
     --radius-lg: 0.75rem;

@@ -7,7 +7,7 @@ export async function GET() {
 
     // Database connectivity check
     const dbStart = Date.now()
-    await prisma.$queryRaw`SELECT 1`
+    await prisma.profile.findFirst({ select: { id: true } })
     const dbTime = Date.now() - dbStart
 
     // Get basic statistics

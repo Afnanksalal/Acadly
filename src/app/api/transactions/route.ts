@@ -119,16 +119,40 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       validateBuyerNotSeller(user.id, listing.userId)
 
       // Check for existing active transaction with proper locking
+      // Only block if there's a PAID transaction or a very recent INITIATED transaction
       const existingTransaction = await tx.transaction.findFirst({
         where: {
           listingId: data.listingId,
-          status: { in: ["INITIATED", "PAID"] },
+          OR: [
+            { status: "PAID" },
+            { 
+              status: "INITIATED",
+              createdAt: {
+                gte: new Date(Date.now() - 10 * 60 * 1000) // Only block if initiated in last 10 minutes
+              }
+            }
+          ],
         },
       })
 
       if (existingTransaction) {
-        throw new Error("TRANSACTION_IN_PROGRESS")
+        if (existingTransaction.status === "PAID") {
+          throw new Error("ITEM_ALREADY_SOLD")
+        } else {
+          throw new Error("TRANSACTION_IN_PROGRESS")
+        }
       }
+
+      // Clean up old cancelled/failed transactions for this listing
+      await tx.transaction.deleteMany({
+        where: {
+          listingId: data.listingId,
+          status: { in: ["CANCELLED", "REFUNDED"] },
+          createdAt: {
+            lt: new Date(Date.now() - 24 * 60 * 60 * 1000) // Older than 24 hours
+          }
+        }
+      })
 
       // Validate user's transaction limits (prevent spam)
       const recentTransactions = await tx.transaction.count({
@@ -259,8 +283,10 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
           return notFoundResponse("Listing not found")
         case "LISTING_INACTIVE":
           return validationErrorResponse("This item is no longer available")
+        case "ITEM_ALREADY_SOLD":
+          return validationErrorResponse("This item has already been sold")
         case "TRANSACTION_IN_PROGRESS":
-          return validationErrorResponse("A transaction is already in progress for this listing")
+          return validationErrorResponse("A payment is currently being processed for this item. Please try again in a few minutes.")
         case "TRANSACTION_LIMIT_EXCEEDED":
           return validationErrorResponse("Daily transaction limit exceeded. Please try again tomorrow.")
       }

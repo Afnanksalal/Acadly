@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { GraduationCap, Twitter, Instagram, Briefcase, Heart } from "lucide-react"
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -10,7 +11,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">🎓</span>
+              <GraduationCap className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold">Acadly</span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -72,14 +73,14 @@ export function Footer() {
                 </a>
               </li>
               <li className="flex gap-3 pt-2">
-                <a href="#" className="text-2xl hover:scale-110 transition-transform" aria-label="Twitter">
-                  🐦
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Twitter">
+                  <Twitter className="h-5 w-5" />
                 </a>
-                <a href="#" className="text-2xl hover:scale-110 transition-transform" aria-label="Instagram">
-                  📷
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Instagram">
+                  <Instagram className="h-5 w-5" />
                 </a>
-                <a href="#" className="text-2xl hover:scale-110 transition-transform" aria-label="LinkedIn">
-                  💼
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors" aria-label="LinkedIn">
+                  <Briefcase className="h-5 w-5" />
                 </a>
               </li>
             </ul>
@@ -91,8 +92,10 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             © {currentYear} Acadly. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>Made with ❤️ for students</span>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Made with</span>
+            <Heart className="h-4 w-4 text-red-500 fill-current" />
+            <span>for students</span>
           </div>
         </div>
       </div>
