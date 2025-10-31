@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

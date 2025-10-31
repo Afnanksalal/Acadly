@@ -4,6 +4,9 @@ import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { z } from "zod"
 import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 // GET /api/profile - Get current user's profile
 export async function GET() {
   try {

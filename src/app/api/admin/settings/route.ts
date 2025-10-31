@@ -3,6 +3,9 @@ import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
 import { z } from "zod"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 // System settings schema
 const settingsSchema = z.object({
   maintenanceMode: z.boolean().optional(),

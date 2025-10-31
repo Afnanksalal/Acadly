@@ -5,6 +5,9 @@ import { successResponse, errorResponse, notFoundResponse, validationErrorRespon
 import { refundForDispute } from "@/lib/refund"
 import { z } from "zod"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 const resolveDisputeSchema = z.object({
   resolution: z.string().min(10, "Resolution must be at least 10 characters").max(1000, "Resolution too long"),
   action: z.enum(["RESOLVED", "REJECTED"]),

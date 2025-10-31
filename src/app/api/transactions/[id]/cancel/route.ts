@@ -5,6 +5,9 @@ import { successResponse, errorResponse, notFoundResponse, validationErrorRespon
 import { refundCancelledTransaction } from "@/lib/refund"
 import { isValidUUID } from "@/lib/uuid-validation"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export const POST = withAuth(async (request: NextRequest, user) => {
   try {
     const url = new URL(request.url)

@@ -5,6 +5,9 @@ import { successResponse, errorResponse, notFoundResponse, validationErrorRespon
 import { validateAndSanitizeBody } from "@/lib/validation"
 import { z } from "zod"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 const confirmPickupSchema = z.object({
   transactionId: z.string().uuid("Invalid transaction ID"),
   pickupCode: z.string().length(6, "Pickup code must be 6 digits").regex(/^\d+$/, "Pickup code must contain only numbers")

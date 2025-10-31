@@ -4,6 +4,9 @@ import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse } from "@/lib/api-response"
 import { validatePagination } from "@/lib/validation"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export const GET = withAdminAuth(async (request: NextRequest, user) => {
   // Log admin disputes access for security audit
   console.log(`Admin disputes accessed by user: ${user.id} (${user.email})`)

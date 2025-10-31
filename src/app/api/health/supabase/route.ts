@@ -1,6 +1,9 @@
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { successResponse, errorResponse } from "@/lib/api-response"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const supabase = createRouteHandlerSupabaseClient()

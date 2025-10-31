@@ -4,6 +4,9 @@ import { withAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export const POST = withAuth(async (request: NextRequest, user) => {
   try {
     // Check if user is already verified

@@ -3,6 +3,9 @@ import Razorpay from "razorpay"
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { successResponse, errorResponse, unauthorizedResponse, validationErrorResponse } from "@/lib/api-response"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
     // Auth check

@@ -5,6 +5,9 @@ import { successResponse, errorResponse, validationErrorResponse, notFoundRespon
 import { sendMessageSchema, validateAndSanitizeBody, validatePagination } from "@/lib/validation"
 import { isValidUUID } from "@/lib/uuid-validation"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

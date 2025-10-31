@@ -5,6 +5,9 @@ import { successResponse, errorResponse, notFoundResponse, validationErrorRespon
 import { z } from "zod"
 import { isValidUUID } from "@/lib/uuid-validation"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 const updateUserSchema = z.object({
   verified: z.boolean().optional(),
   role: z.enum(["USER", "ADMIN"]).optional(),

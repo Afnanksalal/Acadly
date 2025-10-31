@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse } from "@/lib/api-response"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export const GET = withAdminAuth(async (request: NextRequest, user) => {
   // Log admin access for security audit
   console.log(`Admin analytics accessed by user: ${user.id} (${user.email})`)

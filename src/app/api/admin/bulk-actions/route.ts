@@ -4,6 +4,9 @@ import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
 import { z } from "zod"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 const bulkActionSchema = z.object({
   action: z.enum([
     "verify_users",

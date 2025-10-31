@@ -4,6 +4,9 @@ import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { processRefund, processPartialRefund } from "@/lib/refund"
 import { z } from "zod"
+
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
 import { isValidUUID } from "@/lib/uuid-validation"
 
 const refundSchema = z.object({

@@ -3,6 +3,9 @@ import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { createClient } from "@supabase/supabase-js"
 import { successResponse, errorResponse, unauthorizedResponse, validationErrorResponse } from "@/lib/api-response"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 

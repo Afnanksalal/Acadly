@@ -5,6 +5,9 @@ import { successResponse, errorResponse, notFoundResponse, validationErrorRespon
 import { z } from "zod"
 import { isValidUUID } from "@/lib/uuid-validation"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 const updateDisputeSchema = z.object({
   status: z.enum(["OPEN", "IN_REVIEW", "RESOLVED", "REJECTED"]).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),

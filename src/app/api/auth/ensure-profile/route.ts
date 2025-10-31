@@ -2,6 +2,9 @@ import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { prisma } from "@/lib/prisma"
 import { successResponse, unauthorizedResponse } from "@/lib/api-response"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export async function POST() {
   const supabase = createRouteHandlerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()

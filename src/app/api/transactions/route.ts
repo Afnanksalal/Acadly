@@ -5,6 +5,9 @@ import { withVerifiedAuth, validateBuyerNotSeller } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { createTransactionSchema, validateAndSanitizeBody, validatePagination } from "@/lib/validation"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

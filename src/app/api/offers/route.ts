@@ -5,6 +5,9 @@ import { successResponse, errorResponse, validationErrorResponse, notFoundRespon
 import { createOfferSchema, validateAndSanitizeBody } from "@/lib/validation"
 import { z } from "zod"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
   try {
     const body = await request.json()

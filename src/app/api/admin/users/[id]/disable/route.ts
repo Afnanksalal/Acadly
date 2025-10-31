@@ -4,6 +4,9 @@ import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { validateUUIDForAPI } from "@/lib/uuid-validation"
 import { successResponse, unauthorizedResponse, forbiddenResponse, notFoundResponse } from "@/lib/api-response"
 
+// Force dynamic rendering since we use cookies for auth
+export const dynamic = 'force-dynamic'
+
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   // Validate UUID format
   const validation = validateUUIDForAPI(params.id, "user")
