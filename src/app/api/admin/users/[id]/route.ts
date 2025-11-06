@@ -3,217 +3,241 @@ import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { z } from "zod"
-import { isValidUUID } from "@/lib/uuid-validation"
+import { notifyAccountVerified, notifySecurityAlert } from "@/lib/notifications"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
 const updateUserSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  username: z.string().min(3).max(50).optional(),
+  department: z.string().max(100).optional(),
+  year: z.string().max(20).optional(),
   verified: z.boolean().optional(),
   role: z.enum(["USER", "ADMIN"]).optional(),
-  notes: z.string().max(500).optional(),
+  bio: z.string().max(500).optional()
 })
 
-export const GET = withAdminAuth(async (request: NextRequest, user) => {
-  // Log admin user detail access for security audit
-  console.log(`Admin user detail accessed by user: ${user.id} (${user.email})`)
+// GET /api/admin/users/[id] - Get user details
+export const GET = withAdminAuth(async (request: NextRequest, adminUser) => {
   try {
-    const url = new URL(request.url)
-    const userId = url.pathname.split("/")[4] // /api/admin/users/[id]
-
+    // Extract user ID from URL path
+    const userId = request.url.split('/').pop()
+    
     if (!userId) {
       return validationErrorResponse("User ID is required")
     }
 
-    if (!isValidUUID(userId)) {
-      return validationErrorResponse("Invalid user ID format")
-    }
-
-    const targetUser = await prisma.profile.findUnique({
+    const user = await prisma.profile.findUnique({
       where: { id: userId },
       include: {
-        listings: {
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            isActive: true,
-            createdAt: true,
-          },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
-        purchases: {
-          select: {
-            id: true,
-            amount: true,
-            status: true,
-            createdAt: true,
-            listing: {
-              select: {
-                id: true,
-                title: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
-        sales: {
-          select: {
-            id: true,
-            amount: true,
-            status: true,
-            createdAt: true,
-            listing: {
-              select: {
-                id: true,
-                title: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
-        disputes: {
-          select: {
-            id: true,
-            subject: true,
-            status: true,
-            reason: true,
-            createdAt: true,
-          },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
-        reviewsReceived: {
-          select: {
-            id: true,
-            rating: true,
-            comment: true,
-            createdAt: true,
-            reviewer: {
-              select: {
-                id: true,
-                username: true,
-                name: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
         _count: {
           select: {
             listings: true,
             purchases: true,
             sales: true,
             reviewsReceived: true,
+            reviewsGiven: true,
             disputes: true,
-          },
+            notifications: true
+          }
         },
-      },
+        listings: {
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          include: { category: true }
+        },
+        purchases: {
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          include: { 
+            listing: { select: { title: true } },
+            seller: { select: { email: true, name: true } }
+          }
+        },
+        sales: {
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          include: { 
+            listing: { select: { title: true } },
+            buyer: { select: { email: true, name: true } }
+          }
+        },
+        reviewsReceived: {
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          include: {
+            reviewer: { select: { email: true, name: true } },
+            transaction: { include: { listing: { select: { title: true } } } }
+          }
+        }
+      }
     })
 
-    if (!targetUser) {
+    if (!user) {
       return notFoundResponse("User not found")
     }
 
-    return successResponse(targetUser)
+    return successResponse(user)
   } catch (error) {
-    console.error("Error fetching user:", error)
+    console.error("Error fetching user details:", error)
     return errorResponse(error, 500)
   }
 })
 
-export const PUT = withAdminAuth(async (request: NextRequest, user) => {
+// PUT /api/admin/users/[id] - Update user
+export const PUT = withAdminAuth(async (request: NextRequest, adminUser) => {
   try {
-    const url = new URL(request.url)
-    const userId = url.pathname.split("/")[4] // /api/admin/users/[id]
-
+    // Extract user ID from URL path
+    const userId = request.url.split('/').pop()
+    
     if (!userId) {
       return validationErrorResponse("User ID is required")
     }
-
+    
     const body = await request.json()
+    
     const parsed = updateUserSchema.safeParse(body)
-
     if (!parsed.success) {
-      return validationErrorResponse("Invalid input data", parsed.error.errors)
+      return validationErrorResponse("Invalid user data", parsed.error.errors)
     }
 
-    const { verified, role, notes } = parsed.data
+    const data = parsed.data
 
     // Check if user exists
     const existingUser = await prisma.profile.findUnique({
-      where: { id: userId },
+      where: { id: userId }
     })
 
     if (!existingUser) {
       return notFoundResponse("User not found")
     }
 
-    // Prevent admin from demoting themselves
-    if (userId === user.id && role === "USER") {
-      return validationErrorResponse("You cannot demote yourself from admin")
+    // Check if username is already taken (if updating username)
+    if (data.username && data.username !== existingUser.username) {
+      const usernameExists = await prisma.profile.findUnique({
+        where: { username: data.username }
+      })
+      if (usernameExists) {
+        return validationErrorResponse("Username already taken")
+      }
     }
 
     // Update user
     const updatedUser = await prisma.profile.update({
       where: { id: userId },
       data: {
-        ...(verified !== undefined && { verified }),
-        ...(role && { role }),
-        updatedAt: new Date(),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        username: true,
-        avatarUrl: true,
-        phone: true,
-        department: true,
-        year: true,
-        role: true,
-        verified: true,
-        ratingAvg: true,
-        ratingCount: true,
-        createdAt: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            listings: true,
-            purchases: true,
-            sales: true,
-            reviewsReceived: true,
-            disputes: true,
-          },
-        },
-      },
+        ...data,
+        updatedAt: new Date()
+      }
     })
 
-    // Log admin action
-    const changes = []
-    if (verified !== undefined && verified !== existingUser.verified) {
-      changes.push(`Verification: ${existingUser.verified} → ${verified}`)
-    }
-    if (role && role !== existingUser.role) {
-      changes.push(`Role: ${existingUser.role} → ${role}`)
+    // Send notifications for important changes
+    if (data.verified === true && !existingUser.verified) {
+      // User was just verified
+      await notifyAccountVerified(userId)
     }
 
-    if (changes.length > 0 || notes) {
-      // Note: AdminAction requires disputeId, so we'll skip logging for user updates
-      // In a real app, you might want a separate UserAction table
-      console.log(`Admin ${user.id} updated user ${existingUser.email}: ${changes.join(", ")}${notes ? ` | Notes: ${notes}` : ""}`)
+    if (data.role === "ADMIN" && existingUser.role !== "ADMIN") {
+      // User was promoted to admin
+      await notifySecurityAlert(
+        userId,
+        "Account Promotion",
+        "Your account has been promoted to administrator by an admin."
+      )
     }
 
     return successResponse({
       user: updatedUser,
-      message: "User updated successfully",
+      message: "User updated successfully"
     })
   } catch (error) {
     console.error("Error updating user:", error)
+    return errorResponse(error, 500)
+  }
+})
+
+// DELETE /api/admin/users/[id] - Suspend/Delete user
+export const DELETE = withAdminAuth(async (request: NextRequest, adminUser) => {
+  try {
+    // Extract user ID from URL path
+    const userId = request.url.split('/').pop()
+    
+    if (!userId) {
+      return validationErrorResponse("User ID is required")
+    }
+    
+    const { searchParams } = new URL(request.url)
+    const action = searchParams.get("action") || "suspend" // suspend or delete
+
+    // Check if user exists
+    const existingUser = await prisma.profile.findUnique({
+      where: { id: userId }
+    })
+
+    if (!existingUser) {
+      return notFoundResponse("User not found")
+    }
+
+    // Prevent admin from deleting themselves
+    if (userId === adminUser.id) {
+      return validationErrorResponse("Cannot delete your own account")
+    }
+
+    if (action === "delete") {
+      // Hard delete user and all related data
+      await prisma.$transaction(async (tx) => {
+        // Delete in correct order to handle foreign key constraints
+        await tx.notification.deleteMany({ where: { userId } })
+        await tx.review.deleteMany({ where: { OR: [{ reviewerId: userId }, { revieweeId: userId }] } })
+        await tx.message.deleteMany({ where: { senderId: userId } })
+        await tx.dispute.deleteMany({ where: { reporterId: userId } })
+        await tx.pickup.deleteMany({ 
+          where: { 
+            transaction: { 
+              OR: [{ buyerId: userId }, { sellerId: userId }] 
+            } 
+          } 
+        })
+        await tx.transaction.deleteMany({ where: { OR: [{ buyerId: userId }, { sellerId: userId }] } })
+        await tx.listing.deleteMany({ where: { userId } })
+        await tx.profile.delete({ where: { id: userId } })
+      })
+
+      return successResponse({
+        message: "User and all related data deleted successfully"
+      })
+    } else {
+      // Suspend user (deactivate account)
+      const suspendedUser = await prisma.profile.update({
+        where: { id: userId },
+        data: {
+          verified: false,
+          // Could add a suspended field to the schema
+          updatedAt: new Date()
+        }
+      })
+
+      // Deactivate all user's listings
+      await prisma.listing.updateMany({
+        where: { userId },
+        data: { isActive: false }
+      })
+
+      // Send security alert
+      await notifySecurityAlert(
+        userId,
+        "Account Suspended",
+        "Your account has been suspended by an administrator. Contact support for more information."
+      )
+
+      return successResponse({
+        user: suspendedUser,
+        message: "User suspended successfully"
+      })
+    }
+  } catch (error) {
+    console.error("Error deleting/suspending user:", error)
     return errorResponse(error, 500)
   }
 })

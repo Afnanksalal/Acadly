@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -26,35 +26,35 @@ model Profile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  listings        Listing[]
-  purchases       Transaction[] @relation("Purchases")
-  sales           Transaction[] @relation("Sales")
-  reviewsGiven    Review[]      @relation("ReviewsGiven")
-  reviewsReceived Review[]      @relation("ReviewsReceived")
-  disputes        Dispute[]
-  chatsBuyer      Chat[]        @relation("ChatBuyer")
-  chatsSeller     Chat[]        @relation("ChatSeller")
-  Message         Message[]
-  Offer           Offer[]
-  AdminAction     AdminAction[]
-  events          Event[]
-  trophies        Trophy[]
-  badges          Badge[]
-  projects        Project[]
-  papers          Paper[]
-  clubMemberships ClubMembership[]
-  notifications   Notification[]
-  analytics       Analytics[]
-  feedback        Feedback[]
-  feedbackAssigned Feedback[] @relation("FeedbackAssignee")
+  listings          Listing[]
+  purchases         Transaction[]      @relation("Purchases")
+  sales             Transaction[]      @relation("Sales")
+  reviewsGiven      Review[]           @relation("ReviewsGiven")
+  reviewsReceived   Review[]           @relation("ReviewsReceived")
+  disputes          Dispute[]
+  chatsBuyer        Chat[]             @relation("ChatBuyer")
+  chatsSeller       Chat[]             @relation("ChatSeller")
+  Message           Message[]
+  Offer             Offer[]
+  AdminAction       AdminAction[]
+  events            Event[]
+  trophies          Trophy[]
+  badges            Badge[]
+  projects          Project[]
+  papers            Paper[]
+  clubMemberships   ClubMembership[]
+  notifications     Notification[]
+  analytics         Analytics[]
+  feedback          Feedback[]
+  feedbackAssigned  Feedback[]         @relation("FeedbackAssignee")
   feedbackResponses FeedbackResponse[]
-  announcements   Announcement[]
+  announcements     Announcement[]
   announcementViews AnnouncementView[]
-  reportsCreated  Report[] @relation("ReportsCreated")
-  reportsReceived Report[] @relation("ReportsReceived")
-  reportsAssigned Report[] @relation("ReportsAssigned")
-  userSessions    UserSession[]
-  auditLogs       AuditLog[]
+  reportsCreated    Report[]           @relation("ReportsCreated")
+  reportsReceived   Report[]           @relation("ReportsReceived")
+  reportsAssigned   Report[]           @relation("ReportsAssigned")
+  userSessions      UserSession[]
+  auditLogs         AuditLog[]
 
   @@map("profiles")
 }
@@ -259,23 +259,23 @@ model Review {
 }
 
 model Dispute {
-  id            String        @id @default(uuid()) @db.Uuid
-  transactionId String        @db.Uuid
-  transaction   Transaction   @relation(fields: [transactionId], references: [id])
-  reporterId    String        @db.Uuid
-  reporter      Profile       @relation(fields: [reporterId], references: [id])
+  id            String          @id @default(uuid()) @db.Uuid
+  transactionId String          @db.Uuid
+  transaction   Transaction     @relation(fields: [transactionId], references: [id])
+  reporterId    String          @db.Uuid
+  reporter      Profile         @relation(fields: [reporterId], references: [id])
   subject       String
   description   String
-  reason        DisputeReason @default(OTHER)
+  reason        DisputeReason   @default(OTHER)
   evidence      Json?
-  status        DisputeStatus @default(OPEN)
+  status        DisputeStatus   @default(OPEN)
   priority      DisputePriority @default(MEDIUM)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   resolvedAt    DateTime?
-  resolvedBy    String?       @db.Uuid
+  resolvedBy    String?         @db.Uuid
   resolution    String?
-  refundAmount  Decimal?      @db.Decimal(12, 2)
+  refundAmount  Decimal?        @db.Decimal(12, 2)
 
   actions AdminAction[]
 
@@ -305,7 +305,7 @@ model Event {
   imageUrl    String?
   venue       String
   hostType    HostType
-  hostName    String      // Club name, Department name, etc.
+  hostName    String // Club name, Department name, etc.
   startTime   DateTime
   endTime     DateTime?
   status      EventStatus @default(UPCOMING)
@@ -335,110 +335,110 @@ enum HostType {
 }
 
 model Trophy {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @db.Uuid
-  user        Profile  @relation(fields: [userId], references: [id])
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @db.Uuid
+  user        Profile        @relation(fields: [userId], references: [id])
   title       String
   description String?
   category    TrophyCategory @default(ACADEMIC)
   awardedBy   String?
   awardedAt   DateTime
   imageUrl    String?
-  isVerified  Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  isVerified  Boolean        @default(false)
+  createdAt   DateTime       @default(now())
 
   @@index([userId, category])
   @@map("trophies")
 }
 
 model Badge {
-  id          String     @id @default(uuid()) @db.Uuid
-  userId      String     @db.Uuid
-  user        Profile    @relation(fields: [userId], references: [id])
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  user        Profile   @relation(fields: [userId], references: [id])
   name        String
   description String?
-  type        BadgeType  @default(ACHIEVEMENT)
+  type        BadgeType @default(ACHIEVEMENT)
   iconUrl     String?
-  color       String?    @default("#3B82F6")
-  earnedAt    DateTime   @default(now())
-  isVisible   Boolean    @default(true)
+  color       String?   @default("#3B82F6")
+  earnedAt    DateTime  @default(now())
+  isVisible   Boolean   @default(true)
 
   @@index([userId, type])
   @@map("badges")
 }
 
 model Project {
-  id          String        @id @default(uuid()) @db.Uuid
-  userId      String        @db.Uuid
-  user        Profile       @relation(fields: [userId], references: [id])
-  title       String
-  description String
-  category    ProjectCategory @default(ACADEMIC)
-  technologies Json?        // Array of tech stack
-  githubUrl   String?
-  liveUrl     String?
-  imageUrls   Json?         // Array of project images
-  startDate   DateTime?
-  endDate     DateTime?
-  status      ProjectStatus @default(COMPLETED)
-  isPublic    Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String          @db.Uuid
+  user         Profile         @relation(fields: [userId], references: [id])
+  title        String
+  description  String
+  category     ProjectCategory @default(ACADEMIC)
+  technologies Json? // Array of tech stack
+  githubUrl    String?
+  liveUrl      String?
+  imageUrls    Json? // Array of project images
+  startDate    DateTime?
+  endDate      DateTime?
+  status       ProjectStatus   @default(COMPLETED)
+  isPublic     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   @@index([userId, category, status])
   @@map("projects")
 }
 
 model Paper {
-  id          String     @id @default(uuid()) @db.Uuid
-  userId      String     @db.Uuid
-  user        Profile    @relation(fields: [userId], references: [id])
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @db.Uuid
+  user        Profile       @relation(fields: [userId], references: [id])
   title       String
   abstract    String?
-  authors     Json       // Array of author names
+  authors     Json // Array of author names
   journal     String?
   conference  String?
   publishedAt DateTime?
   doi         String?
   pdfUrl      String?
   category    PaperCategory @default(RESEARCH)
-  keywords    Json?      // Array of keywords
-  citations   Int        @default(0)
-  isVerified  Boolean    @default(false)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  keywords    Json? // Array of keywords
+  citations   Int           @default(0)
+  isVerified  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([userId, category])
   @@map("papers")
 }
 
 model Club {
-  id          String     @id @default(uuid()) @db.Uuid
-  name        String     @unique
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @unique
   description String?
   category    ClubCategory @default(ACADEMIC)
   logoUrl     String?
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  members     ClubMembership[]
+  members ClubMembership[]
 
   @@index([category, isActive])
   @@map("clubs")
 }
 
 model ClubMembership {
-  id        String           @id @default(uuid()) @db.Uuid
-  userId    String           @db.Uuid
-  user      Profile          @relation(fields: [userId], references: [id])
-  clubId    String           @db.Uuid
-  club      Club             @relation(fields: [clubId], references: [id])
-  role      ClubRole         @default(MEMBER)
-  position  String?          // Custom position title
-  joinedAt  DateTime         @default(now())
-  leftAt    DateTime?
-  isActive  Boolean          @default(true)
+  id       String    @id @default(uuid()) @db.Uuid
+  userId   String    @db.Uuid
+  user     Profile   @relation(fields: [userId], references: [id])
+  clubId   String    @db.Uuid
+  club     Club      @relation(fields: [clubId], references: [id])
+  role     ClubRole  @default(MEMBER)
+  position String? // Custom position title
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+  isActive Boolean   @default(true)
 
   @@unique([userId, clubId])
   @@index([clubId, role])
@@ -511,17 +511,17 @@ enum ClubRole {
 }
 
 model Notification {
-  id          String            @id @default(uuid()) @db.Uuid
-  userId      String            @db.Uuid
-  user        Profile           @relation(fields: [userId], references: [id])
-  type        NotificationType  @default(GENERAL)
-  title       String
-  message     String
-  data        Json?             // Additional data for the notification
-  isRead      Boolean           @default(false)
-  priority    NotificationPriority @default(NORMAL)
-  expiresAt   DateTime?
-  createdAt   DateTime          @default(now())
+  id        String               @id @default(uuid()) @db.Uuid
+  userId    String               @db.Uuid
+  user      Profile              @relation(fields: [userId], references: [id])
+  type      NotificationType     @default(GENERAL)
+  title     String
+  message   String
+  data      Json? // Additional data for the notification
+  isRead    Boolean              @default(false)
+  priority  NotificationPriority @default(NORMAL)
+  expiresAt DateTime?
+  createdAt DateTime             @default(now())
 
   @@index([userId, isRead, createdAt])
   @@index([type, priority])
@@ -529,15 +529,15 @@ model Notification {
 }
 
 model Analytics {
-  id          String      @id @default(uuid()) @db.Uuid
-  eventType   String      // page_view, user_action, transaction, etc.
-  eventName   String      // specific event name
-  userId      String?     @db.Uuid
-  user        Profile?    @relation(fields: [userId], references: [id])
-  sessionId   String?
-  data        Json?       // Event-specific data
-  metadata    Json?       // Browser, device, location info
-  createdAt   DateTime    @default(now())
+  id        String   @id @default(uuid()) @db.Uuid
+  eventType String // page_view, user_action, transaction, etc.
+  eventName String // specific event name
+  userId    String?  @db.Uuid
+  user      Profile? @relation(fields: [userId], references: [id])
+  sessionId String?
+  data      Json? // Event-specific data
+  metadata  Json? // Browser, device, location info
+  createdAt DateTime @default(now())
 
   @@index([eventType, eventName, createdAt])
   @@index([userId, createdAt])
@@ -545,25 +545,25 @@ model Analytics {
 }
 
 model Feedback {
-  id          String        @id @default(uuid()) @db.Uuid
-  userId      String?       @db.Uuid
-  user        Profile?      @relation(fields: [userId], references: [id])
-  type        FeedbackType  @default(GENERAL)
-  category    String?       // bug, feature_request, improvement, etc.
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String?          @db.Uuid
+  user        Profile?         @relation(fields: [userId], references: [id])
+  type        FeedbackType     @default(GENERAL)
+  category    String? // bug, feature_request, improvement, etc.
   title       String
   description String
-  rating      Int?          // 1-5 rating
-  status      FeedbackStatus @default(OPEN)
+  rating      Int? // 1-5 rating
+  status      FeedbackStatus   @default(OPEN)
   priority    FeedbackPriority @default(MEDIUM)
-  assignedTo  String?       @db.Uuid
-  assignee    Profile?      @relation("FeedbackAssignee", fields: [assignedTo], references: [id])
-  tags        Json?         // Array of tags
-  attachments Json?         // Array of file URLs
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  assignedTo  String?          @db.Uuid
+  assignee    Profile?         @relation("FeedbackAssignee", fields: [assignedTo], references: [id])
+  tags        Json? // Array of tags
+  attachments Json? // Array of file URLs
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   resolvedAt  DateTime?
 
-  responses   FeedbackResponse[]
+  responses FeedbackResponse[]
 
   @@index([type, status, priority])
   @@index([userId, createdAt])
@@ -571,35 +571,35 @@ model Feedback {
 }
 
 model FeedbackResponse {
-  id          String    @id @default(uuid()) @db.Uuid
-  feedbackId  String    @db.Uuid
-  feedback    Feedback  @relation(fields: [feedbackId], references: [id])
-  userId      String    @db.Uuid
-  user        Profile   @relation(fields: [userId], references: [id])
-  message     String
-  isInternal  Boolean   @default(false) // Internal admin notes vs public responses
-  createdAt   DateTime  @default(now())
+  id         String   @id @default(uuid()) @db.Uuid
+  feedbackId String   @db.Uuid
+  feedback   Feedback @relation(fields: [feedbackId], references: [id])
+  userId     String   @db.Uuid
+  user       Profile  @relation(fields: [userId], references: [id])
+  message    String
+  isInternal Boolean  @default(false) // Internal admin notes vs public responses
+  createdAt  DateTime @default(now())
 
   @@index([feedbackId, createdAt])
   @@map("feedback_responses")
 }
 
 model Announcement {
-  id          String              @id @default(uuid()) @db.Uuid
-  title       String
-  content     String
-  type        AnnouncementType    @default(INFO)
-  priority    AnnouncementPriority @default(NORMAL)
-  targetAudience Json?            // Array of user roles/criteria
-  isActive    Boolean             @default(true)
-  startDate   DateTime?
-  endDate     DateTime?
-  createdBy   String              @db.Uuid
-  creator     Profile             @relation(fields: [createdBy], references: [id])
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id             String               @id @default(uuid()) @db.Uuid
+  title          String
+  content        String
+  type           AnnouncementType     @default(INFO)
+  priority       AnnouncementPriority @default(NORMAL)
+  targetAudience Json? // Array of user roles/criteria
+  isActive       Boolean              @default(true)
+  startDate      DateTime?
+  endDate        DateTime?
+  createdBy      String               @db.Uuid
+  creator        Profile              @relation(fields: [createdBy], references: [id])
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
-  views       AnnouncementView[]
+  views AnnouncementView[]
 
   @@index([type, priority, isActive])
   @@index([startDate, endDate])
@@ -619,24 +619,24 @@ model AnnouncementView {
 }
 
 model Report {
-  id          String      @id @default(uuid()) @db.Uuid
-  reporterId  String      @db.Uuid
-  reporter    Profile     @relation("ReportsCreated", fields: [reporterId], references: [id])
-  targetType  String      // USER, LISTING, MESSAGE, REVIEW, etc.
-  targetId    String      @db.Uuid
-  targetUser  String?     @db.Uuid
-  reportedUser Profile?   @relation("ReportsReceived", fields: [targetUser], references: [id])
-  reason      ReportReason @default(OTHER)
-  description String?
-  evidence    Json?       // Screenshots, links, etc.
-  status      ReportStatus @default(PENDING)
-  priority    ReportPriority @default(MEDIUM)
-  assignedTo  String?     @db.Uuid
-  assignee    Profile?    @relation("ReportsAssigned", fields: [assignedTo], references: [id])
-  resolution  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  resolvedAt  DateTime?
+  id           String         @id @default(uuid()) @db.Uuid
+  reporterId   String         @db.Uuid
+  reporter     Profile        @relation("ReportsCreated", fields: [reporterId], references: [id])
+  targetType   String // USER, LISTING, MESSAGE, REVIEW, etc.
+  targetId     String         @db.Uuid
+  targetUser   String?        @db.Uuid
+  reportedUser Profile?       @relation("ReportsReceived", fields: [targetUser], references: [id])
+  reason       ReportReason   @default(OTHER)
+  description  String?
+  evidence     Json? // Screenshots, links, etc.
+  status       ReportStatus   @default(PENDING)
+  priority     ReportPriority @default(MEDIUM)
+  assignedTo   String?        @db.Uuid
+  assignee     Profile?       @relation("ReportsAssigned", fields: [assignedTo], references: [id])
+  resolution   String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  resolvedAt   DateTime?
 
   @@index([status, priority, createdAt])
   @@index([targetType, targetId])
@@ -645,18 +645,18 @@ model Report {
 }
 
 model UserSession {
-  id          String    @id @default(uuid()) @db.Uuid
-  userId      String    @db.Uuid
-  user        Profile   @relation(fields: [userId], references: [id])
-  sessionId   String    @unique
-  ipAddress   String?
-  userAgent   String?
-  location    Json?     // Country, city, etc.
-  device      Json?     // Device info
-  isActive    Boolean   @default(true)
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  user         Profile  @relation(fields: [userId], references: [id])
+  sessionId    String   @unique
+  ipAddress    String?
+  userAgent    String?
+  location     Json? // Country, city, etc.
+  device       Json? // Device info
+  isActive     Boolean  @default(true)
   lastActivity DateTime @default(now())
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
 
   @@index([userId, isActive])
   @@index([sessionId])
@@ -664,18 +664,18 @@ model UserSession {
 }
 
 model AuditLog {
-  id          String    @id @default(uuid()) @db.Uuid
-  userId      String?   @db.Uuid
-  user        Profile?  @relation(fields: [userId], references: [id])
-  action      String    // CREATE, UPDATE, DELETE, LOGIN, etc.
-  resource    String    // USER, LISTING, TRANSACTION, etc.
-  resourceId  String?   @db.Uuid
-  oldValues   Json?     // Previous state
-  newValues   Json?     // New state
-  ipAddress   String?
-  userAgent   String?
-  metadata    Json?     // Additional context
-  createdAt   DateTime  @default(now())
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  user       Profile? @relation(fields: [userId], references: [id])
+  action     String // CREATE, UPDATE, DELETE, LOGIN, etc.
+  resource   String // USER, LISTING, TRANSACTION, etc.
+  resourceId String?  @db.Uuid
+  oldValues  Json? // Previous state
+  newValues  Json? // New state
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json? // Additional context
+  createdAt  DateTime @default(now())
 
   @@index([userId, action, createdAt])
   @@index([resource, resourceId])
@@ -684,12 +684,12 @@ model AuditLog {
 }
 
 model SystemMetric {
-  id          String    @id @default(uuid()) @db.Uuid
-  name        String    // cpu_usage, memory_usage, active_users, etc.
-  value       Float
-  unit        String?   // percentage, bytes, count, etc.
-  tags        Json?     // Additional metadata
-  timestamp   DateTime  @default(now())
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String // cpu_usage, memory_usage, active_users, etc.
+  value     Float
+  unit      String? // percentage, bytes, count, etc.
+  tags      Json? // Additional metadata
+  timestamp DateTime @default(now())
 
   @@index([name, timestamp])
   @@map("system_metrics")

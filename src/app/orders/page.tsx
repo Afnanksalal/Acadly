@@ -38,15 +38,15 @@ export default async function OrdersPage() {
   })
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-8">
+    <main className="max-w-6xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 lg:space-y-8">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight">My Orders</h1>
-        <p className="text-muted-foreground mt-2">Track your purchases and sales</p>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">My Orders</h1>
+        <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Track your purchases and sales</p>
       </div>
 
       {/* Purchases */}
       <section>
-        <h2 className="text-2xl font-semibold mb-4">🛒 My Purchases ({purchases.length})</h2>
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-3 sm:mb-4">🛒 My Purchases ({purchases.length})</h2>
         {purchases.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -59,40 +59,40 @@ export default async function OrdersPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:gap-4">
             {purchases.map((order) => (
               <Link key={order.id} href={`/orders/${order.id}`}>
                 <Card className="hover:border-primary transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{order.listing.title}</h3>
+                  <CardContent>
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                      <div className="flex-1 w-full sm:w-auto">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                          <h3 className="font-semibold text-sm sm:text-base lg:text-lg line-clamp-2">{order.listing.title}</h3>
                           <Badge variant={
                             order.status === "PAID" && order.pickup?.status === "CONFIRMED" ? "success" :
                             order.status === "PAID" ? "default" :
                             order.status === "CANCELLED" ? "destructive" :
                             "secondary"
-                          }>
+                          } className="self-start sm:self-auto text-xs">
                             {order.pickup?.status === "CONFIRMED" ? "Completed" : order.status}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                           Seller: {order.seller.email?.split('@')[0]} • {order.listing.category.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Ordered on {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                         {order.status === "PAID" && order.pickup && order.pickup.status === "GENERATED" && (
-                          <div className="mt-3 p-3 bg-primary/10 rounded-md">
-                            <p className="text-sm font-medium mb-1">🔑 Your Pickup Code:</p>
-                            <p className="text-2xl font-bold font-mono tracking-wider">{order.pickup.pickupCode}</p>
+                          <div className="mt-3 p-2 sm:p-3 bg-primary/10 rounded-md">
+                            <p className="text-xs sm:text-sm font-medium mb-1">🔑 Your Pickup Code:</p>
+                            <p className="text-lg sm:text-xl lg:text-2xl font-bold font-mono tracking-wider">{order.pickup.pickupCode}</p>
                           </div>
                         )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-primary">₹{order.amount.toString()}</p>
-                        <Button variant="outline" className="mt-2">View Details</Button>
+                      <div className="text-left sm:text-right w-full sm:w-auto flex sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-2">
+                        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">₹{order.amount.toString()}</p>
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm">View Details</Button>
                       </div>
                     </div>
                   </CardContent>
@@ -105,7 +105,7 @@ export default async function OrdersPage() {
 
       {/* Sales */}
       <section>
-        <h2 className="text-2xl font-semibold mb-4">💰 My Sales ({sales.length})</h2>
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-3 sm:mb-4">💰 My Sales ({sales.length})</h2>
         {sales.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -118,41 +118,41 @@ export default async function OrdersPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:gap-4">
             {sales.map((order) => (
               <Link key={order.id} href={`/orders/${order.id}`}>
                 <Card className="hover:border-primary transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{order.listing.title}</h3>
+                  <CardContent>
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                      <div className="flex-1 w-full sm:w-auto">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                          <h3 className="font-semibold text-sm sm:text-base lg:text-lg line-clamp-2">{order.listing.title}</h3>
                           <Badge variant={
                             order.status === "PAID" && order.pickup?.status === "CONFIRMED" ? "success" :
                             order.status === "PAID" ? "default" :
                             order.status === "CANCELLED" ? "destructive" :
                             "secondary"
-                          }>
+                          } className="self-start sm:self-auto text-xs">
                             {order.pickup?.status === "CONFIRMED" ? "Completed" : 
                              order.status === "PAID" ? "Awaiting Pickup" : order.status}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                           Buyer: {order.buyer.email?.split('@')[0]} • {order.listing.category.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Sold on {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                         {order.status === "PAID" && order.pickup && order.pickup.status === "GENERATED" && (
-                          <div className="mt-3 p-3 bg-secondary/10 rounded-md">
-                            <p className="text-sm font-medium text-secondary">⏳ Waiting for buyer pickup</p>
+                          <div className="mt-3 p-2 sm:p-3 bg-secondary/10 rounded-md">
+                            <p className="text-xs sm:text-sm font-medium text-secondary">⏳ Waiting for buyer pickup</p>
                             <p className="text-xs text-muted-foreground mt-1">Ask buyer for their code to confirm</p>
                           </div>
                         )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-primary">₹{order.amount.toString()}</p>
-                        <Button variant="outline" className="mt-2">
+                      <div className="text-left sm:text-right w-full sm:w-auto flex sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-2">
+                        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">₹{order.amount.toString()}</p>
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm">
                           {order.pickup?.status === "GENERATED" ? "Confirm Pickup" : "View Details"}
                         </Button>
                       </div>

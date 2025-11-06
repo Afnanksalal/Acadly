@@ -282,7 +282,15 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         </ScrollArea>
 
         <div className="p-4 border-t">
-          <Button variant="outline" className="w-full" size="sm">
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            size="sm"
+            onClick={() => {
+              setIsOpen(false)
+              window.location.href = '/notifications'
+            }}
+          >
             View All Notifications
           </Button>
         </div>

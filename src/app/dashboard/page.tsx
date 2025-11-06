@@ -56,19 +56,19 @@ export default async function DashboardPage() {
         
         {/* Header */}
         <div className="bg-card border-b border-primary/10 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 sm:py-6 gap-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 sm:py-4 lg:py-6 gap-3 sm:gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Comprehensive platform management and analytics
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+                  Platform management and analytics
                 </p>
               </div>
-              <div className="flex items-center space-x-4">
-                <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 text-xs">
                   Admin Access
                 </Badge>
-                <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                <div className="bg-primary/10 text-primary px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
                   System Online
                 </div>
               </div>
@@ -77,30 +77,30 @@ export default async function DashboardPage() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-          <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-8">
+          <Tabs defaultValue="overview" className="space-y-3 sm:space-y-4 lg:space-y-6">
             {/* Mobile-friendly tabs with horizontal scroll */}
-            <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground min-w-max">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+            <div className="w-full overflow-x-auto pb-1">
+              <TabsList className="inline-flex h-8 sm:h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground min-w-max">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Overview
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Analytics
                 </TabsTrigger>
-                <TabsTrigger value="users" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                <TabsTrigger value="users" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Users
                 </TabsTrigger>
-                <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Content
                 </TabsTrigger>
-                <TabsTrigger value="financial" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                <TabsTrigger value="financial" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Financial
                 </TabsTrigger>
-                <TabsTrigger value="system" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                <TabsTrigger value="system" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   System
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap">
+                <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Settings
                 </TabsTrigger>
               </TabsList>
@@ -143,13 +143,13 @@ export default async function DashboardPage() {
 
   // Regular user dashboard
   return (
-    <main className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
+    <main className="max-w-5xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 lg:space-y-8">
       {/* Announcements */}
       <AnnouncementBanner />
       
       <div>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">Welcome back!</h1>
-        <p className="text-muted-foreground mt-2">Manage your listings and account</p>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">Welcome back!</h1>
+        <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Manage your listings and account</p>
       </div>
 
       {gate ? (
@@ -170,25 +170,25 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           <Card className="md:col-span-2 hover-lift">
-            <CardHeader className="p-4 sm:p-6">
+            <CardHeader>
               <CardTitle className="text-foreground">Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <Link href="/listings/new" className="group">
-                  <div className="rounded-xl border-2 border-primary/10 p-4 sm:p-6 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:scale-105 bg-muted/20">
-                    <div className="text-4xl mb-3">📝</div>
-                    <div className="font-medium group-hover:text-primary transition-colors text-foreground">Create Listing</div>
-                    <p className="text-xs text-muted-foreground mt-2">Sell your items</p>
+                  <div className="rounded-xl border-2 border-primary/10 p-3 sm:p-4 lg:p-6 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:scale-105 bg-muted/20">
+                    <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-3">📝</div>
+                    <div className="font-medium group-hover:text-primary transition-colors text-foreground text-xs sm:text-sm lg:text-base">Create Listing</div>
+                    <p className="text-xs text-muted-foreground mt-1 sm:mt-2 hidden sm:block">Sell your items</p>
                   </div>
                 </Link>
                 <Link href="/listings" className="group">
-                  <div className="rounded-xl border-2 border-primary/10 p-4 sm:p-6 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:scale-105 bg-muted/20">
-                    <div className="text-4xl mb-3">🛍️</div>
-                    <div className="font-medium group-hover:text-primary transition-colors text-foreground">Browse Listings</div>
-                    <p className="text-xs text-muted-foreground mt-2">Find what you need</p>
+                  <div className="rounded-xl border-2 border-primary/10 p-3 sm:p-4 lg:p-6 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:scale-105 bg-muted/20">
+                    <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-3">🛍️</div>
+                    <div className="font-medium group-hover:text-primary transition-colors text-foreground text-xs sm:text-sm lg:text-base">Browse Listings</div>
+                    <p className="text-xs text-muted-foreground mt-1 sm:mt-2 hidden sm:block">Find what you need</p>
                   </div>
                 </Link>
               </div>

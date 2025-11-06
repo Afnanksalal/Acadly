@@ -9,10 +9,10 @@ export const dynamic = 'force-dynamic'
 
 const badgeSchema = z.object({
   name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
+  description: z.string().max(500).optional().nullable().transform(val => val || null),
   type: z.enum(["ACHIEVEMENT", "SKILL", "PARTICIPATION", "MILESTONE", "SPECIAL"]),
-  iconUrl: z.string().url().optional(),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
+  iconUrl: z.string().url().optional().nullable().or(z.literal("")).transform(val => val || null),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i).optional().default("#3B82F6"),
   isVisible: z.boolean().default(true),
 })
 

@@ -2,65 +2,48 @@ import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse } from "@/lib/api-response"
-import { logAdminAction, ADMIN_ACTIONS } from "@/lib/admin-logger"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
 export const GET = withAdminAuth(async (request: NextRequest, user) => {
-  await logAdminAction({
-    adminId: user.id,
-    action: ADMIN_ACTIONS.VIEW_DASHBOARD,
-    request
-  })
-
   try {
     const now = new Date()
-    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    const last7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const last30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    // Key Performance Indicators
-    const kpis = await Promise.all([
-      // Revenue (last 30 days)
-      prisma.transaction.aggregate({
-        _sum: { amount: true },
-        _count: true,
-        where: {
-          status: "PAID",
-          createdAt: { gte: last30d }
-        }
-      }),
+    // Get basic overview data using proper Prisma queries
+    const [
+      totalUsers,
+      totalListings,
+      totalTransactions,
+      newUsers7d,
+      activeListings,
+      openDisputes,
+      pendingReports,
+      cancelledTransactions24h,
+      recentTransactions,
+      recentListings,
+      recentMessages
+    ] = await Promise.all([
+      // Basic counts
+      prisma.profile.count(),
+      prisma.listing.count(),
+      prisma.transaction.count(),
       
-      // Active users (last 24h)
-      prisma.userSession.findMany({
-        where: {
-          lastActivity: { gte: last24h }
-        },
-        select: { userId: true },
-        distinct: ['userId']
-      }).then(sessions => sessions.length),
-      
-      // New registrations (last 7 days)
+      // New users in last 7 days
       prisma.profile.count({
-        where: {
-          createdAt: { gte: last7d }
-        }
+        where: { createdAt: { gte: sevenDaysAgo } }
       }),
       
       // Active listings
       prisma.listing.count({
         where: { isActive: true }
-      })
-    ])
-
-    // Critical alerts and issues
-    const alerts = await Promise.all([
+      }),
+      
       // Open disputes
       prisma.dispute.count({
-        where: {
-          status: { in: ["OPEN", "IN_REVIEW"] }
-        }
+        where: { status: { in: ["OPEN", "IN_REVIEW"] } }
       }),
       
       // Pending reports
@@ -68,308 +51,273 @@ export const GET = withAdminAuth(async (request: NextRequest, user) => {
         where: { status: "PENDING" }
       }),
       
-      // Cancelled transactions (last 24h)
+      // Cancelled transactions in last 24 hours
       prisma.transaction.count({
         where: {
           status: "CANCELLED",
-          createdAt: { gte: last24h }
+          createdAt: { gte: twentyFourHoursAgo }
         }
       }),
-      
-      // System errors (last 24h)
-      prisma.auditLog.count({
-        where: {
-          action: { contains: "ERROR" },
-          createdAt: { gte: last24h }
-        }
-      })
-    ])
 
-    // Growth trends
-    const trends = await Promise.all([
-      // User growth (last 30 days by day)
-      prisma.profile.findMany({
-        where: { createdAt: { gte: last30d } },
-        select: { createdAt: true },
-        orderBy: { createdAt: 'asc' }
-      }).then(profiles => {
-        const dayMap = new Map()
-        profiles.forEach(profile => {
-          const day = profile.createdAt.toISOString().split('T')[0]
-          dayMap.set(day, (dayMap.get(day) || 0) + 1)
-        })
-        return Array.from(dayMap.entries()).map(([date, new_users]) => ({ date, new_users }))
-      }),
-      
-      // Revenue trend (last 30 days by day)
+      // Get recent activity for active users calculation
       prisma.transaction.findMany({
-        where: {
-          status: "PAID",
-          createdAt: { gte: last30d }
-        },
-        select: { amount: true, createdAt: true },
-        orderBy: { createdAt: 'asc' }
-      }).then(transactions => {
-        const dayMap = new Map()
-        transactions.forEach(transaction => {
-          const day = transaction.createdAt.toISOString().split('T')[0]
-          const existing = dayMap.get(day) || { revenue: 0, transactions: 0 }
-          existing.revenue += Number(transaction.amount)
-          existing.transactions += 1
-          dayMap.set(day, existing)
-        })
-        return Array.from(dayMap.entries()).map(([date, data]) => ({ date, ...data }))
+        where: { createdAt: { gte: twentyFourHoursAgo } },
+        select: { buyerId: true, sellerId: true }
       }),
-      
-      // Listing activity (last 30 days by day)
+
       prisma.listing.findMany({
-        where: { createdAt: { gte: last30d } },
-        select: { createdAt: true },
-        orderBy: { createdAt: 'asc' }
-      }).then(listings => {
-        const dayMap = new Map()
-        listings.forEach(listing => {
-          const day = listing.createdAt.toISOString().split('T')[0]
-          dayMap.set(day, (dayMap.get(day) || 0) + 1)
-        })
-        return Array.from(dayMap.entries()).map(([date, new_listings]) => ({ date, new_listings }))
+        where: { createdAt: { gte: twentyFourHoursAgo } },
+        select: { userId: true }
+      }),
+
+      prisma.message.findMany({
+        where: { createdAt: { gte: twentyFourHoursAgo } },
+        select: { senderId: true }
       })
     ])
 
-    // Top performers
-    const topPerformers = await Promise.all([
-      // Top selling categories
+    // Calculate active users from recent activity
+    const activeUserIds = new Set<string>()
+    recentTransactions.forEach(t => {
+      if (t.buyerId) activeUserIds.add(t.buyerId)
+      if (t.sellerId) activeUserIds.add(t.sellerId)
+    })
+    recentListings.forEach(l => activeUserIds.add(l.userId))
+    recentMessages.forEach(m => activeUserIds.add(m.senderId))
+    
+    const activeUsersCount = activeUserIds.size
+
+    // Get additional data for comprehensive dashboard
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    
+    const [
+      revenueTransactions,
+      topCategories,
+      topSellers,
+      recentUsers
+    ] = await Promise.all([
+      // Revenue data for last 30 days
       prisma.transaction.findMany({
         where: {
           status: "PAID",
-          createdAt: { gte: last30d }
+          createdAt: { gte: thirtyDaysAgo }
         },
-        include: {
-          listing: {
-            include: { category: true }
-          }
+        select: {
+          amount: true,
+          createdAt: true
         }
-      }).then(transactions => {
-        const categoryMap = new Map()
-        transactions.forEach(transaction => {
-          const categoryName = transaction.listing.category.name
-          const existing = categoryMap.get(categoryName) || { sales: 0, revenue: 0 }
-          existing.sales += 1
-          existing.revenue += Number(transaction.amount)
-          categoryMap.set(categoryName, existing)
-        })
-        return Array.from(categoryMap.entries())
-          .map(([category, data]) => ({ category, ...data }))
-          .sort((a, b) => b.revenue - a.revenue)
-          .slice(0, 5)
       }),
-      
-      // Top sellers
-      prisma.transaction.findMany({
+
+      // Top categories by listing count
+      prisma.listing.groupBy({
+        by: ['categoryId'],
+        where: {
+          createdAt: { gte: thirtyDaysAgo }
+        },
+        _count: {
+          categoryId: true
+        },
+        orderBy: {
+          _count: {
+            categoryId: 'desc'
+          }
+        },
+        take: 5
+      }),
+
+      // Top sellers by transaction count
+      prisma.transaction.groupBy({
+        by: ['sellerId'],
         where: {
           status: "PAID",
-          createdAt: { gte: last30d }
+          createdAt: { gte: thirtyDaysAgo }
         },
-        include: {
-          listing: {
-            include: {
-              user: { select: { id: true, name: true, email: true } }
-            }
+        _count: {
+          sellerId: true
+        },
+        _sum: {
+          amount: true
+        },
+        orderBy: {
+          _sum: {
+            amount: 'desc'
           }
-        }
-      }).then(transactions => {
-        const sellerMap = new Map()
-        transactions.forEach(transaction => {
-          const seller = transaction.listing.user
-          const existing = sellerMap.get(seller.id) || {
-            id: seller.id,
-            name: seller.name,
-            email: seller.email,
-            sales: 0,
-            revenue: 0
-          }
-          existing.sales += 1
-          existing.revenue += Number(transaction.amount)
-          sellerMap.set(seller.id, existing)
-        })
-        return Array.from(sellerMap.values())
-          .sort((a, b) => b.revenue - a.revenue)
-          .slice(0, 5)
+        },
+        take: 5
       }),
-      
+
       // Most active users
-      prisma.userSession.findMany({
-        where: { createdAt: { gte: last7d } },
-        include: {
-          user: { select: { id: true, name: true, email: true } }
-        }
-      }).then(sessions => {
-        const userMap = new Map()
-        sessions.forEach(session => {
-          const user = session.user
-          const existing = userMap.get(user.id) || {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            sessions: 0,
-            last_seen: session.lastActivity
-          }
-          existing.sessions += 1
-          if (session.lastActivity > existing.last_seen) {
-            existing.last_seen = session.lastActivity
-          }
-          userMap.set(user.id, existing)
-        })
-        return Array.from(userMap.values())
-          .sort((a, b) => b.sessions - a.sessions)
-          .slice(0, 5)
-      })
-    ])
-
-    // System health overview
-    const systemHealth = await Promise.all([
-      // Database performance from active sessions
-      prisma.userSession.count({
-        where: { isActive: true }
-      }).then(count => [{ active_connections: count }]),
-      
-      // Recent API errors from audit logs
-      prisma.auditLog.count({
-        where: {
-          action: { contains: "ERROR" },
-          createdAt: { gte: last24h }
-        }
-      })
-    ])
-
-    // Recent activities
-    const recentActivities = await Promise.all([
-      // Recent admin actions from audit logs
-      prisma.auditLog.findMany({
-        where: {
-          action: { contains: "ADMIN" },
-          createdAt: { gte: last24h }
-        },
-        include: {
-          user: {
-            select: { name: true, email: true }
-          }
-        },
-        orderBy: { createdAt: "desc" },
-        take: 10
-      }),
-      
-      // Recent user registrations
       prisma.profile.findMany({
-        where: {
-          createdAt: { gte: last24h }
+        orderBy: {
+          createdAt: 'desc'
         },
+        take: 5,
         select: {
           id: true,
           name: true,
           email: true,
-          createdAt: true,
-          verified: true
-        },
-        orderBy: { createdAt: "desc" },
-        take: 10
-      }),
-      
-      // Recent high-value transactions
-      prisma.transaction.findMany({
-        where: {
-          status: "PAID",
-          amount: { gte: 1000 }, // High value threshold
-          createdAt: { gte: last7d }
-        },
-        include: {
-          listing: {
-            select: { title: true, category: true }
-          },
-          buyer: {
-            select: { name: true, email: true }
-          }
-        },
-        orderBy: { amount: "desc" },
-        take: 5
+          createdAt: true
+        }
       })
     ])
 
-    // Calculate health score
-    const totalAlerts = alerts.reduce((sum: number, count: number) => sum + count, 0)
-    const errorRate = systemHealth[1]
-    const healthScore = Math.max(0, 100 - (totalAlerts * 5) - (errorRate * 2))
+    // Calculate revenue metrics
+    const totalRevenue = revenueTransactions.reduce((sum, t) => sum + Number(t.amount), 0)
+    const averageTransaction = revenueTransactions.length > 0 ? totalRevenue / revenueTransactions.length : 0
 
-    const dashboardSummary = {
-      timestamp: now,
+    // Generate actual trend data from database
+    const trendData = []
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
+      const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000)
+      
+      const [dayUsers, dayRevenue, dayListings] = await Promise.all([
+        prisma.profile.count({
+          where: { createdAt: { gte: dayStart, lt: dayEnd } }
+        }),
+        prisma.transaction.findMany({
+          where: {
+            status: "PAID",
+            createdAt: { gte: dayStart, lt: dayEnd }
+          },
+          select: { amount: true }
+        }),
+        prisma.listing.count({
+          where: { createdAt: { gte: dayStart, lt: dayEnd } }
+        })
+      ])
+      
+      const dayRevenueTotal = dayRevenue.reduce((sum, t) => sum + Number(t.amount), 0)
+      
+      trendData.push({
+        date: dayStart.toISOString().split('T')[0],
+        new_users: dayUsers,
+        revenue: dayRevenueTotal,
+        transactions: dayRevenue.length,
+        new_listings: dayListings
+      })
+    }
+
+    // Calculate system health score
+    const systemHealthScore = Math.min(100, Math.max(0, 
+      100 - (openDisputes * 5) - (pendingReports * 3) - (cancelledTransactions24h * 2)
+    ))
+
+    // Comprehensive dashboard data
+    const dashboardData = {
       kpis: {
         revenue30d: {
-          total: kpis[0]._sum.amount || 0,
-          transactions: kpis[0]._count,
-          average: kpis[0]._count > 0 ? Number(kpis[0]._sum.amount || 0) / kpis[0]._count : 0
+          total: totalRevenue,
+          transactions: revenueTransactions.length,
+          average: averageTransaction
         },
-        activeUsers24h: kpis[1],
-        newUsers7d: kpis[2],
-        activeListings: kpis[3]
+        activeUsers24h: activeUsersCount,
+        newUsers7d: newUsers7d,
+        activeListings: activeListings
       },
       alerts: {
-        total: totalAlerts,
-        openDisputes: alerts[0],
-        pendingReports: alerts[1],
-        failedTransactions24h: alerts[2],
-        systemErrors24h: alerts[3],
-        severity: totalAlerts > 20 ? "HIGH" : totalAlerts > 10 ? "MEDIUM" : "LOW"
+        total: openDisputes + pendingReports + cancelledTransactions24h,
+        openDisputes,
+        pendingReports,
+        cancelledTransactions24h,
+        systemErrors24h: 0,
+        severity: (openDisputes > 10 ? 'HIGH' : openDisputes > 5 ? 'MEDIUM' : 'LOW') as 'LOW' | 'MEDIUM' | 'HIGH'
       },
       trends: {
-        userGrowth: trends[0],
-        revenueGrowth: trends[1],
-        listingActivity: trends[2]
+        userGrowth: trendData.map(d => ({ date: d.date, new_users: d.new_users })),
+        revenueGrowth: trendData.map(d => ({ date: d.date, revenue: d.revenue, transactions: d.transactions })),
+        listingActivity: trendData.map(d => ({ date: d.date, new_listings: d.new_listings }))
       },
       topPerformers: {
-        categories: topPerformers[0],
-        sellers: topPerformers[1],
-        activeUsers: topPerformers[2]
+        categories: await Promise.all(topCategories.map(async (c) => {
+          const category = await prisma.category.findUnique({
+            where: { id: c.categoryId },
+            select: { name: true }
+          })
+          const categoryRevenue = await prisma.transaction.aggregate({
+            where: {
+              status: "PAID",
+              listing: { categoryId: c.categoryId },
+              createdAt: { gte: thirtyDaysAgo }
+            },
+            _sum: { amount: true }
+          })
+          return {
+            category: category?.name || 'Unknown',
+            sales: c._count.categoryId,
+            revenue: Number(categoryRevenue._sum.amount || 0)
+          }
+        })),
+        sellers: await Promise.all(topSellers.map(async (s) => {
+          const seller = await prisma.profile.findUnique({
+            where: { id: s.sellerId },
+            select: { name: true, email: true }
+          })
+          return {
+            id: s.sellerId,
+            name: seller?.name || 'Unknown',
+            email: seller?.email || 'unknown@example.com',
+            sales: s._count.sellerId,
+            revenue: Number(s._sum.amount || 0)
+          }
+        })),
+        activeUsers: await Promise.all(recentUsers.map(async (u) => {
+          const sessionCount = await prisma.userSession.count({
+            where: {
+              userId: u.id,
+              createdAt: { gte: sevenDaysAgo }
+            }
+          })
+          const lastSession = await prisma.userSession.findFirst({
+            where: { userId: u.id },
+            orderBy: { lastActivity: 'desc' },
+            select: { lastActivity: true }
+          })
+          return {
+            id: u.id,
+            name: u.name || 'Unknown',
+            email: u.email,
+            sessions: sessionCount,
+            last_seen: lastSession?.lastActivity || u.createdAt
+          }
+        }))
       },
       systemHealth: {
-        score: healthScore,
-        status: healthScore > 90 ? "EXCELLENT" : healthScore > 70 ? "GOOD" : healthScore > 50 ? "FAIR" : "POOR",
-        dbConnections: systemHealth[0],
-        recentErrors: systemHealth[1]
-      },
-      recentActivities: {
-        adminActions: recentActivities[0],
-        newUsers: recentActivities[1],
-        highValueTransactions: recentActivities[2]
+        score: systemHealthScore,
+        status: systemHealthScore >= 90 ? 'Excellent' : 
+                systemHealthScore >= 70 ? 'Good' : 
+                systemHealthScore >= 50 ? 'Fair' : 'Poor'
       },
       quickActions: [
         {
-          title: "View Pending Reports",
-          description: `${alerts[1]} reports need review`,
-          url: "/admin/reports",
-          priority: alerts[1] > 5 ? "HIGH" : "NORMAL"
+          title: 'Review Disputes',
+          description: `${openDisputes} open disputes need attention`,
+          url: '/dashboard?tab=content',
+          priority: openDisputes > 5 ? 'HIGH' : 'NORMAL'
         },
         {
-          title: "Review Open Disputes",
-          description: `${alerts[0]} disputes require attention`,
-          url: "/admin/disputes",
-          priority: alerts[0] > 3 ? "HIGH" : "NORMAL"
+          title: 'Verify Users',
+          description: 'Review pending user verifications',
+          url: '/dashboard?tab=users',
+          priority: 'NORMAL'
         },
         {
-          title: "System Monitoring",
-          description: "Check system performance",
-          url: "/admin/system/monitor",
-          priority: "NORMAL"
+          title: 'View Analytics',
+          description: 'Check user engagement and growth trends',
+          url: '/dashboard?tab=analytics',
+          priority: 'LOW'
         },
         {
-          title: "User Management",
-          description: "Manage user accounts",
-          url: "/admin/users",
-          priority: "NORMAL"
+          title: 'Financial Reports',
+          description: 'Review revenue and transaction data',
+          url: '/dashboard?tab=financial',
+          priority: 'LOW'
         }
       ]
     }
 
-    return successResponse(dashboardSummary)
+    return successResponse(dashboardData)
   } catch (error) {
     console.error("Error fetching dashboard summary:", error)
     return errorResponse(error, 500)

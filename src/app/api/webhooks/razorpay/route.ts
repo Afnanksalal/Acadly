@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import { prisma } from "@/lib/prisma"
+import { notifyPaymentReceived, notifyPickupCodeGenerated } from "@/lib/notifications"
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,6 +61,9 @@ export async function POST(req: NextRequest) {
           
           for (const tx of transactions) {
             try {
+              // Send payment received notification
+              await notifyPaymentReceived(tx.id)
+              
               // Generate pickup code if not exists
               if (!tx.pickup) {
                 await prisma.pickup.create({
@@ -70,6 +74,9 @@ export async function POST(req: NextRequest) {
                   }
                 })
                 console.log(`Pickup code generated for transaction ${tx.id}`)
+                
+                // Send pickup code notification
+                await notifyPickupCodeGenerated(tx.id)
               }
               
               // Mark listing as sold (no longer active)
@@ -112,6 +119,9 @@ export async function POST(req: NextRequest) {
           
           for (const tx of transactions) {
             try {
+              // Send payment received notification (fallback)
+              await notifyPaymentReceived(tx.id)
+              
               // Generate pickup code if not exists
               if (!tx.pickup) {
                 await prisma.pickup.create({
@@ -122,6 +132,9 @@ export async function POST(req: NextRequest) {
                   }
                 })
                 console.log(`Pickup code generated for transaction ${tx.id} (fallback)`)
+                
+                // Send pickup code notification (fallback)
+                await notifyPickupCodeGenerated(tx.id)
               }
               
               // Mark listing as sold

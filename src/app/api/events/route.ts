@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const status = searchParams.get("status")
     const upcoming = searchParams.get("upcoming") === "true"
+    const creatorId = searchParams.get("creatorId")
     
     const where: any = { isActive: true }
     
@@ -23,6 +24,10 @@ export async function GET(req: NextRequest) {
     if (upcoming) {
       where.startTime = { gte: new Date() }
       where.status = { in: ["UPCOMING", "ONGOING"] }
+    }
+    
+    if (creatorId) {
+      where.creatorId = creatorId
     }
     
     const events = await prisma.event.findMany({

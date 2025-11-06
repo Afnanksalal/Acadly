@@ -159,14 +159,14 @@ export default function NewListingPage() {
   }
 
   return (
-    <main className="max-w-3xl mx-auto p-6">
+    <main className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Create New Listing</CardTitle>
-          <p className="text-sm opacity-70">Share what you&apos;re selling or offering</p>
+          <CardTitle>Create New Listing</CardTitle>
+          <p className="text-xs sm:text-sm opacity-70">Share what you&apos;re selling or offering</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-6">
+          <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -195,9 +195,9 @@ export default function NewListingPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Price (₹) *</label>
+                <label className="text-xs sm:text-sm font-medium">Price (₹) *</label>
                 <Input
                   placeholder="500"
                   type="number"
@@ -206,16 +206,18 @@ export default function NewListingPage() {
                   onChange={e => setPrice(e.target.value)}
                   disabled={loading}
                   required
+                  className="text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Category *</label>
+                <label className="text-xs sm:text-sm font-medium">Category *</label>
                 <Select
                   value={categoryId}
                   onChange={e => setCategoryId(e.target.value)}
                   disabled={loading}
                   required
+                  className="text-sm"
                 >
                   <option value="">Select category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -224,13 +226,13 @@ export default function NewListingPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Type</label>
-              <div className="flex gap-3">
+              <label className="text-xs sm:text-sm font-medium">Type</label>
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setType("PRODUCT")}
                   disabled={loading}
-                  className={`px-4 py-2 rounded-md border transition-all ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md border transition-all text-xs sm:text-sm ${
                     type === "PRODUCT"
                       ? "bg-primary text-white border-primary"
                       : "border-border hover:border-primary/50"
@@ -242,7 +244,7 @@ export default function NewListingPage() {
                   type="button"
                   onClick={() => setType("SERVICE")}
                   disabled={loading}
-                  className={`px-4 py-2 rounded-md border transition-all ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md border transition-all text-xs sm:text-sm ${
                     type === "SERVICE"
                       ? "bg-primary text-white border-primary"
                       : "border-border hover:border-primary/50"
@@ -306,15 +308,16 @@ export default function NewListingPage() {
               )}
             </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button type="submit" disabled={loading} className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4">
+              <Button type="submit" disabled={loading} className="flex-1 order-2 sm:order-1">
                 {loading ? "Creating..." : "Create Listing"}
               </Button>
               <Button
                 type="button"
                 onClick={() => router.back()}
                 disabled={loading}
-                className="bg-muted text-foreground hover:bg-muted/80"
+                variant="outline"
+                className="order-1 sm:order-2"
               >
                 Cancel
               </Button>

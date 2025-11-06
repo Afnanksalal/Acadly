@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { withVerifiedAuth, validateBuyerNotSeller } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { createTransactionSchema, validateAndSanitizeBody, validatePagination } from "@/lib/validation"
+import { notifyTransactionCreated } from "@/lib/notifications"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
@@ -286,6 +287,14 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       buyer: user.id,
       seller: listing.userId
     })
+
+    // Send notification to seller about new purchase order
+    try {
+      await notifyTransactionCreated(transaction.id)
+    } catch (notificationError) {
+      console.error(`[${transactionId}] Failed to send notification:`, notificationError)
+      // Don't fail the transaction if notification fails
+    }
 
     return successResponse({
       order,

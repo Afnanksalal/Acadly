@@ -3,17 +3,19 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { 
   Users, 
   ShoppingBag, 
-  DollarSign, 
   AlertTriangle,
-  TrendingUp,
   Activity,
+  UserPlus,
+  Eye,
+  DollarSign,
   MessageSquare,
+  TrendingUp,
   Star
 } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from 'recharts'
 
 interface DashboardData {
   kpis: {

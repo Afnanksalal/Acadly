@@ -6,6 +6,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ProfileEditForm } from "./profile-edit-form"
+import { TrophySection } from "@/components/profile/trophy-section"
+import { BadgeSection } from "@/components/profile/badge-section"
+import { ProjectSection } from "@/components/profile/project-section"
+import { PaperSection } from "@/components/profile/paper-section"
+import { ClubSection } from "@/components/profile/club-section"
+import { EventSection } from "@/components/profile/event-section"
 
 export default async function ProfilePage() {
   const supabase = createServerSupabaseClient()
@@ -53,22 +59,22 @@ export default async function ProfilePage() {
   if (!profile) redirect("/dashboard")
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-8">
-      <div className="flex items-center justify-between">
+    <main className="max-w-6xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 lg:space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">My Profile</h1>
-          <p className="text-muted-foreground mt-2">Manage your account information</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">My Profile</h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Manage your account information</p>
         </div>
         {profile.username && (
-          <Link href={`/u/${profile.username}`}>
-            <Button variant="outline">View Public Profile</Button>
+          <Link href={`/u/${profile.username}`} className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto text-xs sm:text-sm">View Public Profile</Button>
           </Link>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Profile Stats */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Profile Stats</CardTitle>
@@ -146,6 +152,29 @@ export default async function ProfilePage() {
               <ProfileEditForm profile={profile} />
             </CardContent>
           </Card>
+        </div>
+      </div>
+
+      {/* Achievements & Portfolio Section */}
+      <div className="space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold">Achievements & Portfolio</h2>
+        
+        {/* Top Row - Badges and Trophies */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <BadgeSection userId={profile.id} isOwner={true} />
+          <TrophySection userId={profile.id} isOwner={true} />
+        </div>
+        
+        {/* Middle Row - Projects and Papers */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <ProjectSection userId={profile.id} isOwner={true} />
+          <PaperSection userId={profile.id} isOwner={true} />
+        </div>
+        
+        {/* Bottom Row - Events and Clubs */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <EventSection userId={profile.id} />
+          <ClubSection userId={profile.id} />
         </div>
       </div>
     </main>

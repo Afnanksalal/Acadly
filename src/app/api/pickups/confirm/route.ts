@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { withVerifiedAuth } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { validateAndSanitizeBody } from "@/lib/validation"
+import { notifyPickupConfirmed } from "@/lib/notifications"
 import { z } from "zod"
 
 // Force dynamic rendering since we use cookies for auth
@@ -77,6 +78,14 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
 
       return updatedPickup
     })
+
+    // Send pickup confirmation notifications
+    try {
+      await notifyPickupConfirmed(transaction.id)
+    } catch (notificationError) {
+      console.error("Failed to send pickup confirmation notification:", notificationError)
+      // Don't fail the pickup confirmation if notification fails
+    }
 
     return successResponse({
       pickup: result,

@@ -47,7 +47,7 @@ export function ContentModeration() {
       const response = await fetch('/api/reports')
       if (response.ok) {
         const result = await response.json()
-        setReports(result.data.reports || [])
+        setReports(result.data || [])
       } else {
         console.error('Failed to fetch reports:', response.statusText)
       }
@@ -58,18 +58,27 @@ export function ContentModeration() {
 
   const fetchStats = async () => {
     try {
-      // Get stats from multiple endpoints
-      const [reportsResponse] = await Promise.all([
+      // Get stats from reports API
+      const [allReports, pendingReports] = await Promise.all([
+        fetch('/api/reports'),
         fetch('/api/reports?status=PENDING')
       ])
 
-      if (reportsResponse.ok) {
-        const reportsResult = await reportsResponse.json()
+      if (allReports.ok && pendingReports.ok) {
+        const allResult = await allReports.json()
+        const pendingResult = await pendingReports.json()
+        
         setStats({
-          pendingReports: reportsResult.data.reports?.length || 0,
-          flaggedContent: 0, // Would come from content moderation system
-          approvedToday: 0, // Would come from moderation logs
-          removedToday: 0 // Would come from moderation logs
+          pendingReports: pendingResult.data?.length || 0,
+          flaggedContent: allResult.data?.filter((r: any) => r.status === 'INVESTIGATING').length || 0,
+          approvedToday: allResult.data?.filter((r: any) => 
+            r.status === 'RESOLVED' && 
+            new Date(r.updatedAt).toDateString() === new Date().toDateString()
+          ).length || 0,
+          removedToday: allResult.data?.filter((r: any) => 
+            r.status === 'DISMISSED' && 
+            new Date(r.updatedAt).toDateString() === new Date().toDateString()
+          ).length || 0
         })
       }
     } catch (error) {
@@ -80,24 +89,44 @@ export function ContentModeration() {
   }
 
   const handleModerationAction = async (action: string, itemIds: string[]) => {
-    try {
-      const response = await fetch('/api/admin/content/moderation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          contentType: 'LISTING',
-          contentIds: itemIds,
-          reason: `${action} by administrator`
-        })
-      })
+    if (itemIds.length === 0) return
+    
+    if (!confirm(`Are you sure you want to ${action.toLowerCase()} ${itemIds.length} reports?`)) {
+      return
+    }
 
-      if (response.ok) {
-        setSelectedItems([])
-        // Refresh moderation queue
+    try {
+      // Update report status based on action
+      const statusMap: Record<string, string> = {
+        'APPROVE': 'RESOLVED',
+        'REJECT': 'DISMISSED', 
+        'FLAG': 'INVESTIGATING',
+        'RESOLVE': 'RESOLVED',
+        'DISMISS': 'DISMISSED'
       }
+
+      const newStatus = statusMap[action] || 'PENDING'
+
+      const updatePromises = itemIds.map(reportId =>
+        fetch(`/api/reports/${reportId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: newStatus,
+            resolution: `${action} by administrator`
+          })
+        })
+      )
+
+      await Promise.all(updatePromises)
+      
+      setSelectedItems([])
+      fetchReports() // Refresh the list
+      fetchStats() // Refresh stats
+      alert(`Successfully ${action.toLowerCase()}ed ${itemIds.length} reports`)
     } catch (error) {
       console.error('Moderation action failed:', error)
+      alert('Moderation action failed')
     }
   }
 

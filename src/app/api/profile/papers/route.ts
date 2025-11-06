@@ -9,15 +9,15 @@ export const dynamic = 'force-dynamic'
 
 const paperSchema = z.object({
   title: z.string().min(1).max(300),
-  abstract: z.string().max(2000).optional(),
-  authors: z.array(z.string()),
-  journal: z.string().max(200).optional(),
-  conference: z.string().max(200).optional(),
-  publishedAt: z.string().datetime().optional(),
-  doi: z.string().max(100).optional(),
-  pdfUrl: z.string().url().optional(),
+  abstract: z.string().max(2000).optional().nullable().transform(val => val || null),
+  authors: z.array(z.string()).min(1, "At least one author is required"),
+  journal: z.string().max(200).optional().nullable().transform(val => val || null),
+  conference: z.string().max(200).optional().nullable().transform(val => val || null),
+  publishedAt: z.string().datetime().optional().nullable().or(z.literal("")).transform(val => val || null),
+  doi: z.string().max(100).optional().nullable().transform(val => val || null),
+  pdfUrl: z.string().url().optional().nullable().or(z.literal("")).transform(val => val || null),
   category: z.enum(["RESEARCH", "REVIEW", "CONFERENCE", "JOURNAL", "THESIS", "DISSERTATION"]),
-  keywords: z.array(z.string()).optional(),
+  keywords: z.array(z.string()).optional().default([]),
   citations: z.number().int().min(0).default(0),
 })
 

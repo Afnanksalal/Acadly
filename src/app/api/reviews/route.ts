@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { z } from "zod"
 import { successResponse, errorResponse, unauthorizedResponse, validationErrorResponse, notFoundResponse, forbiddenResponse } from "@/lib/api-response"
+import { notifyReviewReceived } from "@/lib/notifications"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
@@ -117,6 +118,14 @@ export async function POST(req: NextRequest) {
         ratingCount: agg._count 
       } 
     })
+
+    // Send review notification
+    try {
+      await notifyReviewReceived(review.id)
+    } catch (notificationError) {
+      console.error("Failed to send review notification:", notificationError)
+      // Don't fail the review if notification fails
+    }
 
     return successResponse({ 
       review,

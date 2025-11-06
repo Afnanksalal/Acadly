@@ -4,6 +4,7 @@ import { withVerifiedAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse, notFoundResponse } from "@/lib/api-response"
 import { sendMessageSchema, validateAndSanitizeBody, validatePagination } from "@/lib/validation"
 import { isValidUUID } from "@/lib/uuid-validation"
+import { notifyNewMessage } from "@/lib/notifications"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
@@ -156,6 +157,14 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
 
       return message
     })
+
+    // Send message notification
+    try {
+      await notifyNewMessage(result.id)
+    } catch (notificationError) {
+      console.error("Failed to send message notification:", notificationError)
+      // Don't fail the message if notification fails
+    }
 
     return successResponse(result, 201)
   } catch (error) {

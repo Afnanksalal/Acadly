@@ -15,17 +15,17 @@ export function createServerSupabaseClient() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // Handle cookie setting errors gracefully
-            console.warn(`Failed to set cookie ${name}:`, error)
+          } catch {
+            // Silently ignore cookie setting errors in Server Components
+            // Cookies can only be modified in Server Actions or Route Handlers
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: "", ...options, maxAge: 0 })
-          } catch (error) {
-            // Handle cookie removal errors gracefully
-            console.warn(`Failed to remove cookie ${name}:`, error)
+          } catch {
+            // Silently ignore cookie removal errors in Server Components
+            // Cookies can only be modified in Server Actions or Route Handlers
           }
         },
       },

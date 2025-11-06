@@ -9,11 +9,11 @@ export const dynamic = 'force-dynamic'
 
 const trophySchema = z.object({
   title: z.string().min(1).max(200),
-  description: z.string().max(1000).optional(),
+  description: z.string().max(1000).optional().nullable().transform(val => val || null),
   category: z.enum(["ACADEMIC", "SPORTS", "CULTURAL", "TECHNICAL", "LEADERSHIP", "COMMUNITY", "OTHER"]),
-  awardedBy: z.string().max(200).optional(),
+  awardedBy: z.string().max(200).optional().nullable().transform(val => val || null),
   awardedAt: z.string().datetime(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: z.string().url().optional().nullable().or(z.literal("")).transform(val => val || null),
 })
 
 // GET /api/profile/trophies - Get user's trophies

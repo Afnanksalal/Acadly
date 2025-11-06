@@ -53,14 +53,14 @@ export default async function EventsPage() {
   }
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-8">
-      <div className="flex items-center justify-between">
+    <main className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 lg:space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Campus Events</h1>
-          <p className="text-muted-foreground mt-2">Discover upcoming events on campus</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Campus Events</h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Discover upcoming events on campus</p>
         </div>
-        <Link href="/events/new">
-          <Button className="px-6 py-3">
+        <Link href="/events/new" className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto text-xs sm:text-sm">
             ✨ Create Event
           </Button>
         </Link>
@@ -78,12 +78,12 @@ export default async function EventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {events.map((event: any) => (
             <Link key={event.id} href={`/events/${event.id}`}>
               <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                 {event.imageUrl && (
-                  <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
+                  <div className="relative w-full h-32 sm:h-40 lg:h-48 overflow-hidden rounded-t-lg">
                     <Image
                       src={event.imageUrl}
                       alt={event.title}
@@ -94,19 +94,19 @@ export default async function EventsPage() {
                 )}
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
-                    <Badge variant={getStatusColor(event.status) as any}>
+                    <CardTitle className="line-clamp-2">{event.title}</CardTitle>
+                    <Badge variant={getStatusColor(event.status) as any} className="text-xs shrink-0">
                       {event.status}
                     </Badge>
                   </div>
-                  <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <span>📅</span>
-                      <span>{formatDate(event.startTime)}</span>
+                      <span className="truncate">{formatDate(event.startTime)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span>🕐</span>
-                      <span>{formatTime(event.startTime)}</span>
+                      <span className="truncate">{formatTime(event.startTime)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span>📍</span>
@@ -119,11 +119,11 @@ export default async function EventsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-3">
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-3">
                     {event.description}
                   </p>
-                  <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>By {event.creator.username || event.creator.name || event.creator.email?.split('@')[0]}</span>
+                  <div className="mt-3 sm:mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="truncate">By {event.creator.username || event.creator.name || event.creator.email?.split('@')[0]}</span>
                   </div>
                 </CardContent>
               </Card>

@@ -5,9 +5,9 @@ export function Select({ className, children, ...props }: SelectHTMLAttributes<H
   return (
     <select
       className={cn(
-        "w-full px-3 py-2 rounded-md bg-muted text-foreground border border-border",
+        "w-full px-3 py-2 sm:py-2.5 rounded-md bg-muted text-sm sm:text-base text-foreground border border-border",
         "focus:ring-2 focus:ring-ring focus:outline-none",
-        "transition-all duration-200",
+        "transition-all duration-200 min-h-[44px] touch-manipulation",
         className
       )}
       {...props}

@@ -3,6 +3,12 @@ import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
+import { TrophySection } from "@/components/profile/trophy-section"
+import { BadgeSection } from "@/components/profile/badge-section"
+import { ProjectSection } from "@/components/profile/project-section"
+import { PaperSection } from "@/components/profile/paper-section"
+import { ClubSection } from "@/components/profile/club-section"
+import { EventSection } from "@/components/profile/event-section"
 
 export default async function PublicProfilePage({ params }: { params: { username: string } }) {
   const profile = await (prisma as any).profile.findUnique({
@@ -65,11 +71,11 @@ export default async function PublicProfilePage({ params }: { params: { username
   }
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-8">
+    <main className="max-w-6xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 lg:space-y-8">
       {/* Profile Header */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-6">
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <div className="flex-shrink-0">
               {profile.avatarUrl ? (
                 <Image
@@ -80,7 +86,7 @@ export default async function PublicProfilePage({ params }: { params: { username
                   className="rounded-full object-cover"
                 />
               ) : (
-                <div className="w-30 h-30 rounded-full bg-primary/20 flex items-center justify-center text-4xl">
+                <div className="w-[120px] h-[120px] rounded-full bg-primary/20 flex items-center justify-center text-4xl">
                   👤
                 </div>
               )}
@@ -88,8 +94,8 @@ export default async function PublicProfilePage({ params }: { params: { username
             <div className="flex-1">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold">{profile.name || profile.username}</h1>
-                  <p className="text-muted-foreground">@{profile.username}</p>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{profile.name || profile.username}</h1>
+                  <p className="text-muted-foreground text-sm sm:text-base">@{profile.username}</p>
                 </div>
                 {profile.ratingCount > 0 && (
                   <div className="text-right">
@@ -135,7 +141,7 @@ export default async function PublicProfilePage({ params }: { params: { username
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Active Listings */}
         <div className="lg:col-span-2">
           <Card>
@@ -148,7 +154,7 @@ export default async function PublicProfilePage({ params }: { params: { username
                   <p>No active listings</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {profile.listings.map((listing: any) => (
                     <a
                       key={listing.id}
@@ -216,6 +222,29 @@ export default async function PublicProfilePage({ params }: { params: { username
               )}
             </CardContent>
           </Card>
+        </div>
+      </div>
+
+      {/* Achievements & Portfolio Section */}
+      <div className="space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold">Achievements & Portfolio</h2>
+        
+        {/* Top Row - Badges and Trophies */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <BadgeSection userId={profile.id} isOwner={false} />
+          <TrophySection userId={profile.id} isOwner={false} />
+        </div>
+        
+        {/* Middle Row - Projects and Papers */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <ProjectSection userId={profile.id} isOwner={false} />
+          <PaperSection userId={profile.id} isOwner={false} />
+        </div>
+        
+        {/* Bottom Row - Events and Clubs */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <EventSection userId={profile.id} />
+          <ClubSection userId={profile.id} />
         </div>
       </div>
     </main>
