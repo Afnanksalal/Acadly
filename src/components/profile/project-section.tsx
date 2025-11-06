@@ -269,7 +269,7 @@ export function ProjectSection({ userId, isOwner = false }: { userId: string, is
                     id="isPublic"
                     checked={formData.isPublic}
                     onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
-                    className="w-4 h-4"
+                    className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
                   />
                   <Label htmlFor="isPublic" className="cursor-pointer">
                     Show on public profile

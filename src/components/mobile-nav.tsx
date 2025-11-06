@@ -17,10 +17,12 @@ import {
   Plus, 
   Key, 
   Sparkles,
-  X
+  X,
+  AlertTriangle,
+  Flag
 } from "lucide-react"
 
-type Route = "/" | "/listings" | "/dashboard" | "/orders" | "/chats" | "/profile" | "/reviews" | "/events" | "/listings/new" | "/auth/login" | "/auth/signup"
+type Route = "/" | "/listings" | "/dashboard" | "/orders" | "/chats" | "/profile" | "/reviews" | "/events" | "/listings/new" | "/auth/login" | "/auth/signup" | "/disputes" | "/reports"
 
 export function MobileNav({ 
   user, 
@@ -177,8 +179,14 @@ export function MobileNav({
                   <NavLink href="/reviews" onClick={closeMenu} isActive={isActive('/reviews')} icon={<Star className="h-5 w-5" />}>
                     Reviews
                   </NavLink>
-
-
+                  
+                  <NavLink href="/disputes" onClick={closeMenu} isActive={isActive('/disputes')} icon={<AlertTriangle className="h-5 w-5" />}>
+                    Disputes
+                  </NavLink>
+                  
+                  <NavLink href="/reports" onClick={closeMenu} isActive={isActive('/reports')} icon={<Flag className="h-5 w-5" />}>
+                    My Reports
+                  </NavLink>
 
                   {/* Divider */}
                   <div className="my-3 border-t border-border" />

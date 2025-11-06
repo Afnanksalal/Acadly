@@ -26,17 +26,57 @@ export async function POST(req: NextRequest) {
       evidence: z.array(z.string().url()).max(5).optional()
     })
 
-    // Custom evidence validation
-    const validateEvidence = (urls: string[]) => {
+    // Enhanced evidence validation
+    const validateEvidence = async (urls: string[]) => {
       const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-      return urls.every(url => {
+      
+      for (const url of urls) {
         try {
+          // Validate URL format
           const urlObj = new URL(url)
-          return imageExtensions.some(ext => urlObj.pathname.toLowerCase().includes(ext))
+          
+          // Check if URL has image extension
+          const hasImageExt = imageExtensions.some(ext => 
+            urlObj.pathname.toLowerCase().includes(ext)
+          )
+          
+          if (!hasImageExt) {
+            return { valid: false, error: `Invalid image URL: ${url}` }
+          }
+
+          // Check if URL is accessible (HEAD request with timeout)
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+          
+          try {
+            const response = await fetch(url, {
+              method: 'HEAD',
+              signal: controller.signal
+            })
+            clearTimeout(timeoutId)
+            
+            if (!response.ok) {
+              return { valid: false, error: `Image not accessible: ${url}` }
+            }
+            
+            // Verify content type is an image
+            const contentType = response.headers.get('content-type')
+            if (contentType && !contentType.startsWith('image/')) {
+              return { valid: false, error: `URL is not an image: ${url}` }
+            }
+          } catch (fetchError) {
+            clearTimeout(timeoutId)
+            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+              return { valid: false, error: `Image URL timeout: ${url}` }
+            }
+            return { valid: false, error: `Cannot access image: ${url}` }
+          }
         } catch {
-          return false
+          return { valid: false, error: `Invalid URL format: ${url}` }
         }
-      })
+      }
+      
+      return { valid: true }
     }
 
     const parsed = schema.safeParse(await req.json())
@@ -47,8 +87,11 @@ export async function POST(req: NextRequest) {
     const { transactionId, subject, description, reason, evidence } = parsed.data
 
     // Validate evidence URLs if provided
-    if (evidence && evidence.length > 0 && !validateEvidence(evidence)) {
-      return validationErrorResponse("Evidence must be valid image URLs")
+    if (evidence && evidence.length > 0) {
+      const validationResult = await validateEvidence(evidence)
+      if (!validationResult.valid) {
+        return validationErrorResponse(validationResult.error || "Evidence must be valid and accessible image URLs")
+      }
     }
 
     // Verify transaction exists and user is a participant

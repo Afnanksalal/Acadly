@@ -8,6 +8,24 @@ export const dynamic = 'force-dynamic'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif']
+
+// Magic numbers for file type validation
+const FILE_SIGNATURES: Record<string, number[][]> = {
+  'image/jpeg': [[0xFF, 0xD8, 0xFF]],
+  'image/png': [[0x89, 0x50, 0x4E, 0x47]],
+  'image/gif': [[0x47, 0x49, 0x46, 0x38]],
+  'image/webp': [[0x52, 0x49, 0x46, 0x46]] // RIFF header
+}
+
+function validateFileSignature(buffer: Buffer, mimeType: string): boolean {
+  const signatures = FILE_SIGNATURES[mimeType]
+  if (!signatures) return false
+  
+  return signatures.some(signature => {
+    return signature.every((byte, index) => buffer[index] === byte)
+  })
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,9 +50,29 @@ export async function POST(req: NextRequest) {
       return validationErrorResponse("File size must be less than 5MB")
     }
 
-    // Validate file type
+    // Validate file size minimum (prevent empty files)
+    if (file.size < 100) {
+      return validationErrorResponse("File is too small or corrupted")
+    }
+
+    // Validate MIME type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return validationErrorResponse("Only JPEG, PNG, WebP, and GIF images are allowed")
+    }
+
+    // Validate file extension
+    const fileExt = file.name.split('.').pop()?.toLowerCase()
+    if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+      return validationErrorResponse("Invalid file extension")
+    }
+
+    // Convert File to Buffer for validation
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Validate file signature (magic numbers) to prevent MIME type spoofing
+    if (!validateFileSignature(buffer, file.type)) {
+      return validationErrorResponse("File content does not match the declared type. Possible file corruption or security issue.")
     }
 
     // Create Supabase admin client for storage
@@ -43,13 +81,8 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop()
+    // Generate unique filename with sanitized extension
     const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-
-    // Convert File to ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
 
     // Upload to Supabase Storage
     const { error } = await supabaseAdmin.storage

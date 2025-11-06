@@ -80,7 +80,7 @@ export default async function DashboardPage() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-8">
           <Tabs defaultValue="overview" className="space-y-3 sm:space-y-4 lg:space-y-6">
             {/* Mobile-friendly tabs with horizontal scroll */}
-            <div className="w-full overflow-x-auto pb-1">
+            <div className="w-full overflow-x-auto overflow-y-hidden pb-1 scrollbar-hide">
               <TabsList className="inline-flex h-8 sm:h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground min-w-max">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Overview

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { withAuth } from "@/lib/auth"
+import { withVerifiedAuth } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { refundCancelledTransaction } from "@/lib/refund"
 import { isValidUUID } from "@/lib/uuid-validation"
@@ -8,7 +8,7 @@ import { isValidUUID } from "@/lib/uuid-validation"
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
-export const POST = withAuth(async (request: NextRequest, user) => {
+export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
   try {
     const url = new URL(request.url)
     const transactionId = url.pathname.split("/")[3]

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ChatButton } from "./chat-button"
 import { BuyButton } from "./buy-button"
+import { ReportButton } from "@/components/report-button"
 
 export default async function ListingDetail({ params }: { params: { id: string } }) {
   // Validate UUID format first
@@ -195,6 +196,15 @@ export default async function ListingDetail({ params }: { params: { id: string }
                 <Button variant="secondary" className="w-full">
                   Edit Listing
                 </Button>
+              )}
+              {!isOwner && user && (
+                <ReportButton
+                  targetType="LISTING"
+                  targetId={listing.id}
+                  targetUserId={listing.userId}
+                  variant="outline"
+                  className="w-full"
+                />
               )}
             </CardContent>
           </Card>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -180,7 +180,7 @@ export function UserManagement() {
             <input
               type="text"
               placeholder="Search users..."
-              className="pl-10 pr-4 py-2 border border-primary/10 rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -316,7 +316,7 @@ export function UserManagement() {
                         setSelectedUsers(selectedUsers.filter(id => id !== user.id))
                       }
                     }}
-                    className="mt-1"
+                    className="mt-1 h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -482,118 +482,126 @@ export function UserManagement() {
 
       {/* View User Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>User Details: {viewingUser?.name || viewingUser?.email}</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-3 sm:p-4">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-sm sm:text-base line-clamp-1">
+              {viewingUser?.name || viewingUser?.email}
+            </DialogTitle>
           </DialogHeader>
           {viewingUser && (
-            <div className="space-y-6">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Email</Label>
-                  <p className="text-sm text-muted-foreground">{viewingUser.email}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Username</Label>
-                  <p className="text-sm text-muted-foreground">{viewingUser.username || 'Not set'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Department</Label>
-                  <p className="text-sm text-muted-foreground">{viewingUser.department || 'Not set'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Year</Label>
-                  <p className="text-sm text-muted-foreground">{viewingUser.year || 'Not set'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Rating</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {viewingUser.ratingAvg ? viewingUser.ratingAvg.toFixed(1) : '0.0'} ★ ({viewingUser.ratingCount || 0} reviews)
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Joined</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(viewingUser.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status Badges */}
-              <div className="flex gap-2">
-                <Badge variant={viewingUser.verified ? 'default' : 'secondary'}>
+            <div className="space-y-3">
+              {/* Status Badges - Move to top */}
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={viewingUser.verified ? 'default' : 'secondary'} className="text-xs">
                   {viewingUser.verified ? 'Verified' : 'Unverified'}
                 </Badge>
-                <Badge variant={viewingUser.role === 'ADMIN' ? 'destructive' : 'outline'}>
+                <Badge variant={viewingUser.role === 'ADMIN' ? 'destructive' : 'outline'} className="text-xs">
                   {viewingUser.role}
                 </Badge>
               </div>
 
-              {/* Bio */}
-              {viewingUser.bio && (
-                <div>
-                  <Label className="text-sm font-medium">Bio</Label>
-                  <p className="text-sm text-muted-foreground mt-1">{viewingUser.bio}</p>
+              {/* Compact Info Grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-muted-foreground mb-0.5">Email</p>
+                  <p className="font-medium truncate">{viewingUser.email}</p>
                 </div>
-              )}
-
-              {/* Activity Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="text-center p-3 bg-muted/20 rounded-lg">
-                  <div className="text-lg font-bold">{viewingUser._count.listings}</div>
-                  <div className="text-xs text-muted-foreground">Listings</div>
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-muted-foreground mb-0.5">Username</p>
+                  <p className="font-medium truncate">{viewingUser.username || 'Not set'}</p>
                 </div>
-                <div className="text-center p-3 bg-muted/20 rounded-lg">
-                  <div className="text-lg font-bold">{viewingUser._count.sales}</div>
-                  <div className="text-xs text-muted-foreground">Sales</div>
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-muted-foreground mb-0.5">Department</p>
+                  <p className="font-medium truncate">{viewingUser.department || 'Not set'}</p>
                 </div>
-                <div className="text-center p-3 bg-muted/20 rounded-lg">
-                  <div className="text-lg font-bold">{viewingUser._count.purchases}</div>
-                  <div className="text-xs text-muted-foreground">Purchases</div>
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-muted-foreground mb-0.5">Year</p>
+                  <p className="font-medium">{viewingUser.year || 'Not set'}</p>
                 </div>
-                <div className="text-center p-3 bg-muted/20 rounded-lg">
-                  <div className="text-lg font-bold">{viewingUser._count.reviewsReceived || 0}</div>
-                  <div className="text-xs text-muted-foreground">Reviews</div>
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-muted-foreground mb-0.5">Rating</p>
+                  <p className="font-medium">
+                    {viewingUser.ratingAvg ? viewingUser.ratingAvg.toFixed(1) : '0.0'} ★
+                  </p>
                 </div>
-                <div className="text-center p-3 bg-muted/20 rounded-lg">
-                  <div className="text-lg font-bold">{viewingUser._count.disputes || 0}</div>
-                  <div className="text-xs text-muted-foreground">Disputes</div>
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-muted-foreground mb-0.5">Joined</p>
+                  <p className="font-medium">
+                    {new Date(viewingUser.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                  </p>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-4 border-t">
+              {/* Bio - Compact */}
+              {viewingUser.bio && (
+                <div className="p-2 bg-muted/20 rounded text-xs">
+                  <p className="text-muted-foreground mb-1">Bio</p>
+                  <p className="line-clamp-2">{viewingUser.bio}</p>
+                </div>
+              )}
+
+              {/* Activity Stats - Compact Grid */}
+              <div className="grid grid-cols-5 gap-1.5">
+                <div className="text-center p-1.5 bg-muted/20 rounded">
+                  <div className="text-sm font-bold">{viewingUser._count.listings}</div>
+                  <div className="text-[10px] text-muted-foreground">Listings</div>
+                </div>
+                <div className="text-center p-1.5 bg-muted/20 rounded">
+                  <div className="text-sm font-bold">{viewingUser._count.sales}</div>
+                  <div className="text-[10px] text-muted-foreground">Sales</div>
+                </div>
+                <div className="text-center p-1.5 bg-muted/20 rounded">
+                  <div className="text-sm font-bold">{viewingUser._count.purchases}</div>
+                  <div className="text-[10px] text-muted-foreground">Purchases</div>
+                </div>
+                <div className="text-center p-1.5 bg-muted/20 rounded">
+                  <div className="text-sm font-bold">{viewingUser._count.reviewsReceived || 0}</div>
+                  <div className="text-[10px] text-muted-foreground">Reviews</div>
+                </div>
+                <div className="text-center p-1.5 bg-muted/20 rounded">
+                  <div className="text-sm font-bold">{viewingUser._count.disputes || 0}</div>
+                  <div className="text-[10px] text-muted-foreground">Disputes</div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Compact */}
+              <div className="grid grid-cols-3 gap-1.5 pt-2 border-t">
                 <Button 
                   variant="outline" 
+                  size="sm"
+                  className="text-xs h-8"
                   onClick={() => {
                     setViewDialogOpen(false)
                     setEditingUser(viewingUser)
                     setEditDialogOpen(true)
                   }}
                 >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit User
+                  <Edit className="h-3 w-3 mr-1" />
+                  Edit
                 </Button>
                 <Button 
                   variant="destructive" 
+                  size="sm"
+                  className="text-xs h-8"
                   onClick={() => {
                     setViewDialogOpen(false)
                     handleDeleteUser(viewingUser.id, 'suspend')
                   }}
                 >
-                  <UserX className="h-4 w-4 mr-2" />
-                  Suspend User
+                  <UserX className="h-3 w-3 mr-1" />
+                  Suspend
                 </Button>
                 <Button 
                   variant="destructive" 
+                  size="sm"
+                  className="text-xs h-8"
                   onClick={() => {
                     setViewDialogOpen(false)
                     handleDeleteUser(viewingUser.id, 'delete')
                   }}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete User
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Delete
                 </Button>
               </div>
             </div>

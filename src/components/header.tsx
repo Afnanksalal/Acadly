@@ -52,6 +52,9 @@ export async function Header() {
               <Link href="/reviews" className="text-sm font-medium hover:text-primary transition-colors">
                 Reviews
               </Link>
+              <Link href="/disputes" className="text-sm font-medium hover:text-primary transition-colors">
+                Disputes
+              </Link>
               <div className="h-8 w-px bg-border" />
               <div className="flex items-center gap-3">
                 <NotificationBell userId={user.id} />

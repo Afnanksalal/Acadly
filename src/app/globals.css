@@ -22,6 +22,16 @@
   .admin-card-header {
     @apply border-b border-gray-100 bg-gray-50/50;
   }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
 }
 
 @layer base {
@@ -75,10 +85,12 @@
 html {
   color-scheme: dark;
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
   @apply bg-background text-foreground antialiased;
+  overflow-x: hidden;
 }
 
 /* Smooth animations */

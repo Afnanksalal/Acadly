@@ -193,7 +193,7 @@ export function BadgeSection({ userId, isOwner = false }: { userId: string, isOw
                     id="isVisible"
                     checked={formData.isVisible}
                     onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })}
-                    className="w-4 h-4"
+                    className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
                   />
                   <Label htmlFor="isVisible" className="cursor-pointer">
                     Show on public profile

@@ -39,7 +39,6 @@
     "security:audit": "npm audit --audit-level moderate",
     "deps:update": "npm update && npm audit fix"
   },
-
   "dependencies": {
     "@prisma/client": "^6.18.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -62,6 +61,7 @@
     "@types/validator": "^13.15.4",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.6",
+    "@vercel/analytics": "^1.5.0",
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
