@@ -12,6 +12,8 @@ import { ContentModeration } from "@/components/admin/content-moderation"
 import { FinancialOverview } from "@/components/admin/financial-overview"
 import { SystemMonitor } from "@/components/admin/system-monitor"
 import { AdminSettings } from "@/components/admin/admin-settings"
+import { AuditLog } from "@/components/admin/audit-log"
+import { ListingsManagement } from "@/components/admin/listings-management"
 import { AnnouncementBanner } from "@/components/announcement-banner"
 
 export default async function DashboardPage() {
@@ -100,6 +102,9 @@ export default async function DashboardPage() {
                 <TabsTrigger value="system" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   System
                 </TabsTrigger>
+                <TabsTrigger value="audit" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
+                  Audit Log
+                </TabsTrigger>
                 <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Settings
                 </TabsTrigger>
@@ -122,6 +127,7 @@ export default async function DashboardPage() {
 
             <TabsContent value="content" className="space-y-4 sm:space-y-6">
               <ContentModeration />
+              <ListingsManagement />
             </TabsContent>
 
             <TabsContent value="financial" className="space-y-4 sm:space-y-6">
@@ -130,6 +136,10 @@ export default async function DashboardPage() {
 
             <TabsContent value="system" className="space-y-4 sm:space-y-6">
               <SystemMonitor />
+            </TabsContent>
+
+            <TabsContent value="audit" className="space-y-4 sm:space-y-6">
+              <AuditLog />
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4 sm:space-y-6">
