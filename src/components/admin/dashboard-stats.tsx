@@ -50,12 +50,6 @@ interface DashboardData {
     score: number
     status: string
   }
-  quickActions: Array<{
-    title: string
-    description: string
-    url: string
-    priority: string
-  }>
 }
 
 export function DashboardStats() {
@@ -447,36 +441,6 @@ export function DashboardStats() {
           </Card>
         </div>
       )}
-
-      {/* Quick Actions */}
-      <Card className="hover-lift">
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common administrative tasks</CardDescription>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0">
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            {data.quickActions.map((action, index) => (
-              <div
-                key={index}
-                className="p-3 sm:p-4 border border-primary/10 rounded-lg hover:bg-muted/50 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/20"
-                onClick={() => window.location.href = action.url}
-              >
-                <div className="flex items-start justify-between mb-2 gap-2">
-                  <h4 className="font-medium text-sm flex-1 min-w-0">{action.title}</h4>
-                  <Badge 
-                    variant={action.priority === 'HIGH' ? 'destructive' : 'outline'}
-                    className="text-xs flex-shrink-0"
-                  >
-                    {action.priority}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-2">{action.description}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

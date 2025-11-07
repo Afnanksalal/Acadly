@@ -81,13 +81,10 @@ export default async function DashboardPage() {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-8">
-          <Tabs defaultValue="overview" className="space-y-3 sm:space-y-4 lg:space-y-6">
+          <Tabs defaultValue="analytics" className="space-y-3 sm:space-y-4 lg:space-y-6">
             {/* Mobile-friendly tabs with horizontal scroll */}
             <div className="w-full overflow-x-auto overflow-y-hidden pb-1 scrollbar-hide">
               <TabsList className="inline-flex h-8 sm:h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground min-w-max">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
-                  Overview
-                </TabsTrigger>
                 <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Analytics
                 </TabsTrigger>
@@ -96,9 +93,6 @@ export default async function DashboardPage() {
                 </TabsTrigger>
                 <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   Content
-                </TabsTrigger>
-                <TabsTrigger value="financial" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
-                  Financial
                 </TabsTrigger>
                 <TabsTrigger value="system" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
                   System
@@ -112,12 +106,8 @@ export default async function DashboardPage() {
               </TabsList>
             </div>
 
-            <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-              <DashboardStats />
-              <RealtimeMetrics />
-            </TabsContent>
-
             <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
+              <DashboardStats />
               <RealtimeMetrics />
               <FinancialOverview />
             </TabsContent>
@@ -129,10 +119,6 @@ export default async function DashboardPage() {
             <TabsContent value="content" className="space-y-4 sm:space-y-6">
               <ContentModeration />
               <ListingsManagement />
-            </TabsContent>
-
-            <TabsContent value="financial" className="space-y-4 sm:space-y-6">
-              <FinancialOverview />
             </TabsContent>
 
             <TabsContent value="system" className="space-y-4 sm:space-y-6">
