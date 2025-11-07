@@ -42,12 +42,39 @@ export const POST = async (request: NextRequest) => {
       include: {
         listing: true,
         buyer: true,
-        seller: true
+        seller: true,
+        pickup: true
       }
     })
 
     if (!transaction) {
       return validationErrorResponse("Transaction not found")
+    }
+
+    // Generate pickup code if not exists
+    if (!transaction.pickup) {
+      try {
+        await prisma.pickup.create({
+          data: {
+            transactionId: transaction.id,
+            pickupCode: Math.floor(100000 + Math.random() * 900000).toString(),
+            status: "GENERATED"
+          }
+        })
+        console.log(`Pickup code generated for transaction ${transaction.id}`)
+        
+        // Mark listing as sold
+        if (transaction.listing.isActive) {
+          await prisma.listing.update({
+            where: { id: transaction.listingId },
+            data: { isActive: false }
+          })
+          console.log(`Listing ${transaction.listingId} marked as sold`)
+        }
+      } catch (pickupError) {
+        console.error(`Error generating pickup code for transaction ${transaction.id}:`, pickupError)
+        // Don't fail the payment verification if pickup code generation fails
+      }
     }
 
     return successResponse({

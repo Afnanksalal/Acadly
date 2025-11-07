@@ -138,7 +138,7 @@ export function BuyButton({
         order_id: order.id,
         handler: async function (response: RazorpayResponse) {
           try {
-            // Verify payment and generate pickup code
+            // Verify payment (this will also generate pickup code)
             const verifyRes = await fetch("/api/webhooks/razorpay/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -150,11 +150,8 @@ export function BuyButton({
               })
             })
 
-            if (verifyRes.ok) {
-              // Auto-generate pickup code after successful payment
-              await fetch(`/api/transactions/${transaction.id}/generate-pickup`, {
-                method: "POST"
-              })
+            if (!verifyRes.ok) {
+              console.error("Payment verification failed:", await verifyRes.text())
             }
 
             // Redirect to transaction page
