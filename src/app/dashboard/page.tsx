@@ -14,6 +14,7 @@ import { SystemMonitor } from "@/components/admin/system-monitor"
 import { AdminSettings } from "@/components/admin/admin-settings"
 import { AuditLog } from "@/components/admin/audit-log"
 import { ListingsManagement } from "@/components/admin/listings-management"
+import { AnnouncementManagement } from "@/components/admin/announcement-management"
 import { AnnouncementBanner } from "@/components/announcement-banner"
 
 export default async function DashboardPage() {
@@ -136,6 +137,7 @@ export default async function DashboardPage() {
 
             <TabsContent value="system" className="space-y-4 sm:space-y-6">
               <SystemMonitor />
+              <AnnouncementManagement />
             </TabsContent>
 
             <TabsContent value="audit" className="space-y-4 sm:space-y-6">
