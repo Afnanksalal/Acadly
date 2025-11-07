@@ -230,47 +230,49 @@ export function ContentModeration() {
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-3">
-        <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-            <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
-            <Flag className="h-4 w-4 text-red-400" />
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold text-red-400">
-              {loading ? '...' : stats?.pendingReports || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Need review</p>
-          </CardContent>
-        </Card>
+      {/* Stats Cards - Only show for Reports and Disputes tabs */}
+      {activeTab !== 'listings' && (
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-3">
+          <Card className="hover-lift">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
+              <Flag className="h-4 w-4 text-red-400" />
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="text-2xl font-bold text-red-400">
+                {loading ? '...' : stats?.pendingReports || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">Need review</p>
+            </CardContent>
+          </Card>
 
-        <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-            <CardTitle className="text-sm font-medium">Open Disputes</CardTitle>
-            <Shield className="h-4 w-4 text-yellow-400" />
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold text-yellow-400">
-              {loading ? '...' : stats?.openDisputes || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Require action</p>
-          </CardContent>
-        </Card>
+          <Card className="hover-lift">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium">Open Disputes</CardTitle>
+              <Shield className="h-4 w-4 text-yellow-400" />
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="text-2xl font-bold text-yellow-400">
+                {loading ? '...' : stats?.openDisputes || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">Require action</p>
+            </CardContent>
+          </Card>
 
-        <Card className="hover-lift">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-            <CardTitle className="text-sm font-medium">Total Resolved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold text-green-400">
-              {loading ? '...' : stats?.totalResolved || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Completed</p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="hover-lift">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium">Total Resolved</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-400" />
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="text-2xl font-bold text-green-400">
+                {loading ? '...' : stats?.totalResolved || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">Completed</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Content based on active tab */}
       {activeTab === 'reports' ? (

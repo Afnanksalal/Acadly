@@ -36,7 +36,7 @@ interface Announcement {
   startDate: string | null
   endDate: string | null
   createdAt: string
-  _count: {
+  _count?: {
     views: number
   }
 }
@@ -352,7 +352,7 @@ export function AnnouncementManagement() {
                         {announcement.content}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>{announcement._count.views} views</span>
+                        <span>{announcement._count?.views || 0} views</span>
                         <span>•</span>
                         <span>Created {new Date(announcement.createdAt).toLocaleDateString()}</span>
                         {announcement.startDate && (

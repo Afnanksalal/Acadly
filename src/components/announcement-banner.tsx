@@ -39,7 +39,7 @@ export function AnnouncementBanner() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
       
-      const response = await fetch('/api/announcements?priority=HIGH,URGENT&limit=3', {
+      const response = await fetch('/api/announcements?limit=5', {
         signal: controller.signal,
         cache: 'no-store', // Ensure fresh data for announcements
         headers: {
