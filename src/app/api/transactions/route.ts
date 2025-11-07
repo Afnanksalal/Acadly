@@ -154,29 +154,25 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
         }
       }
 
-      // Clean up old cancelled/failed transactions for this listing (more aggressive cleanup)
-      await tx.transaction.deleteMany({
-        where: {
-          listingId: data.listingId,
-          status: { in: ["CANCELLED", "REFUNDED"] },
-          createdAt: {
-            lt: new Date(Date.now() - 6 * 60 * 60 * 1000) // Older than 6 hours
-          }
-        }
-      })
-
-      // Also clean up very old INITIATED transactions that were never completed
-      await tx.transaction.deleteMany({
+      // Mark old INITIATED transactions as CANCELLED (preserve for audit trail)
+      // Don't delete - just mark as cancelled for historical data
+      await tx.transaction.updateMany({
         where: {
           listingId: data.listingId,
           status: "INITIATED",
           createdAt: {
             lt: new Date(Date.now() - 2 * 60 * 60 * 1000) // Older than 2 hours
           }
+        },
+        data: {
+          status: "CANCELLED"
         }
       })
 
       // Validate user's transaction limits (prevent spam)
+      // Get configurable limit from environment or use default
+      const dailyTransactionLimit = parseInt(process.env.DAILY_TRANSACTION_LIMIT || '10')
+      
       const recentTransactions = await tx.transaction.count({
         where: {
           buyerId: user.id,
@@ -186,7 +182,7 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
         }
       })
 
-      if (recentTransactions >= 10) { // Max 10 transactions per day
+      if (recentTransactions >= dailyTransactionLimit) {
         throw new Error("TRANSACTION_LIMIT_EXCEEDED")
       }
 

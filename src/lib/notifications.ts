@@ -14,6 +14,31 @@ export async function createNotification(notification: NotificationData & {
   expiresAt?: Date
 }) {
   try {
+    // Deduplication: Check for duplicate notifications in the last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+    const existingNotification = await prisma.notification.findFirst({
+      where: {
+        userId: notification.userId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        createdAt: {
+          gte: fiveMinutesAgo
+        }
+      },
+      select: { id: true }
+    })
+
+    // If duplicate found, skip creation
+    if (existingNotification) {
+      console.log("⚠️ Duplicate notification prevented:", {
+        userId: notification.userId,
+        type: notification.type,
+        title: notification.title
+      })
+      return { success: true, notificationId: existingNotification.id, deduplicated: true }
+    }
+
     // Store notification in database
     const dbNotification = await prisma.notification.create({
       data: {

@@ -333,7 +333,7 @@ export function ListingsManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Listing?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{selectedListing?.title}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{selectedListing?.title}&quot;? This action cannot be undone.
               {selectedListing && selectedListing._count.chats > 0 && (
                 <div className="mt-2 p-2 bg-orange-500/10 border border-orange-500/20 rounded text-orange-600 dark:text-orange-400 text-sm">
                   <AlertTriangle className="h-4 w-4 inline mr-1" />

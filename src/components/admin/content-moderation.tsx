@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -73,16 +73,6 @@ export function ContentModeration() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
-    setLoading(true)
-    await Promise.all([fetchReports(), fetchDisputes(), fetchStats()])
-    setLoading(false)
-  }
-
   const fetchReports = async () => {
     try {
       const response = await fetch('/api/reports')
@@ -144,6 +134,16 @@ export function ContentModeration() {
       setStats({ pendingReports: 0, openDisputes: 0, totalResolved: 0 })
     }
   }
+
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    await Promise.all([fetchReports(), fetchDisputes(), fetchStats()])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleOpenReportDialog = (report: ReportData) => {
     setSelectedReport(report)

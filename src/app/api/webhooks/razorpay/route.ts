@@ -13,17 +13,32 @@ export async function POST(req: NextRequest) {
     }
 
     const text = await req.text()
-    const signature = req.headers.get("x-razorpay-signature") || ""
+    const signature = req.headers.get("x-razorpay-signature")
     
-    // Verify signature
+    // Strict validation: Check for missing signature
+    if (!signature) {
+      console.error("Missing webhook signature")
+      return new NextResponse("Unauthorized - Missing signature", { status: 401 })
+    }
+    
+    // Verify signature with timing-safe comparison
     const expected = crypto
       .createHmac("sha256", webhookSecret)
       .update(text)
       .digest("hex")
     
-    if (signature !== expected) {
-      console.error("Invalid Razorpay webhook signature")
-      return new NextResponse("Invalid signature", { status: 401 })
+    // Use crypto.timingSafeEqual for secure comparison (prevents timing attacks)
+    const expectedBuffer = Buffer.from(expected, 'hex')
+    const receivedBuffer = Buffer.from(signature, 'hex')
+    
+    if (expectedBuffer.length !== receivedBuffer.length || 
+        !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)) {
+      console.error("Invalid webhook signature", {
+        expected,
+        received: signature,
+        bodyLength: text.length
+      })
+      return new NextResponse("Unauthorized - Invalid signature", { status: 401 })
     }
 
     // Safe to parse after signature verification
