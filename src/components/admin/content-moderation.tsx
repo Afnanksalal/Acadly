@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Shield, Flag, Eye, CheckCircle, XCircle } from 'lucide-react'
+import { Shield, Flag, Eye, CheckCircle } from 'lucide-react'
 import { ReportResolutionDialog } from './report-resolution-dialog'
 import { DisputeResolutionDialog } from './dispute-resolution-dialog'
+import { ListingsManagement } from './listings-management'
 
 interface ReportData {
   id: string
@@ -65,7 +66,7 @@ export function ContentModeration() {
   const [disputes, setDisputes] = useState<DisputeData[]>([])
   const [stats, setStats] = useState<ModerationStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'reports' | 'disputes'>('reports')
+  const [activeTab, setActiveTab] = useState<'reports' | 'disputes' | 'listings'>('reports')
   
   // Dialogs
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null)
@@ -196,10 +197,10 @@ export function ContentModeration() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-2 border-b overflow-x-auto">
         <button
           onClick={() => setActiveTab('reports')}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
             activeTab === 'reports'
               ? 'border-b-2 border-primary text-primary'
               : 'text-muted-foreground hover:text-foreground'
@@ -209,13 +210,23 @@ export function ContentModeration() {
         </button>
         <button
           onClick={() => setActiveTab('disputes')}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
             activeTab === 'disputes'
               ? 'border-b-2 border-primary text-primary'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           Disputes ({disputes.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('listings')}
+          className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'listings'
+              ? 'border-b-2 border-primary text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Listings
         </button>
       </div>
 
@@ -390,6 +401,11 @@ export function ContentModeration() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Listings Tab */}
+      {activeTab === 'listings' && (
+        <ListingsManagement />
       )}
 
       {/* Dialogs */}
