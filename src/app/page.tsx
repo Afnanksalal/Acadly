@@ -197,7 +197,7 @@ export default async function HomePage() {
               </div>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              <p>Save listings you're interested in. Get notified when prices drop or similar items are listed.</p>
+              <p>Save listings you&apos;re interested in. Get notified when prices drop or similar items are listed.</p>
             </CardContent>
           </Card>
 
@@ -236,7 +236,7 @@ export default async function HomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <p className="text-muted-foreground">Automatic cleanup of expired transactions after 30 minutes. Listings are automatically reactivated if payment isn't completed.</p>
+              <p className="text-muted-foreground">Automatic cleanup of expired transactions after 30 minutes. Listings are automatically reactivated if payment isn&apos;t completed.</p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">Auto-cleanup</Badge>
                 <Badge variant="secondary">Listing reactivation</Badge>
@@ -287,7 +287,7 @@ export default async function HomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <p className="text-muted-foreground">Transactions auto-complete after 7 days if pickup isn't confirmed. Ensures smooth closure and prevents indefinite pending states.</p>
+              <p className="text-muted-foreground">Transactions auto-complete after 7 days if pickup isn&apos;t confirmed. Ensures smooth closure and prevents indefinite pending states.</p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">7-day auto-complete</Badge>
                 <Badge variant="secondary">Pickup confirmation</Badge>
