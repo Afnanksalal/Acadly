@@ -275,7 +275,7 @@ export function ContentModeration() {
       )}
 
       {/* Content based on active tab */}
-      {activeTab === 'reports' ? (
+      {activeTab === 'reports' && (
         <Card className="hover-lift">
           <CardHeader className="p-4 sm:p-6">
             <CardTitle>Reports Queue</CardTitle>
@@ -336,8 +336,10 @@ export function ContentModeration() {
           </div>
         </CardContent>
       </Card>
-      ) : (
-        /* Disputes Queue */
+      )}
+
+      {/* Disputes Tab */}
+      {activeTab === 'disputes' && (
         <Card className="hover-lift">
           <CardHeader className="p-4 sm:p-6">
             <CardTitle>Disputes Queue</CardTitle>
