@@ -1,21 +1,14 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
+import { withVerifiedAuth } from "@/lib/auth"
 import { z } from "zod"
-import { successResponse, errorResponse, unauthorizedResponse, validationErrorResponse, notFoundResponse, forbiddenResponse } from "@/lib/api-response"
+import { successResponse, errorResponse, validationErrorResponse, notFoundResponse, forbiddenResponse } from "@/lib/api-response"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
-export async function POST(req: NextRequest) {
+export const POST = withVerifiedAuth(async (req: NextRequest, user) => {
   try {
-    // Auth check
-    const supabase = createRouteHandlerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return unauthorizedResponse("Login required")
-    }
 
     // Validate input
     const schema = z.object({
@@ -154,17 +147,11 @@ export async function POST(req: NextRequest) {
     console.error("Create dispute error:", error)
     return errorResponse(error, 500)
   }
-}
+})
 
 // Get user's disputes
-export async function GET() {
+export const GET = withVerifiedAuth(async (req: NextRequest, user) => {
   try {
-    const supabase = createRouteHandlerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return unauthorizedResponse("Login required")
-    }
 
     const disputes = await prisma.dispute.findMany({
       where: { reporterId: user.id },
@@ -184,4 +171,4 @@ export async function GET() {
     console.error("Get disputes error:", error)
     return errorResponse(error, 500)
   }
-}
+})

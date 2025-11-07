@@ -1,22 +1,16 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
+import { withVerifiedAuth } from "@/lib/auth"
 import { z } from "zod"
-import { successResponse, errorResponse, unauthorizedResponse, validationErrorResponse, notFoundResponse, forbiddenResponse } from "@/lib/api-response"
+import { successResponse, errorResponse, validationErrorResponse, notFoundResponse, forbiddenResponse } from "@/lib/api-response"
 import { notifyReviewReceived } from "@/lib/notifications"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
 // POST /api/reviews - Create a review
-export async function POST(req: NextRequest) {
+export const POST = withVerifiedAuth(async (req: NextRequest, user) => {
   try {
-    const supabase = createRouteHandlerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return unauthorizedResponse("Login required")
-    }
 
     const schema = z.object({
       transactionId: z.string().uuid(),
@@ -136,17 +130,11 @@ export async function POST(req: NextRequest) {
     console.error("Create review error:", error)
     return errorResponse(error, 500)
   }
-}
+})
 
 // GET /api/reviews - Get user's reviews
-export async function GET(req: NextRequest) {
+export const GET = withVerifiedAuth(async (req: NextRequest, user) => {
   try {
-    const supabase = createRouteHandlerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return unauthorizedResponse("Login required")
-    }
 
     const { searchParams } = new URL(req.url)
     const type = searchParams.get("type") // "given" or "received"
@@ -206,4 +194,4 @@ export async function GET(req: NextRequest) {
     console.error("Get reviews error:", error)
     return errorResponse(error, 500)
   }
-}
+})

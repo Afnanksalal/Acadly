@@ -145,6 +145,27 @@ export function UserManagement() {
     }
   }
 
+  const handleQuickVerify = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verified: true })
+      })
+
+      if (response.ok) {
+        fetchUsers() // Refresh the list
+        alert('User verified successfully')
+      } else {
+        const error = await response.json()
+        alert(`Failed to verify user: ${error.error?.message || error.message}`)
+      }
+    } catch (error) {
+      console.error('Failed to verify user:', error)
+      alert('Failed to verify user')
+    }
+  }
+
   const handleDeleteUser = async (userId: string, action: 'suspend' | 'delete') => {
     const confirmMessage = action === 'delete' 
       ? 'Are you sure you want to permanently delete this user and all their data? This cannot be undone.'
@@ -162,7 +183,7 @@ export function UserManagement() {
         alert(`User ${action}ed successfully`)
       } else {
         const error = await response.json()
-        alert(`Failed to ${action} user: ${error.message}`)
+        alert(`Failed to ${action} user: ${error.error?.message || error.message}`)
       }
     } catch (error) {
       console.error(`Failed to ${action} user:`, error)
@@ -334,7 +355,17 @@ export function UserManagement() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2 sm:flex-shrink-0">
+                <div className="flex flex-wrap gap-2 sm:flex-shrink-0">
+                  {!user.verified && (
+                    <Button 
+                      size="sm" 
+                      className="text-xs bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => handleQuickVerify(user.id)}
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Verify
+                    </Button>
+                  )}
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -388,11 +419,11 @@ export function UserManagement() {
               e.preventDefault()
               const formData = new FormData(e.currentTarget)
               handleEditUser({
-                name: formData.get('name') as string,
-                username: formData.get('username') as string,
-                department: formData.get('department') as string,
-                year: formData.get('year') as string,
-                bio: formData.get('bio') as string,
+                name: formData.get('name') as string || undefined,
+                username: formData.get('username') as string || undefined,
+                department: formData.get('department') as string || undefined,
+                year: formData.get('year') as string || undefined,
+                bio: formData.get('bio') as string || undefined,
                 verified: formData.get('verified') === 'true',
                 role: formData.get('role') as 'USER' | 'ADMIN'
               })

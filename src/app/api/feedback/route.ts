@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { withAuth } from "@/lib/auth"
+import { withAuth, withVerifiedAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
 import { validatePagination } from "@/lib/validation"
 import { z } from "zod"
@@ -59,7 +59,7 @@ export const GET = withAuth(async (request: NextRequest, user) => {
   }
 })
 
-export const POST = withAuth(async (request: NextRequest, user) => {
+export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
   try {
     const body = await request.json()
     const parsed = createFeedbackSchema.safeParse(body)
