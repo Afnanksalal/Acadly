@@ -14,7 +14,7 @@ interface ReportButtonProps {
   targetId: string
   targetUserId?: string
   variant?: "destructive" | "secondary" | "outline" | "primary" | "ghost"
-  size?: "default" | "sm" | "lg"
+  size?: "sm" | "md" | "lg"
   className?: string
 }
 
