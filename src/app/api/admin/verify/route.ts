@@ -26,7 +26,6 @@ const bulkVerifySchema = z.object({
 export const POST = withAdminAuth(async (request: NextRequest, admin) => {
   try {
     const contentType = request.headers.get("content-type") || ""
-    let data: z.infer<typeof verifySchema>
 
     // Handle form data (for simple form submissions)
     if (contentType.includes("application/x-www-form-urlencoded")) {
@@ -75,8 +74,7 @@ export const POST = withAdminAuth(async (request: NextRequest, admin) => {
       return validationErrorResponse("Invalid request data", parsed.error.errors)
     }
 
-    data = parsed.data
-    const { userId, action, reason } = data
+    const { userId, action, reason } = parsed.data
 
     // Find user
     const user = await prisma.profile.findUnique({ where: { id: userId } })

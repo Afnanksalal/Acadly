@@ -146,6 +146,7 @@ export function Select({
         type="button"
         role="combobox"
         aria-expanded={isOpen}
+        aria-controls="select-listbox"
         aria-haspopup="listbox"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -185,6 +186,7 @@ export function Select({
       {/* Dropdown */}
       {isOpen && (
         <ul
+          id="select-listbox"
           ref={listRef}
           role="listbox"
           className={cn(
