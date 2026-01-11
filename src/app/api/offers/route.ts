@@ -57,8 +57,22 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       )
     }
 
-    const body = await request.json()
-    const data = validateAndSanitizeBody(createOfferSchema)(body)
+    let body
+    try {
+      body = await request.json()
+    } catch {
+      return validationErrorResponse("Invalid request body")
+    }
+
+    let data
+    try {
+      data = validateAndSanitizeBody(createOfferSchema)(body)
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        return validationErrorResponse(validationError.errors[0]?.message || "Invalid offer data")
+      }
+      return validationErrorResponse("Invalid offer data")
+    }
 
     // Verify chat exists and user is a participant
     const chat = await prisma.chat.findUnique({

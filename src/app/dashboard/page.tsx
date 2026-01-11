@@ -149,7 +149,7 @@ export default async function DashboardPage() {
       </div>
 
       {gate ? (
-        <Card className="border-secondary/20 bg-secondary/5 hover-lift">
+        <Card className="border-secondary/20 bg-secondary/5">
           <CardContent className="pt-6 p-4 sm:p-6">
             <div className="flex items-start gap-4">
               <div className="text-4xl">⏳</div>
@@ -167,21 +167,21 @@ export default async function DashboardPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-          <Card className="md:col-span-2 hover-lift">
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="text-foreground">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <Link href="/listings/new" className="group">
-                  <div className="rounded-xl border-2 border-primary/10 p-3 sm:p-4 lg:p-6 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:scale-105 bg-muted/20">
+                  <div className="rounded-xl border-2 border-primary/10 p-3 sm:p-4 lg:p-6 text-center transition-colors hover:border-primary/30 bg-muted/20">
                     <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-3">📝</div>
                     <div className="font-medium group-hover:text-primary transition-colors text-foreground text-xs sm:text-sm lg:text-base">Create Listing</div>
                     <p className="text-xs text-muted-foreground mt-1 sm:mt-2 hidden sm:block">Sell your items</p>
                   </div>
                 </Link>
                 <Link href="/listings" className="group">
-                  <div className="rounded-xl border-2 border-primary/10 p-3 sm:p-4 lg:p-6 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:scale-105 bg-muted/20">
+                  <div className="rounded-xl border-2 border-primary/10 p-3 sm:p-4 lg:p-6 text-center transition-colors hover:border-primary/30 bg-muted/20">
                     <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-3">🛍️</div>
                     <div className="font-medium group-hover:text-primary transition-colors text-foreground text-xs sm:text-sm lg:text-base">Browse Listings</div>
                     <p className="text-xs text-muted-foreground mt-1 sm:mt-2 hidden sm:block">Find what you need</p>
@@ -190,7 +190,7 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="hover-lift">
+          <Card>
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="text-foreground">Account</CardTitle>
             </CardHeader>

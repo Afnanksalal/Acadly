@@ -14,7 +14,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = "default", hover = true, glow = false, padding, ...props }, ref) => {
+  ({ className, variant = "default", hover = false, glow = false, padding, ...props }, ref) => {
     const variantStyles = {
       default: "bg-card border border-border/50",
       elevated: "bg-card border border-border/30 shadow-xl",
@@ -35,9 +35,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cn(
           "rounded-xl text-card-foreground",
-          "transition-all duration-300",
+          "transition-colors duration-200",
           variantStyles[variant],
-          hover && "hover:border-primary/40 hover:shadow-lg hover:-translate-y-1",
+          hover && "hover:border-primary/40",
           glow && "hover:shadow-glow",
           padding && paddingStyles[padding],
           className
