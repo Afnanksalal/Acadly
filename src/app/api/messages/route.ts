@@ -5,6 +5,7 @@ import { successResponse, errorResponse, validationErrorResponse, notFoundRespon
 import { sendMessageSchema, validateAndSanitizeBody, validatePagination } from "@/lib/validation"
 import { isValidUUID } from "@/lib/uuid-validation"
 import { notifyNewMessage } from "@/lib/notifications"
+import { z } from "zod"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
@@ -169,6 +170,52 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
     return successResponse(result, 201)
   } catch (error) {
     console.error("Error creating message:", error)
+    return errorResponse(error, 500)
+  }
+})
+
+
+// Mark messages as read
+const markReadSchema = z.object({
+  chatId: z.string().uuid("Invalid chat ID"),
+})
+
+export const PATCH = withVerifiedAuth(async (request: NextRequest, user) => {
+  try {
+    const body = await request.json()
+    const data = validateAndSanitizeBody(markReadSchema)(body)
+
+    // Verify chat exists and user is a participant
+    const chat = await prisma.chat.findUnique({
+      where: { id: data.chatId },
+    })
+
+    if (!chat) {
+      return notFoundResponse("Chat not found")
+    }
+
+    if (chat.buyerId !== user.id && chat.sellerId !== user.id) {
+      return validationErrorResponse("You are not a participant in this chat")
+    }
+
+    // Mark all messages from the other user as read
+    const result = await prisma.message.updateMany({
+      where: {
+        chatId: data.chatId,
+        senderId: { not: user.id }, // Only mark messages from the other user
+        readStatus: { not: "READ" },
+      },
+      data: {
+        readStatus: "READ",
+      },
+    })
+
+    return successResponse({ 
+      updated: result.count,
+      message: `${result.count} messages marked as read` 
+    })
+  } catch (error) {
+    console.error("Error marking messages as read:", error)
     return errorResponse(error, 500)
   }
 })

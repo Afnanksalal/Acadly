@@ -111,7 +111,6 @@ export default async function NotificationsPage() {
             
             const NotificationCard = (
               <Card 
-                key={notification.id}
                 className={`transition-all hover:shadow-md ${
                   !notification.isRead ? 'bg-primary/5 border-primary/20' : ''
                 }`}

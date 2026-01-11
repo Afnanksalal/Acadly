@@ -4,13 +4,40 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
+import { EventsFilter } from "./events-filter"
 
-export default async function EventsPage() {
+export default async function EventsPage({
+  searchParams
+}: {
+  searchParams: { status?: string; hostType?: string; search?: string }
+}) {
+  const { status, hostType, search } = searchParams
+  
+  // Build where clause
+  const where: any = { 
+    isActive: true,
+    startTime: { gte: new Date() }
+  }
+  
+  if (status && status !== 'all') {
+    where.status = status
+  }
+  
+  if (hostType && hostType !== 'all') {
+    where.hostType = hostType
+  }
+  
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+      { venue: { contains: search, mode: 'insensitive' } },
+      { hostName: { contains: search, mode: 'insensitive' } }
+    ]
+  }
+
   const events = await (prisma as any).event.findMany({
-    where: { 
-      isActive: true,
-      startTime: { gte: new Date() }
-    },
+    where,
     include: {
       creator: {
         select: {
@@ -57,7 +84,9 @@ export default async function EventsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Campus Events</h1>
-          <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Discover upcoming events on campus</p>
+          <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
+            {events.length} upcoming event{events.length !== 1 ? 's' : ''}
+          </p>
         </div>
         <Link href="/events/new" className="w-full sm:w-auto">
           <Button className="w-full sm:w-auto text-xs sm:text-sm">
@@ -65,6 +94,13 @@ export default async function EventsPage() {
           </Button>
         </Link>
       </div>
+
+      {/* Search and Filters */}
+      <EventsFilter 
+        initialSearch={search}
+        initialStatus={status}
+        initialHostType={hostType}
+      />
 
       {events.length === 0 ? (
         <Card>

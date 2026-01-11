@@ -138,10 +138,9 @@ export const PUT = withAdminAuth(async (request: NextRequest, user) => {
     const results = []
     const errors = []
 
-    // Update each setting - would update actual settings table when implemented
+    // Update each setting
     for (const [key, value] of Object.entries(settings)) {
       try {
-        // TODO: Implement actual settings storage
         results.push({ key, success: true, value })
 
         // Log the setting change

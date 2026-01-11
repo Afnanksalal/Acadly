@@ -73,8 +73,6 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
       const fileName = `${profile.id}-${Date.now()}.${fileExt}`
       const filePath = fileName
 
-      console.log('Uploading image:', { fileName, filePath, size: file.size })
-
       // Upload to Supabase storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('images')
@@ -84,18 +82,13 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
         })
 
       if (uploadError) {
-        console.error('Upload error:', uploadError)
         throw new Error(uploadError.message || 'Failed to upload image')
       }
-
-      console.log('Upload successful:', uploadData)
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('images')
         .getPublicUrl(filePath)
-
-      console.log('Public URL:', publicUrl)
 
       if (!publicUrl) {
         throw new Error('Failed to get image URL')
@@ -155,15 +148,11 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
         avatarUrl: formData.avatarUrl || null
       }
 
-      console.log('Submitting profile update:', cleanedData)
-
       const data = await apiRequest("/api/profile", {
         method: "PUT",
         body: JSON.stringify(cleanedData)
       })
 
-      console.log('Profile updated successfully:', data)
-      
       setSuccess(true)
       
       // Refresh the page to show updated data

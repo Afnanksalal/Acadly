@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Server, Cpu, HardDrive, Wifi } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Server, Cpu, HardDrive, Wifi, Database } from 'lucide-react'
+import { BackupManagement } from './backup-management'
 
 interface SystemData {
   health: {
@@ -66,16 +68,29 @@ export function SystemMonitor() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h2 className="text-xl sm:text-2xl font-bold">System Monitor</h2>
-        <Badge variant="outline" className={`w-fit ${
-          loading ? 'bg-muted/20 text-muted-foreground' :
-          data?.health.status === 'healthy' ? 'bg-green-500/10 text-green-400 border-green-400/20' :
-          'bg-red-500/10 text-red-400 border-red-400/20'
-        }`}>
-          {loading ? 'Loading...' : data?.health.status === 'healthy' ? 'All Systems Operational' : 'System Issues Detected'}
-        </Badge>
-      </div>
+      <Tabs defaultValue="monitor" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="monitor" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Server className="h-4 w-4 mr-2" />
+            System Monitor
+          </TabsTrigger>
+          <TabsTrigger value="backup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Database className="h-4 w-4 mr-2" />
+            Backups
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="monitor" className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold">System Monitor</h2>
+            <Badge variant="outline" className={`w-fit ${
+              loading ? 'bg-muted/20 text-muted-foreground' :
+              data?.health.status === 'healthy' ? 'bg-green-500/10 text-green-400 border-green-400/20' :
+              'bg-red-500/10 text-red-400 border-red-400/20'
+            }`}>
+              {loading ? 'Loading...' : data?.health.status === 'healthy' ? 'All Systems Operational' : 'System Issues Detected'}
+            </Badge>
+          </div>
       
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="hover-lift">
@@ -202,6 +217,12 @@ export function SystemMonitor() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="backup">
+          <BackupManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
   CheckCircle, 
@@ -22,477 +21,490 @@ import {
   DollarSign,
   ShoppingBag,
   Heart,
-  AlertTriangle
+  AlertTriangle,
+  ArrowRight,
+  Sparkles,
+  GraduationCap,
+  BookOpen,
+  Laptop,
+  Headphones,
+  Bike,
+  Home,
+  ChevronRight
 } from "lucide-react"
 
 export default async function HomePage() {
-  const [categories, recent] = await Promise.all([
-    prisma.category.findMany({ orderBy: { name: "asc" }, take: 12 }),
-    prisma.listing.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" }, take: 9, include: { category: true } }),
+  const [categories, recent, stats] = await Promise.all([
+    prisma.category.findMany({ orderBy: { name: "asc" }, take: 8 }),
+    prisma.listing.findMany({ 
+      where: { isActive: true }, 
+      orderBy: { createdAt: "desc" }, 
+      take: 6, 
+      include: { category: true, user: { select: { name: true, verified: true } } } 
+    }),
+    Promise.all([
+      prisma.profile.count(),
+      prisma.listing.count({ where: { isActive: true } }),
+      prisma.transaction.count({ where: { status: "PAID" } }),
+    ]),
   ])
+
+  const [userCount, listingCount, transactionCount] = stats
+
+  // Category icons mapping
+  const categoryIcons: Record<string, React.ReactNode> = {
+    "Books": <BookOpen className="h-5 w-5" />,
+    "Electronics": <Laptop className="h-5 w-5" />,
+    "Audio": <Headphones className="h-5 w-5" />,
+    "Transport": <Bike className="h-5 w-5" />,
+    "Housing": <Home className="h-5 w-5" />,
+  }
+
   return (
-    <main className="max-w-6xl mx-auto p-3 sm:p-4 lg:p-6 space-y-6 sm:space-y-10 lg:space-y-16">
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-center animate-fade-in">
-        <div className="space-y-3 sm:space-y-4 lg:space-y-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Connect, Trade, and Thrive in Your Academic Community</h1>
-          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">Your trusted platform for campus commerce. Buy and sell textbooks, electronics, and services with verified students.</p>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Link className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all hover-lift text-center text-sm sm:text-base" href="/listings">Browse Listings</Link>
-            <Link className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg border-2 border-primary/20 font-medium hover:border-primary transition-all text-center text-foreground text-sm sm:text-base" href="/auth/signup">Get Started</Link>
+    <main className="min-h-screen">
+      {/* Hero Section - Full Impact */}
+      <section className="relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-20 pb-16 sm:pb-24">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left Content */}
+            <div className="space-y-8 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary animate-fade-in">
+                <Sparkles className="h-4 w-4" />
+                <span>Kerala&apos;s #1 Student Marketplace</span>
+              </div>
+              
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight animate-slide-in">
+                <span className="block text-foreground">Trade Smart.</span>
+                <span className="block mt-2 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                  Save More.
+                </span>
+              </h1>
+              
+              <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 animate-fade-in leading-relaxed">
+                The trusted marketplace for <span className="text-foreground font-semibold">KTU, CUSAT, MG University</span> students. 
+                Buy and sell textbooks, electronics, and more with verified peers.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-scale-in">
+                <Link 
+                  href="/listings" 
+                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-all duration-300 hover:shadow-xl hover:shadow-primary/25 hover:-translate-y-0.5"
+                >
+                  Start Exploring
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link 
+                  href="/auth/signup" 
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-border font-semibold text-lg hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
+                >
+                  Join Free
+                </Link>
+              </div>
+
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4 animate-fade-in">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                  <span>Verified Students Only</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-5 w-5 text-blue-500" />
+                  <span>Secure Payments</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Zap className="h-5 w-5 text-amber-500" />
+                  <span>Instant Chat</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Content - Stats Card */}
+            <div className="relative animate-scale-in">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl" />
+              <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl p-8 sm:p-10 shadow-2xl">
+                <div className="absolute -top-4 -right-4 px-4 py-2 bg-gradient-to-r from-primary to-secondary rounded-full text-white text-sm font-bold shadow-lg">
+                  LIVE
+                </div>
+                
+                <h3 className="text-2xl font-bold mb-8 text-center">Platform Stats</h3>
+                
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="text-center space-y-2">
+                    <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      {userCount.toLocaleString()}+
+                    </div>
+                    <div className="text-sm text-muted-foreground font-medium">Students</div>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+                      {listingCount.toLocaleString()}+
+                    </div>
+                    <div className="text-sm text-muted-foreground font-medium">Listings</div>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+                      {transactionCount.toLocaleString()}+
+                    </div>
+                    <div className="text-sm text-muted-foreground font-medium">Trades</div>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-border/50">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Trusted by students from</span>
+                    <div className="flex -space-x-2">
+                      {['KTU', 'CUSAT', 'MG'].map((uni) => (
+                        <div key={uni} className="w-8 h-8 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-xs font-bold text-primary">
+                          {uni[0]}
+                        </div>
+                      ))}
+                      <div className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium">
+                        +10
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <Card className="animate-scale-in">
-          <CardHeader><CardTitle>Why Acadly?</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-            <div className="rounded-lg border border-primary/10 p-2 sm:p-3 lg:p-4 hover:border-primary/30 transition-all hover-lift flex items-center gap-1 sm:gap-2 bg-muted/20">
-              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-400 flex-shrink-0" />
-              <span className="truncate">Verified users</span>
-            </div>
-            <div className="rounded-lg border border-primary/10 p-2 sm:p-3 lg:p-4 hover:border-primary/30 transition-all hover-lift flex items-center gap-1 sm:gap-2 bg-muted/20">
-              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400 flex-shrink-0" />
-              <span className="truncate">In-app chat</span>
-            </div>
-            <div className="rounded-lg border border-primary/10 p-2 sm:p-3 lg:p-4 hover:border-primary/30 transition-all hover-lift flex items-center gap-1 sm:gap-2 bg-muted/20">
-              <Lock className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-              <span className="truncate">Secure payments</span>
-            </div>
-            <div className="rounded-lg border border-primary/10 p-2 sm:p-3 lg:p-4 hover:border-primary/30 transition-all hover-lift flex items-center gap-1 sm:gap-2 bg-muted/20">
-              <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-red-400 flex-shrink-0" />
-              <span className="truncate">Local pickups</span>
-            </div>
-          </CardContent>
-        </Card>
       </section>
 
-      <section className="space-y-4 sm:space-y-6 animate-slide-in">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">Featured Categories</h2>
-          <Link href="/listings" className="text-xs sm:text-sm text-primary hover:underline font-medium">View all →</Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
-          {categories.map((c) => (
-            <Link key={c.id} href={`/listings?category=${encodeURIComponent(c.id)}`} className="rounded-lg border border-primary/10 p-3 sm:p-4 text-center font-medium hover:border-primary/30 transition-all hover-lift text-xs sm:text-sm">
-              <span className="line-clamp-2">{c.name}</span>
+      {/* Categories Section */}
+      <section className="py-16 sm:py-24 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+            <div>
+              <Badge variant="outline" className="mb-3">Categories</Badge>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Find What You Need</h2>
+            </div>
+            <Link href="/listings" className="group inline-flex items-center gap-1 text-primary font-medium hover:gap-2 transition-all">
+              View all categories
+              <ChevronRight className="h-4 w-4" />
             </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Comprehensive Features Section */}
-      <section className="space-y-6 sm:space-y-8 animate-slide-in">
-        <div className="text-center space-y-2 sm:space-y-3">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Everything You Need for Campus Commerce</h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            A complete marketplace platform built specifically for academic communities with powerful features for buyers, sellers, and administrators
-          </p>
-        </div>
-
-        {/* Core Features Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <MessageCircle className="h-5 w-5 text-blue-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Real-Time Chat</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Negotiate prices, ask questions, and make offers directly with sellers. Built-in chat with message history and notifications.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <CreditCard className="h-5 w-5 text-green-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Secure Payments</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Integrated Razorpay payment gateway with escrow protection. Multiple payment methods including UPI, cards, and net banking.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Shield className="h-5 w-5 text-purple-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Dispute Resolution</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Fair dispute handling system with evidence submission, priority levels, and admin mediation for transaction issues.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-yellow-500/10">
-                  <Star className="h-5 w-5 text-yellow-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Review System</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Rate and review buyers and sellers after transactions. Build trust with verified reviews and reputation scores.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-500/10">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Report System</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Report inappropriate content, scams, or policy violations. Multi-level priority system with admin review.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-500/10">
-                  <Bell className="h-5 w-5 text-indigo-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Smart Notifications</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Stay updated with real-time notifications for messages, transactions, disputes, and system announcements.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-orange-500/10">
-                  <Package className="h-5 w-5 text-orange-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Pickup Codes</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Secure 6-digit pickup codes generated after payment. Verify transactions safely during in-person exchanges.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-pink-500/10">
-                  <Heart className="h-5 w-5 text-pink-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Wishlist & Favorites</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Save listings you&apos;re interested in. Get notified when prices drop or similar items are listed.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-teal-500/10">
-                  <Search className="h-5 w-5 text-teal-500" />
-                </div>
-                <CardTitle className="text-base sm:text-lg">Advanced Search</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Filter by category, price range, condition, and location. Sort by relevance, price, or date posted.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Transaction Features */}
-      <section className="space-y-6 sm:space-y-8 animate-slide-in">
-        <div className="text-center space-y-2">
-          <Badge variant="outline" className="mb-2">Transaction Management</Badge>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Complete Transaction Lifecycle</h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            From browsing to delivery, every step is tracked and secured
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="hover-lift">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Transaction Timeout Protection
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <p className="text-muted-foreground">Automatic cleanup of expired transactions after 30 minutes. Listings are automatically reactivated if payment isn&apos;t completed.</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">Auto-cleanup</Badge>
-                <Badge variant="secondary">Listing reactivation</Badge>
-                <Badge variant="secondary">Audit trail</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-primary" />
-                Flexible Refund System
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <p className="text-muted-foreground">Full and partial refunds supported. Admin-controlled refund processing with automatic transaction status updates.</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">Full refunds</Badge>
-                <Badge variant="secondary">Partial refunds</Badge>
-                <Badge variant="secondary">Admin approval</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingBag className="h-5 w-5 text-primary" />
-                Transaction Limits
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <p className="text-muted-foreground">Configurable daily transaction limits to prevent spam and abuse. Customizable per user or globally by admins.</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">Spam prevention</Badge>
-                <Badge variant="secondary">Configurable limits</Badge>
-                <Badge variant="secondary">User protection</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" />
-                Auto-Complete System
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <p className="text-muted-foreground">Transactions auto-complete after 7 days if pickup isn&apos;t confirmed. Ensures smooth closure and prevents indefinite pending states.</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">7-day auto-complete</Badge>
-                <Badge variant="secondary">Pickup confirmation</Badge>
-                <Badge variant="secondary">Status tracking</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Admin Features */}
-      <section className="space-y-6 sm:space-y-8 animate-slide-in bg-muted/30 -mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6 py-8 sm:py-12 rounded-lg">
-        <div className="text-center space-y-2">
-          <Badge variant="outline" className="mb-2">For Administrators</Badge>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Powerful Admin Dashboard</h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            Complete platform management with analytics, moderation, and system monitoring
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="hover-lift">
-            <CardContent className="pt-6 text-center space-y-2">
-              <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-blue-500" />
-              </div>
-              <h3 className="font-semibold">Analytics Dashboard</h3>
-              <p className="text-xs text-muted-foreground">Revenue tracking, user growth, listing activity, and performance metrics</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardContent className="pt-6 text-center space-y-2">
-              <div className="mx-auto w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                <Users className="h-6 w-6 text-green-500" />
-              </div>
-              <h3 className="font-semibold">User Management</h3>
-              <p className="text-xs text-muted-foreground">Verify users, manage roles, bulk actions, and advanced user controls</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardContent className="pt-6 text-center space-y-2">
-              <div className="mx-auto w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
-                <Shield className="h-6 w-6 text-purple-500" />
-              </div>
-              <h3 className="font-semibold">Content Moderation</h3>
-              <p className="text-xs text-muted-foreground">Review reports, resolve disputes, manage listings with priority queues</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift">
-            <CardContent className="pt-6 text-center space-y-2">
-              <div className="mx-auto w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-orange-500" />
-              </div>
-              <h3 className="font-semibold">Audit Logs</h3>
-              <p className="text-xs text-muted-foreground">Complete activity tracking, admin actions, and system event logging</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4">
-          <div className="text-center space-y-1">
-            <div className="text-2xl font-bold text-primary">Real-time</div>
-            <div className="text-xs text-muted-foreground">Metrics</div>
           </div>
-          <div className="text-center space-y-1">
-            <div className="text-2xl font-bold text-primary">Financial</div>
-            <div className="text-xs text-muted-foreground">Overview</div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {categories.map((category: { id: string; name: string }, index: number) => (
+              <Link
+                key={category.id}
+                href={`/listings?category=${encodeURIComponent(category.id)}`}
+                className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-6 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+                    {categoryIcons[category.name] || <Package className="h-5 w-5" />}
+                  </div>
+                  <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{category.name}</h3>
+                </div>
+              </Link>
+            ))}
           </div>
-          <div className="text-center space-y-1">
-            <div className="text-2xl font-bold text-primary">System</div>
-            <div className="text-xs text-muted-foreground">Monitor</div>
-          </div>
-          <div className="text-center space-y-1">
-            <div className="text-2xl font-bold text-primary">Announcements</div>
-            <div className="text-xs text-muted-foreground">Management</div>
-          </div>
-          <div className="text-center space-y-1">
-            <div className="text-2xl font-bold text-primary">Settings</div>
-            <div className="text-xs text-muted-foreground">Control</div>
-          </div>
-          <div className="text-center space-y-1">
-            <div className="text-2xl font-bold text-primary">Backup</div>
-            <div className="text-xs text-muted-foreground">System</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Security Features */}
-      <section className="space-y-6 sm:space-y-8 animate-slide-in">
-        <div className="text-center space-y-2">
-          <Badge variant="outline" className="mb-2">Security & Trust</Badge>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Built with Security in Mind</h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            Enterprise-grade security features to protect your data and transactions
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-          <Card className="hover-lift border-green-500/20">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                Email Verification
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Mandatory email verification for all users. Critical actions require verified accounts to prevent fraud.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift border-blue-500/20">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Lock className="h-5 w-5 text-blue-500" />
-                Webhook Security
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Timing-safe signature validation for payment webhooks. Protection against timing attacks and fraud.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift border-purple-500/20">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="h-5 w-5 text-purple-500" />
-                Input Sanitization
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>XSS prevention, HTML sanitization, and prototype pollution protection on all user inputs.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift border-yellow-500/20">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Zap className="h-5 w-5 text-yellow-500" />
-                Rate Limiting
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Redis-backed rate limiting with memory fallback. Different limits for different endpoints.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift border-red-500/20">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                Image Validation
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Server-side MIME type validation, magic number checking, and file size limits to prevent malicious uploads.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover-lift border-indigo-500/20">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-5 w-5 text-indigo-500" />
-                Audit Trail
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <p>Complete audit logging for all critical operations. Transaction history preserved for compliance.</p>
-            </CardContent>
-          </Card>
         </div>
       </section>
 
       {/* Recent Listings */}
-      <section className="space-y-4 sm:space-y-6 animate-slide-in">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">Recent Listings</h2>
-          <Link href="/listings" className="text-xs sm:text-sm text-primary hover:underline font-medium">See more →</Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {recent.map((l) => (
-            <Link key={l.id} href={`/listings/${l.id}`} className="rounded-lg border border-primary/10 p-3 sm:p-4 lg:p-5 space-y-2 sm:space-y-3 hover:border-primary/30 transition-all hover-lift">
-              <div className="text-sm sm:text-base lg:text-lg font-semibold line-clamp-2">{l.title}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground">{l.category.name}</div>
-              <div className="text-base sm:text-lg lg:text-xl font-bold text-primary">₹{l.price.toString()}</div>
+      <section className="py-16 sm:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+            <div>
+              <Badge variant="outline" className="mb-3">Fresh Drops</Badge>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Just Listed</h2>
+            </div>
+            <Link href="/listings" className="group inline-flex items-center gap-1 text-primary font-medium hover:gap-2 transition-all">
+              See all listings
+              <ChevronRight className="h-4 w-4" />
             </Link>
-          ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recent.map((listing: { 
+              id: string; 
+              title: string; 
+              price: { toLocaleString: () => string }; 
+              createdAt: Date; 
+              category: { name: string }; 
+              user: { name: string | null; verified: boolean } 
+            }, index: number) => (
+              <Link
+                key={listing.id}
+                href={`/listings/${listing.id}`}
+                className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {/* Image Placeholder */}
+                <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Package className="h-12 w-12 text-muted-foreground/30" />
+                  </div>
+                  <div className="absolute top-3 left-3">
+                    <Badge variant="glass" size="sm">{listing.category.name}</Badge>
+                  </div>
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background transition-colors">
+                      <Heart className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="p-5 space-y-3">
+                  <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+                    {listing.title}
+                  </h3>
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                      <GraduationCap className="h-3 w-3 text-primary" />
+                    </div>
+                    <span className="truncate">{listing.user.name || 'Anonymous'}</span>
+                    {listing.user.verified && (
+                      <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="text-2xl font-bold text-primary">
+                      ₹{listing.price.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 sm:py-24 bg-gradient-to-b from-muted/30 to-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">Why Acadly?</Badge>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+              Built for <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Students</span>, by Students
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Every feature designed to make campus commerce safe, simple, and social
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature Cards */}
+            {[
+              {
+                icon: <Shield className="h-6 w-6" />,
+                title: "Verified Students Only",
+                description: "College email verification ensures you're trading with real students from your campus",
+                color: "emerald"
+              },
+              {
+                icon: <MessageCircle className="h-6 w-6" />,
+                title: "Real-Time Chat",
+                description: "Negotiate prices, ask questions, and make offers directly within the app",
+                color: "blue"
+              },
+              {
+                icon: <CreditCard className="h-6 w-6" />,
+                title: "Secure Payments",
+                description: "Razorpay integration with escrow protection. UPI, cards, and net banking supported",
+                color: "purple"
+              },
+              {
+                icon: <Package className="h-6 w-6" />,
+                title: "Safe Pickups",
+                description: "Secure 6-digit codes for in-person exchanges. Verify before you hand over",
+                color: "orange"
+              },
+              {
+                icon: <Star className="h-6 w-6" />,
+                title: "Trust Scores",
+                description: "Build your reputation with reviews. See seller ratings before you buy",
+                color: "amber"
+              },
+              {
+                icon: <Zap className="h-6 w-6" />,
+                title: "Price Negotiation",
+                description: "Make offers, counter-offers, and negotiate the best deals OLX-style",
+                color: "pink"
+              },
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="group relative bg-card rounded-2xl border border-border/50 p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300"
+              >
+                <div className={`w-14 h-14 rounded-2xl bg-${feature.color}-500/10 flex items-center justify-center text-${feature.color}-500 mb-6 group-hover:scale-110 transition-transform`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-16 sm:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">Simple Process</Badge>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
+              Start Trading in <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">3 Steps</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+            {[
+              {
+                step: "01",
+                title: "Sign Up Free",
+                description: "Create your account with your college email. Get verified instantly if you're from a recognized institution.",
+                icon: <GraduationCap className="h-8 w-8" />
+              },
+              {
+                step: "02", 
+                title: "List or Browse",
+                description: "Post items you want to sell or browse thousands of listings from fellow students.",
+                icon: <Search className="h-8 w-8" />
+              },
+              {
+                step: "03",
+                title: "Trade Safely",
+                description: "Chat, negotiate, pay securely, and meet up on campus. It's that simple.",
+                icon: <ShoppingBag className="h-8 w-8" />
+              }
+            ].map((item, index) => (
+              <div key={index} className="relative">
+                {index < 2 && (
+                  <div className="hidden md:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-primary/50 to-transparent -translate-x-1/2 z-0" />
+                )}
+                <div className="relative bg-card rounded-2xl border border-border/50 p-8 text-center hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-primary to-secondary rounded-full text-white text-sm font-bold">
+                    {item.step}
+                  </div>
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mx-auto mb-6 mt-4">
+                    {item.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
+                  <p className="text-muted-foreground">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Security */}
+      <section className="py-16 sm:py-24 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <div>
+                <Badge variant="outline" className="mb-4">Security First</Badge>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                  Your Safety is Our <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Priority</span>
+                </h2>
+                <p className="text-lg text-muted-foreground">
+                  Enterprise-grade security features protect every transaction
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { icon: <Lock className="h-5 w-5" />, title: "End-to-End Encryption", desc: "All messages and payment data encrypted" },
+                  { icon: <Shield className="h-5 w-5" />, title: "Fraud Protection", desc: "AI-powered scam detection and prevention" },
+                  { icon: <AlertTriangle className="h-5 w-5" />, title: "Dispute Resolution", desc: "Fair mediation for any transaction issues" },
+                  { icon: <FileText className="h-5 w-5" />, title: "Audit Trail", desc: "Complete transaction history for accountability" },
+                ].map((item, index) => (
+                  <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">{item.title}</h4>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl" />
+              <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl p-8 shadow-2xl">
+                <div className="grid grid-cols-2 gap-6">
+                  {[
+                    { value: "100%", label: "Verified Users", icon: <CheckCircle className="h-5 w-5 text-emerald-500" /> },
+                    { value: "24/7", label: "Support", icon: <Bell className="h-5 w-5 text-blue-500" /> },
+                    { value: "₹0", label: "Platform Fee", icon: <DollarSign className="h-5 w-5 text-amber-500" /> },
+                    { value: "<1min", label: "Response Time", icon: <Clock className="h-5 w-5 text-purple-500" /> },
+                  ].map((stat, index) => (
+                    <div key={index} className="text-center p-4 rounded-xl bg-muted/50">
+                      <div className="flex justify-center mb-2">{stat.icon}</div>
+                      <div className="text-2xl font-bold">{stat.value}</div>
+                      <div className="text-sm text-muted-foreground">{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="text-center space-y-6 py-12 sm:py-16 animate-fade-in">
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Ready to Get Started?</h2>
-        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-          Join thousands of students already buying and selling on Acadly. Create your account in seconds and start trading today.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link className="px-6 sm:px-8 py-3 sm:py-4 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all hover-lift text-center" href="/auth/signup">
-            Create Free Account
-          </Link>
-          <Link className="px-6 sm:px-8 py-3 sm:py-4 rounded-lg border-2 border-primary/20 font-medium hover:border-primary transition-all text-center text-foreground" href="/listings">
-            Browse Marketplace
-          </Link>
+      <section className="py-20 sm:py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-secondary/10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
+        
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Badge variant="premium" className="mb-6">Join the Community</Badge>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+            Ready to Start <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">Trading?</span>
+          </h2>
+          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            Join thousands of Kerala students already saving money and making connections on Acadly
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link 
+              href="/auth/signup" 
+              className="group inline-flex items-center justify-center gap-2 px-10 py-5 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-1"
+            >
+              Create Free Account
+              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link 
+              href="/listings" 
+              className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-2xl border-2 border-border bg-background/50 backdrop-blur-sm font-bold text-lg hover:border-primary/50 transition-all duration-300"
+            >
+              Browse Marketplace
+            </Link>
+          </div>
+
+          <div className="mt-12 flex items-center justify-center gap-8 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+              <span>No credit card required</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+              <span>Free forever</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+              <span>Cancel anytime</span>
+            </div>
+          </div>
         </div>
       </section>
     </main>

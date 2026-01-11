@@ -54,7 +54,7 @@ export async function ListingsContent({
           </p>
         </div>
         <Link href="/listings/new" className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto hover-lift" size="default">
+          <Button className="w-full sm:w-auto hover-lift" size="md">
             <span className="text-sm sm:text-lg mr-1">+</span> 
             <span className="hidden xs:inline">Create </span>Listing
           </Button>

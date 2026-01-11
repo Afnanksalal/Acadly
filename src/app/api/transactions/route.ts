@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server"
-import Razorpay from "razorpay"
 import { prisma } from "@/lib/prisma"
 import { withVerifiedAuth, validateBuyerNotSeller } from "@/lib/auth"
 import { successResponse, errorResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
 import { createTransactionSchema, validateAndSanitizeBody, validatePagination } from "@/lib/validation"
 import { notifyTransactionCreated } from "@/lib/notifications"
+import { createOrder } from "@/lib/razorpay"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
@@ -196,47 +196,25 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
     
     // Validate amount bounds
     if (finalAmount < 1 || finalAmount > 999999) {
-      return validationErrorResponse("Transaction amount must be between ₹1 and ₹999,999")
+      return validationErrorResponse("Transaction amount must be between ₹1 and ₹9,99,999")
     }
 
-    // Validate Razorpay credentials
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      console.error(`[${transactionId}] Razorpay credentials not configured`)
-      return errorResponse(new Error("Payment gateway not configured"), 500)
-    }
-
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    })
-
-    // Create Razorpay order with retry logic
-    let order: any = null
-    let retries = 3
-    
-    while (retries > 0) {
-      try {
-        order = await razorpay.orders.create({
-          amount: Math.round(finalAmount * 100), // Convert to paise
-          currency: "INR",
-          receipt: transactionId,
-          notes: {
-            listingId: data.listingId,
-            buyerId: user.id,
-            sellerId: listing.userId,
-            transactionId
-          },
-        })
-        break
-      } catch (razorpayError) {
-        retries--
-        if (retries === 0) throw razorpayError
-        await new Promise(resolve => setTimeout(resolve, 1000)) // 1 second delay
-      }
-    }
-
-    if (!order) {
-      throw new Error("Failed to create Razorpay order after retries")
+    // Create Razorpay order using utility (handles retries and validation)
+    let order
+    try {
+      order = await createOrder({
+        amount: finalAmount,
+        receipt: transactionId,
+        notes: {
+          listingId: data.listingId,
+          buyerId: user.id,
+          sellerId: listing.userId,
+          transactionId
+        }
+      })
+    } catch (razorpayError) {
+      console.error(`[${transactionId}] Razorpay order creation failed:`, razorpayError)
+      return errorResponse(new Error("Failed to create payment order. Please try again."), 500)
     }
 
     // Create transaction record
@@ -318,15 +296,11 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       }
     }
 
-    // Handle Razorpay errors with better context
+    // Handle Razorpay errors
     if (error && typeof error === "object" && "error" in error) {
       const razorpayError = error as { error: { description?: string; code?: string } }
       console.error(`[${transactionId}] Razorpay error:`, razorpayError)
-      
-      return errorResponse(
-        new Error(`Payment gateway error: ${razorpayError.error.description || 'Unknown error'}`),
-        500
-      )
+      return errorResponse(new Error("Payment gateway error. Please try again."), 500)
     }
 
     return errorResponse(error, 500)

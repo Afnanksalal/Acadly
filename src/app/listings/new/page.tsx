@@ -6,7 +6,7 @@ import { createBrowserClient } from "@supabase/ssr"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/select"
+import { NativeSelect } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { apiRequest, getErrorMessage } from "@/lib/api-client"
@@ -79,33 +79,62 @@ export default function NewListingPage() {
       const uploadPromises = filesToUpload.map(async (file) => {
         // Validate file size (5MB)
         if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`${file.name} is too large (max 5MB)`)
+          return { success: false, error: `${file.name} is too large (max 5MB)` }
         }
 
         // Validate file type
         if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-          throw new Error(`${file.name} is not a valid image format`)
+          return { success: false, error: `${file.name} is not a valid image format` }
         }
 
         const formData = new FormData()
         formData.append('file', file)
 
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        })
+        try {
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          })
 
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error?.message || 'Upload failed')
+          if (!response.ok) {
+            const error = await response.json()
+            return { success: false, error: error.error?.message || `Failed to upload ${file.name}` }
+          }
+
+          const data = await response.json()
+          return { success: true, url: data.data?.url || data.url }
+        } catch {
+          return { success: false, error: `Network error uploading ${file.name}` }
         }
-
-        const data = await response.json()
-        return data.data?.url || data.url
       })
 
-      const uploadedUrls = await Promise.all(uploadPromises)
-      setImageUrls([...imageUrls, ...uploadedUrls])
+      // Use Promise.allSettled to handle partial failures gracefully
+      const results = await Promise.allSettled(uploadPromises)
+      
+      const successfulUrls: string[] = []
+      const errors: string[] = []
+
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          if (result.value.success && result.value.url) {
+            successfulUrls.push(result.value.url)
+          } else if (result.value.error) {
+            errors.push(result.value.error)
+          }
+        } else {
+          errors.push('Upload failed unexpectedly')
+        }
+      })
+
+      // Add successful uploads to state
+      if (successfulUrls.length > 0) {
+        setImageUrls(prev => [...prev, ...successfulUrls])
+      }
+
+      // Show errors if any uploads failed
+      if (errors.length > 0) {
+        setUploadError(errors.join('. '))
+      }
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Failed to upload images')
     } finally {
@@ -212,7 +241,7 @@ export default function NewListingPage() {
 
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-medium">Category *</label>
-                <Select
+                <NativeSelect
                   value={categoryId}
                   onChange={e => setCategoryId(e.target.value)}
                   disabled={loading}
@@ -221,7 +250,7 @@ export default function NewListingPage() {
                 >
                   <option value="">Select category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </Select>
+                </NativeSelect>
               </div>
             </div>
 

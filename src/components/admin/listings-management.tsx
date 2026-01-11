@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import { NativeSelect } from '@/components/ui/select'
 import { 
   ShoppingBag, 
   Search, 
@@ -167,23 +167,23 @@ export function ListingsManagement() {
               />
             </div>
 
-            <Select
+            <NativeSelect
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-            </Select>
+            </NativeSelect>
 
-            <Select
+            <NativeSelect
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
             >
               <option value="all">All Types</option>
               <option value="PRODUCT">Product</option>
               <option value="SERVICE">Service</option>
-            </Select>
+            </NativeSelect>
           </div>
         </CardContent>
       </Card>

@@ -62,12 +62,6 @@ export async function createNotification(notification: NotificationData & {
       title: notification.title,
       priority: notification.priority || "NORMAL"
     })
-
-    // TODO: Future enhancements:
-    // 1. Send email notifications for HIGH/URGENT priority
-    // 2. Send push notifications via service worker
-    // 3. Send SMS for URGENT notifications
-    // 4. Real-time updates via WebSocket/SSE
     
     return { success: true, notificationId: dbNotification.id }
   } catch (error) {
@@ -474,6 +468,40 @@ export async function notifyOfferAccepted(offerId: string) {
     actionUrl: `/chats/${offer.chatId}`,
     data: { offerId, amount: offer.price },
     priority: "HIGH"
+  })
+}
+
+export async function notifyOfferResponse(offerId: string, status: 'ACCEPTED' | 'DECLINED' | 'COUNTERED') {
+  const offer = await prisma.offer.findUnique({
+    where: { id: offerId },
+    include: {
+      chat: {
+        include: {
+          listing: true,
+          buyer: true,
+          seller: true
+        }
+      },
+      proposer: true
+    }
+  })
+
+  if (!offer) return
+
+  const statusMessages = {
+    ACCEPTED: { title: "Offer Accepted! 🎉", message: `Your offer of ₹${offer.price} for "${offer.chat.listing.title}" was accepted!` },
+    DECLINED: { title: "Offer Declined", message: `Your offer of ₹${offer.price} for "${offer.chat.listing.title}" was declined.` },
+    COUNTERED: { title: "Counter Offer Received", message: `You received a counter offer for "${offer.chat.listing.title}"` }
+  }
+
+  await createNotification({
+    userId: offer.proposerId,
+    type: "CHAT",
+    title: statusMessages[status].title,
+    message: statusMessages[status].message,
+    actionUrl: `/chats/${offer.chatId}`,
+    data: { offerId, amount: offer.price, status },
+    priority: status === 'ACCEPTED' ? "HIGH" : "NORMAL"
   })
 }
 

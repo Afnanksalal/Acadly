@@ -127,6 +127,7 @@ export default async function ChatDetailPage({ params }: { params: { id: string 
                 }
               }))} 
               currentUserId={user.id}
+              listingPrice={parseFloat(chat.listing.price.toString())}
             />
           </ErrorBoundary>
         </CardContent>

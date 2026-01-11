@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/select"
+import { NativeSelect } from "@/components/ui/select"
 import { apiRequest } from "@/lib/api-client"
 import { Plus, Award } from "lucide-react"
 
@@ -131,7 +131,7 @@ export function BadgeSection({ userId, isOwner = false }: { userId: string, isOw
 
                 <div className="space-y-2">
                   <Label htmlFor="type">Type *</Label>
-                  <Select
+                  <NativeSelect
                     id="type"
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
@@ -142,7 +142,7 @@ export function BadgeSection({ userId, isOwner = false }: { userId: string, isOw
                         {type.replace('_', ' ')}
                       </option>
                     ))}
-                  </Select>
+                  </NativeSelect>
                 </div>
 
                 <div className="space-y-2">

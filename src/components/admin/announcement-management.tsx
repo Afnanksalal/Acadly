@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select } from '@/components/ui/select'
+import { NativeSelect } from '@/components/ui/select'
 import { 
   Megaphone, 
   Plus, 
@@ -221,7 +221,7 @@ export function AnnouncementManagement() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="type">Type</Label>
-                  <Select
+                  <NativeSelect
                     id="type"
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
@@ -233,12 +233,12 @@ export function AnnouncementManagement() {
                     <option value="MAINTENANCE">Maintenance</option>
                     <option value="FEATURE">Feature</option>
                     <option value="PROMOTION">Promotion</option>
-                  </Select>
+                  </NativeSelect>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority</Label>
-                  <Select
+                  <NativeSelect
                     id="priority"
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
@@ -247,7 +247,7 @@ export function AnnouncementManagement() {
                     <option value="NORMAL">Normal</option>
                     <option value="HIGH">High</option>
                     <option value="URGENT">Urgent</option>
-                  </Select>
+                  </NativeSelect>
                 </div>
               </div>
 

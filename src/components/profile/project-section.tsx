@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/select"
+import { NativeSelect } from "@/components/ui/select"
 import { apiRequest } from "@/lib/api-client"
 import { Plus, Code, Github, ExternalLink, Calendar } from "lucide-react"
 
@@ -176,7 +176,7 @@ export function ProjectSection({ userId, isOwner = false }: { userId: string, is
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="category">Category *</Label>
-                    <Select
+                    <NativeSelect
                       id="category"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -187,12 +187,12 @@ export function ProjectSection({ userId, isOwner = false }: { userId: string, is
                           {cat.replace('_', ' ')}
                         </option>
                       ))}
-                    </Select>
+                    </NativeSelect>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="status">Status *</Label>
-                    <Select
+                    <NativeSelect
                       id="status"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
@@ -203,7 +203,7 @@ export function ProjectSection({ userId, isOwner = false }: { userId: string, is
                           {status.replace('_', ' ')}
                         </option>
                       ))}
-                    </Select>
+                    </NativeSelect>
                   </div>
                 </div>
 

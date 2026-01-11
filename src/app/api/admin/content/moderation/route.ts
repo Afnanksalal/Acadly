@@ -2,10 +2,9 @@ import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
-import { logAdminAction, ADMIN_ACTIONS } from "@/lib/admin-logger"
 import { z } from "zod"
+import { createNotification } from "@/lib/notifications"
 
-// Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
 const moderationActionSchema = z.object({
@@ -17,88 +16,89 @@ const moderationActionSchema = z.object({
 })
 
 export const GET = withAdminAuth(async (request: NextRequest, user) => {
-  await logAdminAction({
-    adminId: user.id,
-    action: "VIEW_MODERATION_QUEUE",
-    request
-  })
-
   try {
     const { searchParams } = new URL(request.url)
-    const contentType = searchParams.get("contentType")
-    const status = searchParams.get("status") || "PENDING"
-    const priority = searchParams.get("priority")
     const limit = parseInt(searchParams.get("limit") || "50")
-    const offset = parseInt(searchParams.get("offset") || "0")
 
-    // Get pending reports for moderation (simulated since model doesn't exist yet)
-    const reports: any[] = []
+    // Get reports pending review
+    const pendingReports = await prisma.report.findMany({
+      where: { status: "PENDING" },
+      include: {
+        reporter: { select: { id: true, email: true, username: true } },
+        reportedUser: { select: { id: true, email: true, username: true } }
+      },
+      orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
+      take: limit
+    })
 
-    // Get flagged content that needs review
-    const flaggedContent = await Promise.all([
-      // Flagged listings
-      prisma.listing.findMany({
-        where: {
-          OR: [
-            { title: { contains: "suspicious", mode: "insensitive" } },
-            { description: { contains: "spam", mode: "insensitive" } }
-          ]
-        },
-        include: {
-          user: { select: { id: true, name: true, email: true } }
-        },
-        take: 20
-      }),
-      
-      // Recent reviews with low ratings
-      prisma.review.findMany({
-        where: {
-          rating: { lte: 2 },
-          createdAt: {
-            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    // Get flagged listings (recently reported or suspicious)
+    const flaggedListings = await prisma.listing.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { requiresApproval: true },
+          { 
+            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            user: { verified: false }
           }
-        },
-        include: {
-          reviewer: { select: { id: true, name: true } },
-          reviewee: { select: { id: true, name: true } }
-        },
-        take: 20
+        ]
+      },
+      include: {
+        user: { select: { id: true, email: true, username: true, verified: true } },
+        category: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    })
+
+    // Get recent low-rated reviews that might need attention
+    const flaggedReviews = await prisma.review.findMany({
+      where: {
+        rating: { lte: 2 },
+        createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      },
+      include: {
+        reviewer: { select: { id: true, email: true, username: true } },
+        reviewee: { select: { id: true, email: true, username: true } },
+        transaction: { select: { id: true, amount: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    })
+
+    // Get report statistics
+    const [reportStats, recentActions] = await Promise.all([
+      prisma.report.groupBy({
+        by: ['status', 'reason'],
+        _count: true
       }),
-      
-      // Users with multiple reports (simulated)
-      prisma.profile.findMany({
-        include: {
-          _count: {
-            select: {
-              listings: true,
-              reviewsGiven: true
-            }
-          }
-        },
-        take: 20
+      prisma.auditLog.count({
+        where: {
+          action: { startsWith: 'CONTENT_' },
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+        }
       })
     ])
 
-    // Get moderation statistics (simulated)
-    const stats = [
-      [{ status: "PENDING", _count: 5 }, { status: "RESOLVED", _count: 20 }],
-      [{ contentType: "LISTING", _count: 15 }, { contentType: "REVIEW", _count: 10 }],
-      [{ priority: "HIGH", _count: 3 }, { priority: "MEDIUM", _count: 12 }],
-      8 // Recent moderation actions count
-    ]
+    // Log access
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "VIEW_MODERATION_QUEUE",
+        resource: "MODERATION"
+      }
+    })
 
     return successResponse({
-      reports,
+      reports: pendingReports,
       flaggedContent: {
-        listings: flaggedContent[0],
-        reviews: flaggedContent[1],
-        users: flaggedContent[2]
+        listings: flaggedListings,
+        reviews: flaggedReviews
       },
       stats: {
-        byStatus: stats[0],
-        byContentType: stats[1],
-        byPriority: stats[2],
-        actionsLast24h: stats[3]
+        pendingReports: pendingReports.length,
+        reportBreakdown: reportStats,
+        actionsLast24h: recentActions
       }
     })
   } catch (error) {
@@ -107,104 +107,134 @@ export const GET = withAdminAuth(async (request: NextRequest, user) => {
   }
 })
 
-// POST /api/admin/content/moderation - Take moderation actions
 export const POST = withAdminAuth(async (request: NextRequest, user) => {
   try {
     const body = await request.json()
     const parsed = moderationActionSchema.safeParse(body)
 
     if (!parsed.success) {
-      return validationErrorResponse("Invalid moderation action data")
+      return validationErrorResponse("Invalid moderation action data", parsed.error.errors)
     }
 
     const { action, contentType, contentIds, reason, notifyUser } = parsed.data
-    const results = []
-    const errors = []
+    const results: { contentId: string; success: boolean }[] = []
+    const errors: { contentId: string; error: string }[] = []
 
     for (const contentId of contentIds) {
       try {
-        let result
-        let affectedUserId = null
+        let affectedUserId: string | null = null
         
         switch (contentType) {
-          case "LISTING":
+          case "LISTING": {
             const listing = await prisma.listing.findUnique({
               where: { id: contentId },
-              select: { userId: true }
+              select: { userId: true, title: true }
             })
-            affectedUserId = listing?.userId
+            
+            if (!listing) {
+              errors.push({ contentId, error: "Listing not found" })
+              continue
+            }
+            
+            affectedUserId = listing.userId
             
             if (action === "REMOVE" || action === "REJECT") {
-              result = await prisma.listing.update({
+              await prisma.listing.update({
                 where: { id: contentId },
                 data: { isActive: false }
               })
+            } else if (action === "APPROVE") {
+              await prisma.listing.update({
+                where: { id: contentId },
+                data: { requiresApproval: false }
+              })
             }
             break
+          }
             
-          case "REVIEW":
+          case "REVIEW": {
             const review = await prisma.review.findUnique({
               where: { id: contentId },
               select: { reviewerId: true }
             })
-            affectedUserId = review?.reviewerId
+            
+            if (!review) {
+              errors.push({ contentId, error: "Review not found" })
+              continue
+            }
+            
+            affectedUserId = review.reviewerId
             
             if (action === "REMOVE" || action === "REJECT") {
-              result = await prisma.review.delete({
-                where: { id: contentId }
-              })
+              await prisma.review.delete({ where: { id: contentId } })
             }
             break
+          }
             
-          case "MESSAGE":
+          case "MESSAGE": {
             const message = await prisma.message.findUnique({
               where: { id: contentId },
               select: { senderId: true }
             })
-            affectedUserId = message?.senderId
             
-            if (action === "REMOVE" || action === "REJECT") {
-              result = await prisma.message.delete({
-                where: { id: contentId }
-              })
+            if (!message) {
+              errors.push({ contentId, error: "Message not found" })
+              continue
+            }
+            
+            affectedUserId = message.senderId
+            
+            if (action === "REMOVE") {
+              await prisma.message.delete({ where: { id: contentId } })
             }
             break
+          }
             
-          case "PROFILE":
+          case "PROFILE": {
             affectedUserId = contentId
             
-            if (action === "WARN") {
-              result = await prisma.profile.update({
-                where: { id: contentId },
-                data: { 
-                  // Add warning flag or counter
-                }
+            if (action === "WARN" || action === "FLAG") {
+              // Create a notification as a warning
+              await createNotification({
+                userId: contentId,
+                type: "ADMIN",
+                title: "Account Warning",
+                message: reason,
+                priority: "HIGH"
               })
             }
             break
+          }
         }
-        
-        // Update related reports (simulated)
-        // In a real app, you would update the reports here
         
         // Log the moderation action
-        await logAdminAction({
-          adminId: user.id,
-          action: `CONTENT_${action}`,
-          targetType: contentType,
-          targetId: contentId,
-          details: { reason, contentType },
-          request
+        await prisma.auditLog.create({
+          data: {
+            userId: user.id,
+            action: `CONTENT_${action}`,
+            resource: contentType,
+            resourceId: contentId,
+            metadata: { reason, affectedUserId }
+          }
         })
         
-        // Send notification to affected user if requested (simulated)
-        if (notifyUser && affectedUserId) {
-          // In a real app, you would create a notification here
+        // Notify affected user
+        if (notifyUser && affectedUserId && action !== "APPROVE") {
+          await createNotification({
+            userId: affectedUserId,
+            type: "ADMIN",
+            title: `Content ${action.toLowerCase()}`,
+            message: `Your ${contentType.toLowerCase()} was ${action.toLowerCase()}. Reason: ${reason}`,
+            priority: action === "REMOVE" ? "HIGH" : "NORMAL"
+          })
         }
         
-        results.push({ contentId, contentType, action, success: true })
+        results.push({ contentId, success: true })
       } catch (error) {
-        errors.push({ contentId, contentType, action, error: error instanceof Error ? error.message : 'Unknown error' })
+        errors.push({ 
+          contentId, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        })
       }
     }
 

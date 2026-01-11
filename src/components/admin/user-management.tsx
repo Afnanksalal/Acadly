@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select } from '@/components/ui/select'
+import { NativeSelect } from '@/components/ui/select'
 import { Users, UserCheck, UserX, Shield, Search, Edit, Eye, Trash2, CheckCircle } from 'lucide-react'
 
 interface UserData {
@@ -484,17 +484,17 @@ export function UserManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="verified">Verification Status</Label>
-                  <Select name="verified" defaultValue={editingUser.verified.toString()}>
+                  <NativeSelect name="verified" defaultValue={editingUser.verified.toString()}>
                     <option value="true">Verified</option>
                     <option value="false">Unverified</option>
-                  </Select>
+                  </NativeSelect>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select name="role" defaultValue={editingUser.role}>
+                  <NativeSelect name="role" defaultValue={editingUser.role}>
                     <option value="USER">User</option>
                     <option value="ADMIN">Admin</option>
-                  </Select>
+                  </NativeSelect>
                 </div>
               </div>
 

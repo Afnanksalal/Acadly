@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase-route-handler"
 import { z } from "zod"
 import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse, validationErrorResponse } from "@/lib/api-response"
+import { isCollegeEmail, getEmailVerificationStatus } from "@/lib/college-domains"
 
 // Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
@@ -17,7 +18,8 @@ export async function GET() {
       return unauthorizedResponse("Login required")
     }
 
-    const profile = await prisma.profile.findUnique({
+    // Check if profile exists, create if not
+    let profile = await prisma.profile.findUnique({
       where: { id: user.id },
       include: {
         _count: {
@@ -30,8 +32,68 @@ export async function GET() {
       }
     })
 
+    // Auto-create profile if doesn't exist
     if (!profile) {
-      return notFoundResponse("Profile not found")
+      const email = user.email || ''
+      const verificationStatus = getEmailVerificationStatus(email)
+      
+      // Check admin list
+      const adminList = (process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "")
+        .split(",")
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean)
+      
+      const isAdmin = adminList.includes(email.toLowerCase()) || verificationStatus.isAdmin
+      
+      profile = await prisma.profile.create({
+        data: {
+          id: user.id,
+          email: email,
+          verified: verificationStatus.shouldAutoVerify || isAdmin,
+          role: isAdmin ? 'ADMIN' : 'USER'
+        },
+        include: {
+          _count: {
+            select: {
+              listings: true,
+              sales: true,
+              purchases: true
+            }
+          }
+        }
+      })
+      
+      console.log(`[PROFILE] Created profile for ${email}:`, {
+        verified: profile.verified,
+        role: profile.role,
+        reason: verificationStatus.reason
+      })
+    }
+
+    // Check if profile should be auto-verified (for existing unverified profiles)
+    if (!profile.verified && profile.email) {
+      const verificationStatus = getEmailVerificationStatus(profile.email)
+      
+      if (verificationStatus.shouldAutoVerify) {
+        profile = await prisma.profile.update({
+          where: { id: user.id },
+          data: { 
+            verified: true,
+            role: verificationStatus.isAdmin ? 'ADMIN' : profile.role
+          },
+          include: {
+            _count: {
+              select: {
+                listings: true,
+                sales: true,
+                purchases: true
+              }
+            }
+          }
+        })
+        
+        console.log(`[PROFILE] Auto-verified ${profile.email}: ${verificationStatus.reason}`)
+      }
     }
 
     return successResponse({ profile })

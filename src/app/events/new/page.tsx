@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { NativeSelect } from "@/components/ui/select"
 import { createBrowserClient } from "@supabase/ssr"
 import { apiRequest, getErrorMessage } from "@/lib/api-client"
 import Image from "next/image"
@@ -76,8 +77,6 @@ export default function NewEventPage() {
       const fileName = `event-${Date.now()}.${fileExt}`
       const filePath = fileName
 
-      console.log('Attempting upload:', { fileName, filePath, bucket: 'images' })
-
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('images')
         .upload(filePath, file, { 
@@ -87,17 +86,12 @@ export default function NewEventPage() {
         })
 
       if (uploadError) {
-        console.error('Supabase upload error:', uploadError)
         throw new Error(uploadError.message || 'Upload failed')
       }
-
-      console.log('Upload successful:', uploadData)
 
       const { data: { publicUrl } } = supabase.storage
         .from('images')
         .getPublicUrl(filePath)
-
-      console.log('Public URL:', publicUrl)
 
       setFormData(prev => ({ ...prev, imageUrl: publicUrl }))
     } catch (err) {
@@ -131,14 +125,10 @@ export default function NewEventPage() {
         endTime: formData.endTime ? new Date(formData.endTime).toISOString() : null
       }
 
-      console.log('Submitting event:', payload)
-
       const data = await apiRequest("/api/events", {
         method: "POST",
         body: JSON.stringify(payload)
       })
-
-      console.log('API response:', data)
 
       setSuccess(true)
       setTimeout(() => {
@@ -244,12 +234,11 @@ export default function NewEventPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="hostType">Host Type *</Label>
-                <select
+                <NativeSelect
                   id="hostType"
+                  label="Host Type *"
                   value={formData.hostType}
-                  onChange={(e) => setFormData({ ...formData, hostType: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                  onChange={(e) => setFormData({ ...formData, hostType: e.target.value as typeof formData.hostType })}
                   required
                 >
                   <option value="CLUB">Club</option>
@@ -257,7 +246,7 @@ export default function NewEventPage() {
                   <option value="STUDENT_GROUP">Student Group</option>
                   <option value="COLLEGE">College</option>
                   <option value="OTHER">Other</option>
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="space-y-2">

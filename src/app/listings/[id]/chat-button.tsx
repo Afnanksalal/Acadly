@@ -1,16 +1,21 @@
 "use client"
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 export function ChatButton({ listingId }: { listingId: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
   const router = useRouter()
 
-  async function startChat() {
+  const startChat = useCallback(async (isRetry = false) => {
     setLoading(true)
     setError(null)
+    
+    const maxRetries = 3
+    const currentRetry = isRetry ? retryCount + 1 : 0
+    
     try {
       const res = await fetch("/api/chats/start", {
         method: "POST",
@@ -20,31 +25,41 @@ export function ChatButton({ listingId }: { listingId: string }) {
 
       if (res.ok) {
         const response = await res.json()
-        console.log('Chat API response:', response) // Debug log
         const chatId = response.data?.chatId
         if (chatId) {
-          console.log('Navigating to chat:', chatId) // Debug log
+          setRetryCount(0)
           router.push(`/chats/${chatId}`)
         } else {
-          console.error('No chatId in response:', response)
           setError('Failed to start chat - no chat ID received')
         }
       } else {
         const errorData = await res.json()
-        console.error('Chat API error:', errorData)
         setError(errorData.error?.message || "Failed to start chat")
       }
     } catch (error) {
       console.error("Chat error:", error)
-      setError("Failed to start chat")
+      
+      // Auto-retry on network errors with exponential backoff
+      if (currentRetry < maxRetries) {
+        setRetryCount(currentRetry)
+        const delay = Math.pow(2, currentRetry) * 1000 // 1s, 2s, 4s
+        setError(`Connection failed. Retrying in ${delay / 1000}s...`)
+        
+        setTimeout(() => {
+          startChat(true)
+        }, delay)
+        return
+      }
+      
+      setError("Failed to start chat. Please check your connection and try again.")
     } finally {
       setLoading(false)
     }
-  }
+  }, [listingId, retryCount, router])
 
   return (
     <div className="w-full">
-      <Button onClick={startChat} disabled={loading} className="w-full">
+      <Button onClick={() => startChat(false)} disabled={loading} className="w-full">
         {loading ? "Loading..." : "💬 Chat with Seller"}
       </Button>
       {error && (

@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/select"
+import { NativeSelect } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Shield, Eye } from "lucide-react"
@@ -156,7 +156,7 @@ export function ReportResolutionDialog({
           {/* Resolution Action */}
           <div className="space-y-2">
             <Label htmlFor="action">Resolution Action *</Label>
-            <Select
+            <NativeSelect
               id="action"
               value={action}
               onChange={(e) => setAction(e.target.value as any)}
@@ -165,7 +165,7 @@ export function ReportResolutionDialog({
               <option value="RESOLVED">Resolve - Take Action</option>
               <option value="DISMISSED">Dismiss - No Violation Found</option>
               <option value="ESCALATED">Escalate - Needs Senior Review</option>
-            </Select>
+            </NativeSelect>
           </div>
 
           {/* Content & User Actions */}
@@ -180,7 +180,7 @@ export function ReportResolutionDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="contentAction">Action on Reported Content</Label>
-                  <Select
+                  <NativeSelect
                     id="contentAction"
                     value={contentAction}
                     onChange={(e) => setContentAction(e.target.value as any)}
@@ -188,7 +188,7 @@ export function ReportResolutionDialog({
                     <option value="NONE">No Action - Content is Fine</option>
                     <option value="HIDE">Hide Content - Make Invisible</option>
                     <option value="DELETE">Delete Content - Permanent Removal</option>
-                  </Select>
+                  </NativeSelect>
                 </div>
               </div>
 
@@ -201,7 +201,7 @@ export function ReportResolutionDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="userAction">Action on Reported User</Label>
-                  <Select
+                  <NativeSelect
                     id="userAction"
                     value={userAction}
                     onChange={(e) => setUserAction(e.target.value as any)}
@@ -210,13 +210,13 @@ export function ReportResolutionDialog({
                     <option value="WARNING">Send Warning - Email Notification</option>
                     <option value="SUSPEND">Suspend Account - Temporary Ban</option>
                     <option value="BAN">Permanent Ban - Account Disabled</option>
-                  </Select>
+                  </NativeSelect>
                 </div>
 
                 {userAction === 'SUSPEND' && (
                   <div className="space-y-2">
                     <Label htmlFor="suspendDays">Suspension Duration</Label>
-                    <Select
+                    <NativeSelect
                       id="suspendDays"
                       value={suspendDays}
                       onChange={(e) => setSuspendDays(e.target.value)}
@@ -227,7 +227,7 @@ export function ReportResolutionDialog({
                       <option value="14">2 Weeks</option>
                       <option value="30">1 Month</option>
                       <option value="90">3 Months</option>
-                    </Select>
+                    </NativeSelect>
                   </div>
                 )}
 

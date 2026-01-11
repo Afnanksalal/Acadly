@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/select"
+import { NativeSelect } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, XCircle, AlertCircle, DollarSign, Eye, FileText } from "lucide-react"
@@ -203,7 +203,7 @@ export function DisputeResolutionDialog({
           {/* Resolution Action */}
           <div className="space-y-2">
             <Label htmlFor="action" className="text-sm font-semibold">Resolution Decision *</Label>
-            <Select
+            <NativeSelect
               id="action"
               value={action}
               onChange={(e) => setAction(e.target.value as any)}
@@ -212,7 +212,7 @@ export function DisputeResolutionDialog({
               <option value="IN_REVIEW">Mark as In Review - Need More Time</option>
               <option value="RESOLVED">Resolve - Favor Buyer (Issue Refund)</option>
               <option value="REJECTED">Reject - Favor Seller (No Refund)</option>
-            </Select>
+            </NativeSelect>
           </div>
 
           {/* Refund Options - Only show when resolving */}
@@ -226,7 +226,7 @@ export function DisputeResolutionDialog({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="refundPercentage" className="text-sm">Refund Percentage</Label>
-                  <Select
+                  <NativeSelect
                     id="refundPercentage"
                     value={refundPercentage}
                     onChange={(e) => {
@@ -239,7 +239,7 @@ export function DisputeResolutionDialog({
                     <option value="50">50% - Half Refund</option>
                     <option value="25">25% - Quarter Refund</option>
                     <option value="0">Custom Amount</option>
-                  </Select>
+                  </NativeSelect>
                 </div>
 
                 <div className="space-y-2">

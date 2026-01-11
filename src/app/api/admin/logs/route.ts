@@ -4,34 +4,34 @@ import { withAdminAuth } from "@/lib/auth"
 import { successResponse, errorResponse } from "@/lib/api-response"
 import { validatePagination } from "@/lib/validation"
 
-// Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
-export const GET = withAdminAuth(async (request: NextRequest, user) => {
-  // Log admin logs access for security audit
-  console.log(`Admin logs accessed by user: ${user.id} (${user.email})`)
-  
+export const GET = withAdminAuth(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url)
     
-    // Pagination
     const { page, limit, skip } = validatePagination({
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "50"),
     })
 
-    // Filters
     const action = searchParams.get("action")
-    const targetType = searchParams.get("targetType")
-    const adminId = searchParams.get("adminId")
+    const resource = searchParams.get("resource")
+    const userId = searchParams.get("userId")
     const dateFrom = searchParams.get("dateFrom")
     const dateTo = searchParams.get("dateTo")
 
     // Build where clause
-    const where: any = {}
+    const where: {
+      action?: { contains: string; mode: 'insensitive' }
+      resource?: string
+      userId?: string
+      createdAt?: { gte?: Date; lte?: Date }
+    } = {}
+    
     if (action) where.action = { contains: action, mode: "insensitive" }
-    if (targetType) where.targetType = targetType
-    if (adminId) where.userId = adminId
+    if (resource) where.resource = resource
+    if (userId) where.userId = userId
     
     if (dateFrom || dateTo) {
       where.createdAt = {}
@@ -39,38 +39,48 @@ export const GET = withAdminAuth(async (request: NextRequest, user) => {
       if (dateTo) where.createdAt.lte = new Date(dateTo)
     }
 
-    // Get logs with pagination - simulated since auditLog model doesn't exist yet
-    const logs: any[] = []
-    const total = 0
+    const [logs, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        include: {
+          user: { select: { id: true, email: true, username: true, role: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      prisma.auditLog.count({ where })
+    ])
 
-    const totalPages = Math.ceil(total / limit)
+    // Get action breakdown stats
+    const actionStats = await prisma.auditLog.groupBy({
+      by: ['action'],
+      _count: true,
+      orderBy: { _count: { action: 'desc' } },
+      take: 10
+    })
 
-    // Get summary statistics - simulated
-    const actionStats = [
-      { action: "USER_LOGIN", count: 150 },
-      { action: "LISTING_CREATED", count: 89 },
-      { action: "TRANSACTION_COMPLETED", count: 67 },
-      { action: "ADMIN_ACTION", count: 23 }
-    ]
+    // Get resource breakdown
+    const resourceStats = await prisma.auditLog.groupBy({
+      by: ['resource'],
+      _count: true,
+      orderBy: { _count: { resource: 'desc' } }
+    })
 
     return successResponse(
       {
         logs,
         stats: {
           total,
-          actionBreakdown: actionStats
+          actionBreakdown: actionStats.map(s => ({ action: s.action, count: s._count })),
+          resourceBreakdown: resourceStats.map(s => ({ resource: s.resource, count: s._count }))
         }
       },
       200,
-      {
-        page,
-        limit,
-        total,
-        totalPages,
-      }
+      { page, limit, total, totalPages: Math.ceil(total / limit) }
     )
   } catch (error) {
-    console.error("Error fetching admin logs:", error)
+    console.error("Error fetching audit logs:", error)
     return errorResponse(error, 500)
   }
 })

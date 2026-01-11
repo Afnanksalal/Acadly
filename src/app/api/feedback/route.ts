@@ -4,8 +4,8 @@ import { withAuth, withVerifiedAuth } from "@/lib/auth"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
 import { validatePagination } from "@/lib/validation"
 import { z } from "zod"
+import { createNotification } from "@/lib/notifications"
 
-// Force dynamic rendering since we use cookies for auth
 export const dynamic = 'force-dynamic'
 
 const createFeedbackSchema = z.object({
@@ -14,44 +14,60 @@ const createFeedbackSchema = z.object({
   title: z.string().min(1).max(100),
   description: z.string().min(1).max(2000),
   rating: z.number().min(1).max(5).optional(),
-  attachments: z.array(z.string()).optional()
+  attachments: z.array(z.string().url()).max(5).optional()
 })
 
 export const GET = withAuth(async (request: NextRequest, user) => {
   try {
     const { searchParams } = new URL(request.url)
     
-    const { page, limit } = validatePagination({
+    const { page, limit, skip } = validatePagination({
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "20"),
     })
 
-    const type = searchParams.get("type")
-    const status = searchParams.get("status")
-    const category = searchParams.get("category")
+    const type = searchParams.get("type") as "GENERAL" | "BUG_REPORT" | "FEATURE_REQUEST" | "IMPROVEMENT" | "COMPLAINT" | "COMPLIMENT" | null
+    const status = searchParams.get("status") as "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED" | "DUPLICATE" | null
 
-    // Build where clause for future use
-    const where: any = { userId: user.id }
+    // Build where clause
+    const where: {
+      userId?: string
+      type?: "GENERAL" | "BUG_REPORT" | "FEATURE_REQUEST" | "IMPROVEMENT" | "COMPLAINT" | "COMPLIMENT"
+      status?: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED" | "DUPLICATE"
+    } = { userId: user.id }
+    
     if (type) where.type = type
     if (status) where.status = status
-    if (category) where.category = category
 
-    // Simulated feedback since model doesn't exist yet
-    const feedback: any[] = []
-    const total = 0
+    const [feedback, total] = await Promise.all([
+      prisma.feedback.findMany({
+        where,
+        include: {
+          user: { select: { id: true, email: true, username: true } },
+          responses: {
+            include: { user: { select: { id: true, email: true, username: true } } },
+            orderBy: { createdAt: 'desc' },
+            take: 3
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      prisma.feedback.count({ where })
+    ])
 
-    // Get summary statistics - simulated
-    const stats = [
-      { status: "OPEN", type: "BUG_REPORT", priority: "HIGH", _count: 2 },
-      { status: "RESOLVED", type: "FEATURE_REQUEST", priority: "MEDIUM", _count: 5 }
-    ]
-
-    const totalPages = Math.ceil(total / limit)
+    // Get stats for user's feedback
+    const stats = await prisma.feedback.groupBy({
+      by: ['status', 'type'],
+      where: { userId: user.id },
+      _count: true
+    })
 
     return successResponse(
       { feedback, stats },
       200,
-      { page, limit, total, totalPages }
+      { page, limit, total, totalPages: Math.ceil(total / limit) }
     )
   } catch (error) {
     console.error("Error fetching feedback:", error)
@@ -65,25 +81,28 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
     const parsed = createFeedbackSchema.safeParse(body)
 
     if (!parsed.success) {
-      return validationErrorResponse("Invalid feedback data")
+      return validationErrorResponse("Invalid feedback data", parsed.error.errors)
     }
 
     const data = parsed.data
 
-    // Simulated feedback creation
-    const feedback = {
-      id: `feedback_${Date.now()}`,
-      userId: user.id,
-      type: data.type,
-      category: data.category,
-      title: data.title,
-      description: data.description,
-      rating: data.rating,
-      status: "OPEN",
-      priority: data.type === "BUG_REPORT" ? "HIGH" : "MEDIUM",
-      attachments: data.attachments,
-      createdAt: new Date()
-    }
+    // Create feedback in database
+    const feedback = await prisma.feedback.create({
+      data: {
+        userId: user.id,
+        type: data.type,
+        category: data.category,
+        title: data.title,
+        description: data.description,
+        rating: data.rating,
+        status: "OPEN",
+        priority: data.type === "BUG_REPORT" ? "HIGH" : "MEDIUM",
+        attachments: data.attachments
+      },
+      include: {
+        user: { select: { id: true, email: true, username: true } }
+      }
+    })
 
     // Notify admins about new feedback
     const admins = await prisma.profile.findMany({
@@ -91,8 +110,18 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       select: { id: true }
     })
 
-    // Simulated notification to admins
-    console.log(`New feedback created: ${feedback.id}, notifying ${admins.length} admins`)
+    await Promise.all(
+      admins.map(admin =>
+        createNotification({
+          userId: admin.id,
+          type: "ADMIN",
+          title: `New ${data.type.replace('_', ' ')}`,
+          message: `${user.email?.split('@')[0]} submitted: ${data.title}`,
+          actionUrl: `/dashboard/feedback/${feedback.id}`,
+          priority: data.type === "BUG_REPORT" ? "HIGH" : "NORMAL"
+        })
+      )
+    )
 
     return successResponse(feedback, 201)
   } catch (error) {

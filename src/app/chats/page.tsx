@@ -14,7 +14,7 @@ export default async function ChatsPage() {
   const profile = await prisma.profile.findUnique({ where: { id: user.id } })
   if (!profile?.verified) redirect("/dashboard")
 
-  // Get all chats where user is buyer or seller
+  // Get all chats where user is buyer or seller with optimized query
   const chats = await prisma.chat.findMany({
     where: {
       OR: [
@@ -29,6 +29,16 @@ export default async function ChatsPage() {
       messages: {
         orderBy: { createdAt: "desc" },
         take: 1
+      },
+      _count: {
+        select: {
+          messages: {
+            where: {
+              senderId: { not: user.id },
+              readStatus: { not: "READ" }
+            }
+          }
+        }
       }
     },
     orderBy: { updatedAt: "desc" }
@@ -53,7 +63,8 @@ export default async function ChatsPage() {
               {chats.map((chat) => {
                 const otherUser = chat.buyerId === user.id ? chat.seller : chat.buyer
                 const lastMessage = chat.messages[0]
-                const unreadCount = chat.messages.filter(m => m.senderId !== user.id && m.readStatus !== "READ").length
+                // Use the optimized _count from the query instead of filtering in JS
+                const unreadCount = (chat as any)._count?.messages || 0
                 
                 return (
                   <Link key={chat.id} href={`/chats/${chat.id}`}>

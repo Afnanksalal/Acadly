@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select } from '@/components/ui/select'
+import { NativeSelect } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { 
   FileText, 
@@ -137,7 +137,7 @@ export function AuditLog() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Action</label>
-                <Select
+                <NativeSelect
                   value={filters.action}
                   onChange={(e) => setFilters({ ...filters, action: e.target.value })}
                 >
@@ -147,12 +147,12 @@ export function AuditLog() {
                   <option value="DELETE">Delete</option>
                   <option value="LOGIN">Login</option>
                   <option value="LOGOUT">Logout</option>
-                </Select>
+                </NativeSelect>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Resource</label>
-                <Select
+                <NativeSelect
                   value={filters.resource}
                   onChange={(e) => setFilters({ ...filters, resource: e.target.value })}
                 >
@@ -163,7 +163,7 @@ export function AuditLog() {
                   <option value="REPORT">Report</option>
                   <option value="DISPUTE">Dispute</option>
                   <option value="SYSTEM">System</option>
-                </Select>
+                </NativeSelect>
               </div>
 
               <div className="space-y-2">

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/select"
+import { NativeSelect } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Flag, AlertCircle } from "lucide-react"
 
@@ -121,7 +121,7 @@ export function ReportButton({
 
             <div className="space-y-2">
               <Label htmlFor="reason">Reason for report *</Label>
-              <Select
+              <NativeSelect
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -133,7 +133,7 @@ export function ReportButton({
                     {r.label}
                   </option>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
 
             <div className="space-y-2">
