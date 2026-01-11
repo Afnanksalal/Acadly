@@ -145,9 +145,16 @@ export default async function EventsPage({
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <CardTitle className="line-clamp-2">{event.title}</CardTitle>
-                    <Badge variant={getStatusColor(event.status) as any} className="text-xs shrink-0">
-                      {event.status}
-                    </Badge>
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <Badge variant={getStatusColor(event.status) as any} className="text-xs">
+                        {event.status}
+                      </Badge>
+                      {event.eventMode && event.eventMode !== "OFFLINE" && (
+                        <Badge variant="outline" className="text-xs">
+                          {event.eventMode === "ONLINE" ? "🎥 Online" : "🌐 Hybrid"}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
@@ -172,8 +179,11 @@ export default async function EventsPage({
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-3">
                     {event.description}
                   </p>
-                  <div className="mt-3 sm:mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="mt-3 sm:mt-4 flex items-center justify-between gap-2 text-xs text-muted-foreground">
                     <span className="truncate">By {event.creator.username || event.creator.name || event.creator.email?.split('@')[0]}</span>
+                    {event.registrationUrl && (
+                      <Badge variant="success" className="text-xs shrink-0">Registration Open</Badge>
+                    )}
                   </div>
                 </CardContent>
               </Card>
