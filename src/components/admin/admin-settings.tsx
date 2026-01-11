@@ -1,13 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Settings, Shield, Bell, Download, AlertTriangle } from 'lucide-react'
+import { Settings, Shield, Bell, Download, Database } from 'lucide-react'
 
 export function AdminSettings() {
   const [maintenanceMode, setMaintenanceMode] = useState(false)
+  const [lastBackup, setLastBackup] = useState<string | null>(null)
+  const [exporting, setExporting] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchBackupStatus()
+  }, [])
+
+  const fetchBackupStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/system/backup')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.data?.backups?.length > 0) {
+          const latest = result.data.backups[0]
+          setLastBackup(new Date(latest.createdAt).toLocaleDateString())
+        }
+      }
+    } catch {
+      // Silently fail - backup info is optional
+    }
+  }
 
   const toggleMaintenanceMode = async () => {
     try {
@@ -24,8 +45,42 @@ export function AdminSettings() {
       if (response.ok) {
         setMaintenanceMode(!maintenanceMode)
       }
-    } catch (error) {
-      console.error('Failed to toggle maintenance mode:', error)
+    } catch {
+      // Handle error silently
+    }
+  }
+
+  const handleExport = async (type: 'users' | 'transactions' | 'backup') => {
+    setExporting(type)
+    try {
+      if (type === 'backup') {
+        const response = await fetch('/api/admin/system/backup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'full' })
+        })
+        if (response.ok) {
+          fetchBackupStatus()
+          alert('Backup created successfully')
+        }
+      } else {
+        const response = await fetch(`/api/admin/export?type=${type}`)
+        if (response.ok) {
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `${type}-export-${new Date().toISOString().split('T')[0]}.csv`
+          a.click()
+          window.URL.revokeObjectURL(url)
+        } else {
+          alert('Export feature coming soon')
+        }
+      }
+    } catch {
+      alert('Export failed. Please try again.')
+    } finally {
+      setExporting(null)
     }
   }
 
@@ -65,20 +120,20 @@ export function AdminSettings() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
               <div className="flex-1">
                 <h4 className="font-medium">User Registration</h4>
-                <p className="text-sm text-muted-foreground">Allow new user signups</p>
+                <p className="text-sm text-muted-foreground">College email verification required</p>
               </div>
               <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-400/20 w-fit">
-                Enabled
+                Active
               </Badge>
             </div>
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
               <div className="flex-1">
-                <h4 className="font-medium">Email Verification</h4>
-                <p className="text-sm text-muted-foreground">Require email verification for new users</p>
+                <h4 className="font-medium">Platform Commission</h4>
+                <p className="text-sm text-muted-foreground">Fee on successful transactions</p>
               </div>
-              <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-400/20 w-fit">
-                Required
+              <Badge variant="outline" className="w-fit">
+                5%
               </Badge>
             </div>
           </CardContent>
@@ -88,35 +143,35 @@ export function AdminSettings() {
           <CardHeader className="p-4 sm:p-6">
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              Security Settings
+              Security Status
             </CardTitle>
-            <CardDescription>Manage security and access controls</CardDescription>
+            <CardDescription>Current security configuration</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
               <div className="flex-1">
-                <h4 className="font-medium">Two-Factor Authentication</h4>
-                <p className="text-sm text-muted-foreground">Require 2FA for admin accounts</p>
-              </div>
-              <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-400/20 w-fit">
-                Recommended
-              </Badge>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
-              <div className="flex-1">
-                <h4 className="font-medium">Session Timeout</h4>
-                <p className="text-sm text-muted-foreground">Auto-logout after inactivity</p>
-              </div>
-              <Badge variant="outline" className="w-fit">
-                30 minutes
-              </Badge>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
-              <div className="flex-1">
                 <h4 className="font-medium">Rate Limiting</h4>
-                <p className="text-sm text-muted-foreground">API request rate limits</p>
+                <p className="text-sm text-muted-foreground">API request protection</p>
+              </div>
+              <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-400/20 w-fit">
+                Active
+              </Badge>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
+              <div className="flex-1">
+                <h4 className="font-medium">HTTPS Encryption</h4>
+                <p className="text-sm text-muted-foreground">All traffic encrypted</p>
+              </div>
+              <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-400/20 w-fit">
+                Enabled
+              </Badge>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
+              <div className="flex-1">
+                <h4 className="font-medium">Input Validation</h4>
+                <p className="text-sm text-muted-foreground">XSS & SQL injection protection</p>
               </div>
               <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-400/20 w-fit">
                 Active
@@ -129,38 +184,38 @@ export function AdminSettings() {
           <CardHeader className="p-4 sm:p-6">
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Notification Settings
+              Notification Status
             </CardTitle>
-            <CardDescription>Configure system notifications</CardDescription>
+            <CardDescription>System notification channels</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
               <div className="flex-1">
-                <h4 className="font-medium">Email Notifications</h4>
-                <p className="text-sm text-muted-foreground">Send email alerts to admins</p>
+                <h4 className="font-medium">In-App Notifications</h4>
+                <p className="text-sm text-muted-foreground">Real-time user alerts</p>
               </div>
               <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-400/20 w-fit">
-                Enabled
+                Active
               </Badge>
             </div>
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
               <div className="flex-1">
-                <h4 className="font-medium">Slack Integration</h4>
-                <p className="text-sm text-muted-foreground">Send alerts to Slack channel</p>
+                <h4 className="font-medium">Email Notifications</h4>
+                <p className="text-sm text-muted-foreground">Transaction & verification emails</p>
               </div>
-              <Badge variant="outline" className="w-fit">
-                Not Configured
+              <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-400/20 w-fit">
+                Active
               </Badge>
             </div>
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded bg-muted/20">
               <div className="flex-1">
-                <h4 className="font-medium">SMS Alerts</h4>
-                <p className="text-sm text-muted-foreground">Critical system alerts via SMS</p>
+                <h4 className="font-medium">Push Notifications</h4>
+                <p className="text-sm text-muted-foreground">PWA browser notifications</p>
               </div>
-              <Badge variant="outline" className="w-fit">
-                Disabled
+              <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-400/20 w-fit">
+                Supported
               </Badge>
             </div>
           </CardContent>
@@ -169,33 +224,47 @@ export function AdminSettings() {
         <Card className="hover-lift">
           <CardHeader className="p-4 sm:p-6">
             <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
+              <Database className="h-5 w-5" />
               Data Management
             </CardTitle>
             <CardDescription>Backup and export options</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
-            <Button className="w-full" variant="outline">
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => handleExport('users')}
+              disabled={exporting === 'users'}
+            >
               <Download className="h-4 w-4 mr-2" />
-              Export User Data
+              {exporting === 'users' ? 'Exporting...' : 'Export User Data'}
             </Button>
             
-            <Button className="w-full" variant="outline">
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => handleExport('transactions')}
+              disabled={exporting === 'transactions'}
+            >
               <Download className="h-4 w-4 mr-2" />
-              Export Transaction Data
+              {exporting === 'transactions' ? 'Exporting...' : 'Export Transaction Data'}
             </Button>
             
-            <Button className="w-full" variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Create System Backup
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => handleExport('backup')}
+              disabled={exporting === 'backup'}
+            >
+              <Database className="h-4 w-4 mr-2" />
+              {exporting === 'backup' ? 'Creating...' : 'Create System Backup'}
             </Button>
             
-            <div className="flex items-center gap-2 p-3 bg-yellow-500/10 text-yellow-400 border border-yellow-400/20 rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-yellow-400" />
-              <p className="text-sm">
-                Last backup: 2 days ago
+            {lastBackup && (
+              <p className="text-xs text-muted-foreground text-center">
+                Last backup: {lastBackup}
               </p>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

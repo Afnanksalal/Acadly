@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { NativeSelect } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import { AlertCircle, Shield, Eye } from "lucide-react"
 
 interface ReportData {
@@ -231,18 +232,12 @@ export function ReportResolutionDialog({
                   </div>
                 )}
 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="notifyUser"
-                    checked={notifyUser}
-                    onChange={(e) => setNotifyUser(e.target.checked)}
-                    className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
-                  />
-                  <Label htmlFor="notifyUser" className="text-sm cursor-pointer">
-                    Send notification to user about this action
-                  </Label>
-                </div>
+                <Checkbox
+                  checked={notifyUser}
+                  onChange={(e) => setNotifyUser(e.target.checked)}
+                  label="Send notification to user about this action"
+                  size="sm"
+                />
               </div>
             </div>
           )}

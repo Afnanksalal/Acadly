@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { NativeSelect } from "@/components/ui/select"
 import { apiRequest } from "@/lib/api-client"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Award } from "lucide-react"
 
 type Badge = {
@@ -187,18 +188,12 @@ export function BadgeSection({ userId, isOwner = false }: { userId: string, isOw
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isVisible"
+                <Checkbox
                     checked={formData.isVisible}
                     onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })}
-                    className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+                    label="Show on public profile"
+                    size="sm"
                   />
-                  <Label htmlFor="isVisible" className="cursor-pointer">
-                    Show on public profile
-                  </Label>
-                </div>
 
                 <div className="flex gap-3">
                   <Button type="submit" disabled={submitting} className="flex-1">

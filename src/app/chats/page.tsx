@@ -59,7 +59,7 @@ export default async function ChatsPage() {
               <p className="text-sm text-muted-foreground">Start a conversation by contacting a seller</p>
             </div>
           ) : (
-            <div className="space-y-2 sm:space-y-3">
+            <div className="space-y-4 sm:space-y-5">
               {chats.map((chat) => {
                 const otherUser = chat.buyerId === user.id ? chat.seller : chat.buyer
                 const lastMessage = chat.messages[0]

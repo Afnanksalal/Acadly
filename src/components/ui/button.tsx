@@ -83,13 +83,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ),
     }
 
-    // Size styles
+    // Size styles - better desktop padding
     const sizeStyles = {
-      xs: "h-7 px-2.5 text-xs",
-      sm: "h-9 px-3 text-sm",
-      md: "h-11 px-5 text-base",
-      lg: "h-13 px-7 text-lg",
-      xl: "h-14 px-8 text-xl",
+      xs: "h-7 px-2.5 sm:px-3 text-xs",
+      sm: "h-9 px-3 sm:px-4 text-sm",
+      md: "h-11 px-5 sm:px-6 text-base",
+      lg: "h-13 px-7 sm:px-8 text-lg",
+      xl: "h-14 px-8 sm:px-10 text-xl",
       icon: "h-10 w-10 p-0",
     }
 

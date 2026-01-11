@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { NativeSelect } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import { CheckCircle, XCircle, AlertCircle, DollarSign, Eye, FileText } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -296,30 +297,18 @@ export function DisputeResolutionDialog({
           {/* Notification Settings */}
           <div className="space-y-3 p-3 bg-muted/20 rounded border">
             <Label className="text-sm font-semibold">Notification Settings</Label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="notifyBuyer"
-                checked={notifyBuyer}
-                onChange={(e) => setNotifyBuyer(e.target.checked)}
-                className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
-              />
-              <Label htmlFor="notifyBuyer" className="text-sm font-normal cursor-pointer">
-                Send resolution notification to buyer
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="notifySeller"
-                checked={notifySeller}
-                onChange={(e) => setNotifySeller(e.target.checked)}
-                className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
-              />
-              <Label htmlFor="notifySeller" className="text-sm font-normal cursor-pointer">
-                Send resolution notification to seller
-              </Label>
-            </div>
+            <Checkbox
+              checked={notifyBuyer}
+              onChange={(e) => setNotifyBuyer(e.target.checked)}
+              label="Send resolution notification to buyer"
+              size="sm"
+            />
+            <Checkbox
+              checked={notifySeller}
+              onChange={(e) => setNotifySeller(e.target.checked)}
+              label="Send resolution notification to seller"
+              size="sm"
+            />
           </div>
 
           {/* Action Summary */}

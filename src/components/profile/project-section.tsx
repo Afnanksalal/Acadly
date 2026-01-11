@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { NativeSelect } from "@/components/ui/select"
 import { apiRequest } from "@/lib/api-client"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Code, Github, ExternalLink, Calendar } from "lucide-react"
 
 type Project = {
@@ -263,18 +264,12 @@ export function ProjectSection({ userId, isOwner = false }: { userId: string, is
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isPublic"
+                <Checkbox
                     checked={formData.isPublic}
                     onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
-                    className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+                    label="Show on public profile"
+                    size="sm"
                   />
-                  <Label htmlFor="isPublic" className="cursor-pointer">
-                    Show on public profile
-                  </Label>
-                </div>
 
                 <div className="flex gap-3">
                   <Button type="submit" disabled={submitting} className="flex-1">

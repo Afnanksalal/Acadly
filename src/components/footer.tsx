@@ -74,8 +74,7 @@ export function Footer() {
               {[
                 { href: "/policies/terms", label: "Terms of Service" },
                 { href: "/policies/privacy", label: "Privacy Policy" },
-                { href: "/policies/checkout", label: "Checkout Policy" },
-                { href: "/policies/refund", label: "Refund Policy" },
+                { href: "/policies/checkout", label: "Payments & Refunds" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link 
