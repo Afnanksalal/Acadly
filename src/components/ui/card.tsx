@@ -35,10 +35,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cn(
           "rounded-xl text-card-foreground",
-          "transition-colors duration-200",
           variantStyles[variant],
-          hover && "hover:border-primary/40",
-          glow && "hover:shadow-glow",
           padding && paddingStyles[padding],
           className
         )}

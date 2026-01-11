@@ -54,23 +54,18 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex items-center justify-center gap-2 whitespace-nowrap px-4 py-2.5 text-sm font-medium",
-      "ring-offset-background transition-all duration-200",
+      "ring-offset-background",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       "disabled:pointer-events-none disabled:opacity-50",
-      // Default variant styles
       "rounded-lg",
       "data-[state=active]:bg-background data-[state=active]:text-foreground",
       "data-[state=active]:shadow-sm data-[state=active]:shadow-black/5",
-      "hover:text-foreground/80",
-      // Underline variant (when parent has data-variant="underline")
       "group-data-[variant=underline]:rounded-none group-data-[variant=underline]:border-b-2",
       "group-data-[variant=underline]:border-transparent group-data-[variant=underline]:px-4 group-data-[variant=underline]:pb-3",
       "group-data-[variant=underline]:data-[state=active]:border-primary group-data-[variant=underline]:data-[state=active]:bg-transparent",
       "group-data-[variant=underline]:data-[state=active]:shadow-none",
-      // Pills variant
       "group-data-[variant=pills]:rounded-full group-data-[variant=pills]:px-5",
       "group-data-[variant=pills]:data-[state=active]:bg-primary group-data-[variant=pills]:data-[state=active]:text-primary-foreground",
-      // Cards variant
       "group-data-[variant=cards]:rounded-xl group-data-[variant=cards]:border group-data-[variant=cards]:border-border/50",
       "group-data-[variant=cards]:px-5 group-data-[variant=cards]:py-3",
       "group-data-[variant=cards]:data-[state=active]:border-primary/50 group-data-[variant=cards]:data-[state=active]:bg-primary/5",
@@ -94,7 +89,6 @@ const TabsContent = React.forwardRef<
     className={cn(
       "mt-4 ring-offset-background",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      "animate-fade-in",
       className
     )}
     {...props}

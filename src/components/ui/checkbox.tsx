@@ -64,21 +64,20 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           />
           <div className={cn(
             sizeStyles[size],
-            "rounded-md border-2 transition-all duration-200",
+            "rounded-md border-2",
             "flex items-center justify-center",
             isChecked
               ? "bg-primary border-primary"
               : "bg-transparent border-border",
             !disabled && !isChecked && "group-hover:border-primary/60",
-            !disabled && isChecked && "group-hover:bg-primary/90",
             error && !isChecked && "border-destructive",
             "peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background"
           )}>
             <Check 
               className={cn(
                 iconSizes[size],
-                "text-primary-foreground transition-all duration-200",
-                isChecked ? "opacity-100 scale-100" : "opacity-0 scale-75"
+                "text-primary-foreground",
+                isChecked ? "opacity-100" : "opacity-0"
               )} 
               strokeWidth={3}
             />

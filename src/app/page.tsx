@@ -66,48 +66,48 @@ export default async function HomePage() {
       <section className="relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-20 pb-16 sm:pb-24">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Content */}
             <div className="space-y-8 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary animate-fade-in">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
                 <Sparkles className="h-4 w-4" />
                 <span>Kerala&apos;s #1 Student Marketplace</span>
               </div>
               
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight animate-slide-in">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
                 <span className="block text-foreground">Trade Smart.</span>
                 <span className="block mt-2 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
                   Save More.
                 </span>
               </h1>
               
-              <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 animate-fade-in leading-relaxed">
+              <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed">
                 The trusted marketplace for <span className="text-foreground font-semibold">KTU, CUSAT, MG University</span> students. 
                 Buy and sell textbooks, electronics, and more with verified peers.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-scale-in">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link 
                   href="/listings" 
-                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-all duration-300 hover:shadow-xl hover:shadow-primary/25 hover:-translate-y-0.5"
+                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90"
                 >
                   Start Exploring
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="h-5 w-5" />
                 </Link>
                 <Link 
                   href="/auth/signup" 
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-border font-semibold text-lg hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-border font-semibold text-lg hover:border-primary/50 hover:bg-primary/5"
                 >
                   Join Free
                 </Link>
               </div>
 
               {/* Trust Indicators */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4 animate-fade-in">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="h-5 w-5 text-emerald-500" />
                   <span>Verified Students Only</span>
@@ -124,10 +124,10 @@ export default async function HomePage() {
             </div>
 
             {/* Right Content - Stats Card */}
-            <div className="relative animate-scale-in">
+            <div className="relative px-2 sm:px-0">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl" />
               <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl p-8 sm:p-10 shadow-2xl">
-                <div className="absolute -top-4 -right-4 px-4 py-2 bg-gradient-to-r from-primary to-secondary rounded-full text-white text-sm font-bold shadow-lg">
+                <div className="absolute -top-3 right-2 sm:-top-4 sm:-right-4 px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-primary to-secondary rounded-full text-white text-xs sm:text-sm font-bold shadow-lg">
                   LIVE
                 </div>
                 
@@ -190,19 +190,17 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories.map((category: { id: string; name: string }, index: number) => (
+            {categories.map((category: { id: string; name: string }) => (
               <Link
                 key={category.id}
                 href={`/listings?category=${encodeURIComponent(category.id)}`}
-                className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-6 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-6 hover:border-primary/50"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
                     {categoryIcons[category.name] || <Package className="h-5 w-5" />}
                   </div>
-                  <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{category.name}</h3>
+                  <h3 className="font-semibold text-lg">{category.name}</h3>
                 </div>
               </Link>
             ))}
@@ -232,12 +230,11 @@ export default async function HomePage() {
               createdAt: Date; 
               category: { name: string }; 
               user: { name: string | null; verified: boolean } 
-            }, index: number) => (
+            }) => (
               <Link
                 key={listing.id}
                 href={`/listings/${listing.id}`}
-                className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden hover:border-primary/50"
               >
                 {/* Image Placeholder */}
                 <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
@@ -247,15 +244,15 @@ export default async function HomePage() {
                   <div className="absolute top-3 left-3">
                     <Badge variant="glass" size="sm">{listing.category.name}</Badge>
                   </div>
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background transition-colors">
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100">
+                    <button className="p-2 rounded-full bg-background/80 backdrop-blur-sm">
                       <Heart className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
                 
                 <div className="p-5 space-y-3">
-                  <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold text-lg line-clamp-1">
                     {listing.title}
                   </h3>
                   
@@ -339,9 +336,9 @@ export default async function HomePage() {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="group relative bg-card rounded-2xl border border-border/50 p-8 hover:border-primary/30 hover:shadow-lg transition-all duration-300"
+                className="group relative bg-card rounded-2xl border border-border/50 p-8"
               >
-                <div className={`w-14 h-14 rounded-2xl bg-${feature.color}-500/10 flex items-center justify-center text-${feature.color}-500 mb-6 group-hover:scale-110 transition-transform`}>
+                <div className={`w-14 h-14 rounded-2xl bg-${feature.color}-500/10 flex items-center justify-center text-${feature.color}-500 mb-6`}>
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>

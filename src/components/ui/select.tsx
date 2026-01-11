@@ -153,7 +153,7 @@ export function Select({
         onKeyDown={handleKeyDown}
         className={cn(
           "w-full flex items-center justify-between gap-2",
-          "rounded-lg border transition-all duration-200",
+          "rounded-lg border",
           "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
           sizeClasses[size],
           variantClasses[variant],
@@ -177,7 +177,7 @@ export function Select({
         </span>
         <ChevronDown 
           className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0",
+            "h-4 w-4 text-muted-foreground flex-shrink-0",
             isOpen && "rotate-180"
           )} 
         />

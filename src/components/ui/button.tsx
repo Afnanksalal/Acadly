@@ -37,10 +37,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = cn(
       "inline-flex items-center justify-center gap-2",
       "font-medium rounded-lg",
-      "transition-all duration-200",
       "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
       "disabled:opacity-50 disabled:cursor-not-allowed",
-      "active:scale-[0.98]",
       "select-none"
     )
 
@@ -48,33 +46,27 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variantStyles = {
       primary: cn(
         "bg-primary text-primary-foreground",
-        "hover:bg-primary/90",
-        "shadow-md hover:shadow-lg",
-        glow && "hover:shadow-glow"
+        "hover:bg-primary/90"
       ),
       secondary: cn(
         "bg-secondary text-secondary-foreground",
-        "hover:bg-secondary/90",
-        "shadow-md hover:shadow-lg"
+        "hover:bg-secondary/90"
       ),
       outline: cn(
         "border-2 border-primary/30 text-foreground bg-transparent",
-        "hover:border-primary hover:bg-primary/10",
-        "hover:text-primary"
+        "hover:border-primary hover:bg-primary/10"
       ),
       ghost: cn(
         "text-foreground bg-transparent",
-        "hover:bg-muted hover:text-foreground"
+        "hover:bg-muted"
       ),
       destructive: cn(
         "bg-destructive text-destructive-foreground",
-        "hover:bg-destructive/90",
-        "shadow-md hover:shadow-lg"
+        "hover:bg-destructive/90"
       ),
       success: cn(
         "bg-success text-success-foreground",
-        "hover:bg-success/90",
-        "shadow-md hover:shadow-lg"
+        "hover:bg-success/90"
       ),
       link: cn(
         "text-primary underline-offset-4",
@@ -179,10 +171,8 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         title={tooltip}
         className={cn(
           "inline-flex items-center justify-center rounded-lg",
-          "transition-all duration-200",
           "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "active:scale-95",
           sizeStyles[size],
           iconSizes[size],
           variantStyles[variant],

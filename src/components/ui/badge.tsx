@@ -8,28 +8,28 @@ import { cn } from "@/lib/utils"
    ============================================ */
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-full font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center gap-1.5 rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-sm hover:shadow-md hover:shadow-primary/20",
+          "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-sm",
         secondary:
-          "bg-secondary/80 text-secondary-foreground border border-secondary hover:bg-secondary",
+          "bg-secondary/80 text-secondary-foreground border border-secondary",
         destructive:
-          "bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 hover:border-red-500/50",
+          "bg-red-500/15 text-red-400 border border-red-500/30",
         outline: 
-          "text-foreground border border-border/60 bg-background/50 hover:border-primary/40 hover:bg-muted/50",
+          "text-foreground border border-border/60 bg-background/50",
         success:
-          "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/50",
+          "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
         warning:
-          "bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-500/50",
+          "bg-amber-500/15 text-amber-400 border border-amber-500/30",
         info:
-          "bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25 hover:border-blue-500/50",
+          "bg-blue-500/15 text-blue-400 border border-blue-500/30",
         premium:
-          "bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 text-amber-300 border border-amber-500/40 hover:border-amber-400/60",
+          "bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 text-amber-300 border border-amber-500/40",
         glass:
-          "bg-white/5 backdrop-blur-sm text-foreground border border-white/10 hover:bg-white/10",
+          "bg-white/5 backdrop-blur-sm text-foreground border border-white/10",
       },
       size: {
         sm: "px-2 py-0.5 text-[10px]",

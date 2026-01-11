@@ -75,7 +75,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               "w-full rounded-lg border",
               "text-foreground placeholder:text-muted-foreground",
-              "transition-all duration-200",
               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
               "disabled:opacity-50 disabled:cursor-not-allowed",
               sizeStyles[inputSize],
@@ -150,7 +149,6 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             "w-full h-11 pl-10 pr-10 rounded-lg",
             "bg-input border border-border",
             "text-foreground placeholder:text-muted-foreground",
-            "transition-colors duration-200",
             "focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary/50",
             className
           )}
@@ -218,7 +216,6 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             "w-full min-h-[120px] px-4 py-3 rounded-lg",
             "bg-input border border-border",
             "text-foreground placeholder:text-muted-foreground",
-            "transition-all duration-200",
             "focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary/50",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             resizeStyles[resize],
