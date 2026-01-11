@@ -5,18 +5,14 @@ import {
   CheckCircle, 
   MessageCircle, 
   Lock, 
-  MapPin, 
   Shield, 
   Zap, 
-  Users, 
   Star,
-  TrendingUp,
   Bell,
   FileText,
   CreditCard,
   Search,
   Package,
-  Award,
   Clock,
   DollarSign,
   ShoppingBag,
@@ -183,7 +179,7 @@ export default async function HomePage() {
               <Badge variant="outline" className="mb-3">Categories</Badge>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Find What You Need</h2>
             </div>
-            <Link href="/listings" className="group inline-flex items-center gap-1 text-primary font-medium hover:gap-2 transition-all">
+            <Link href="/listings" className="group inline-flex items-center gap-1 text-primary font-medium">
               View all categories
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -216,7 +212,7 @@ export default async function HomePage() {
               <Badge variant="outline" className="mb-3">Fresh Drops</Badge>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Just Listed</h2>
             </div>
-            <Link href="/listings" className="group inline-flex items-center gap-1 text-primary font-medium hover:gap-2 transition-all">
+            <Link href="/listings" className="group inline-flex items-center gap-1 text-primary font-medium">
               See all listings
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -384,7 +380,7 @@ export default async function HomePage() {
                 {index < 2 && (
                   <div className="hidden md:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-primary/50 to-transparent -translate-x-1/2 z-0" />
                 )}
-                <div className="relative bg-card rounded-2xl border border-border/50 p-8 text-center hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                <div className="relative bg-card rounded-2xl border border-border/50 p-8 text-center">
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-primary to-secondary rounded-full text-white text-sm font-bold">
                     {item.step}
                   </div>
@@ -422,7 +418,7 @@ export default async function HomePage() {
                   { icon: <AlertTriangle className="h-5 w-5" />, title: "Dispute Resolution", desc: "Fair mediation for any transaction issues" },
                   { icon: <FileText className="h-5 w-5" />, title: "Audit Trail", desc: "Complete transaction history for accountability" },
                 ].map((item, index) => (
-                  <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-colors">
+                  <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                       {item.icon}
                     </div>
@@ -475,14 +471,14 @@ export default async function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/auth/signup" 
-              className="group inline-flex items-center justify-center gap-2 px-10 py-5 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 hover:-translate-y-1"
+              className="group inline-flex items-center justify-center gap-2 px-10 py-5 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-lg"
             >
               Create Free Account
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="h-5 w-5" />
             </Link>
             <Link 
               href="/listings" 
-              className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-2xl border-2 border-border bg-background/50 backdrop-blur-sm font-bold text-lg hover:border-primary/50 transition-all duration-300"
+              className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-2xl border-2 border-border bg-background/50 backdrop-blur-sm font-bold text-lg hover:border-primary/50"
             >
               Browse Marketplace
             </Link>
