@@ -93,19 +93,19 @@ export function ListingsSearch({
   }
 
   return (
-    <Card className="border-primary/10">
+    <Card className="border-primary/10 mt-2">
       <CardContent className="p-3 sm:p-4 space-y-3">
         {/* Search Bar */}
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               type="text"
               placeholder="Search listings..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="pl-10 pr-4"
+              className="pl-10 pr-4 text-ellipsis"
             />
           </div>
           <Button

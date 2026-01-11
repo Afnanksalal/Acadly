@@ -45,7 +45,7 @@ export async function ListingsContent({
   ])
 
   return (
-    <main className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 animate-fade-in">
+    <main className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 pt-4 sm:pt-6 space-y-4 sm:space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Browse Listings</h1>

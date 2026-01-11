@@ -39,19 +39,31 @@ export function MobileNav({
     setIsOpen(false)
   }, [pathname])
 
-  // Prevent body scroll when menu is open and ensure no horizontal scroll
+  // Prevent body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
+      // Lock body scroll completely
       document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+      document.body.style.top = `-${window.scrollY}px`
     } else {
-      document.body.style.overflow = 'unset'
+      // Restore scroll position
+      const scrollY = document.body.style.top
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.body.style.top = ''
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1)
+      }
     }
-    // Always prevent horizontal scroll
-    document.documentElement.style.overflowX = 'hidden'
-    document.body.style.overflowX = 'hidden'
     
     return () => {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.body.style.top = ''
     }
   }, [isOpen])
 
@@ -99,13 +111,13 @@ export function MobileNav({
 
       {/* Mobile Sidebar - Hidden by default, slides in from right */}
       <div
-        className={`fixed top-0 right-0 h-screen w-[280px] max-w-[85vw] bg-background border-l border-border shadow-2xl z-50 md:hidden transition-transform duration-300 ease-out ${
+        className={`fixed top-0 right-0 h-[100dvh] w-[280px] max-w-[85vw] bg-background border-l border-border shadow-2xl z-50 md:hidden transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex flex-col h-full overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+        <div className="flex flex-col h-full">
+          {/* Header - Fixed */}
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-border bg-muted/30">
             <Link href="/" onClick={closeMenu} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <GraduationCap className="h-6 w-6 text-primary" />
               <span className="font-bold text-lg">Acadly</span>
@@ -119,9 +131,9 @@ export function MobileNav({
             </button>
           </div>
 
-          {/* User Info - Show at top if logged in */}
+          {/* User Info - Fixed at top if logged in */}
           {user && profile && (
-            <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-border">
+            <div className="flex-shrink-0 p-4 bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   {profile.role === 'ADMIN' ? <Crown className="h-5 w-5 text-primary" /> : <User className="h-5 w-5 text-primary" />}
@@ -136,9 +148,9 @@ export function MobileNav({
             </div>
           )}
 
-          {/* Navigation Links */}
-          <nav className="flex-1 overflow-y-auto overscroll-contain p-3 pb-6">
-            <div className="space-y-1">
+          {/* Navigation Links - Scrollable */}
+          <nav className="flex-1 overflow-y-auto overscroll-contain p-3">
+            <div className="space-y-1 pb-4">
               {/* Public Links */}
               <NavLink href="/" onClick={closeMenu} isActive={isActive('/')} icon={<Home className="h-5 w-5" />}>
                 Home
@@ -232,10 +244,10 @@ export function MobileNav({
             </div>
           </nav>
 
-          {/* Logout Button - Fixed at bottom */}
+          {/* Logout Button - Fixed at bottom, always visible */}
           {user && (
-            <div className="p-4 border-t border-border bg-muted/30">
-              <LogoutButton className="w-full px-4 py-3 text-sm font-medium rounded-lg border border-border hover:bg-muted active:bg-muted/80 transition-all touch-manipulation" />
+            <div className="flex-shrink-0 p-4 border-t border-border bg-background safe-area-bottom">
+              <LogoutButton className="w-full px-4 py-3 text-sm font-medium rounded-lg border border-border hover:bg-muted active:bg-muted/80 transition-colors touch-manipulation" />
             </div>
           )}
         </div>

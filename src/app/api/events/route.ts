@@ -97,7 +97,10 @@ export async function POST(req: NextRequest) {
       hostType: z.enum(["CLUB", "DEPARTMENT", "STUDENT_GROUP", "COLLEGE", "OTHER"]),
       hostName: z.string().min(2, "Host name is required").max(100, "Host name too long"),
       startTime: z.string().datetime("Invalid start time"),
-      endTime: z.string().datetime("Invalid end time").optional().nullable()
+      endTime: z.string().datetime("Invalid end time").optional().nullable(),
+      eventMode: z.enum(["ONLINE", "OFFLINE", "HYBRID"]).default("OFFLINE"),
+      meetLink: z.string().url("Invalid meeting link").optional().nullable(),
+      registrationUrl: z.string().url("Invalid registration URL").optional().nullable()
     })
     
     const parsed = schema.safeParse(await req.json())
@@ -130,7 +133,10 @@ export async function POST(req: NextRequest) {
         hostName: data.hostName,
         startTime,
         endTime,
-        status: "UPCOMING"
+        status: "UPCOMING",
+        eventMode: data.eventMode,
+        meetLink: data.meetLink || null,
+        registrationUrl: data.registrationUrl || null
       },
       include: {
         creator: {

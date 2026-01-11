@@ -378,6 +378,11 @@ body {
   }
 }
 
+/* Safe area for devices with home indicator */
+.safe-area-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
 /* ============================================
    LOADING STATES
    ============================================ */

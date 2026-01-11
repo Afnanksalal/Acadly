@@ -117,15 +117,29 @@ export default async function EventsPage({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {events.map((event: any) => (
             <Link key={event.id} href={`/events/${event.id}`}>
-              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                {event.imageUrl && (
-                  <div className="relative w-full h-32 sm:h-40 lg:h-48 overflow-hidden rounded-t-lg">
+              <Card className="h-full hover:border-primary/50 cursor-pointer overflow-hidden">
+                {event.imageUrl ? (
+                  <div className="relative w-full h-32 sm:h-40 lg:h-48 overflow-hidden">
+                    {/* Blurred background */}
                     <Image
                       src={event.imageUrl}
-                      alt={event.title}
+                      alt=""
                       fill
-                      className="object-cover"
+                      className="object-cover blur-xl scale-110 opacity-50"
                     />
+                    {/* Main image */}
+                    <div className="absolute inset-0 flex items-center justify-center p-2">
+                      <Image
+                        src={event.imageUrl}
+                        alt={event.title}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-32 sm:h-40 lg:h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                    <span className="text-4xl opacity-30">📅</span>
                   </div>
                 )}
                 <CardHeader>

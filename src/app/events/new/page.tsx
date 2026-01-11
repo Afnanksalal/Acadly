@@ -11,6 +11,7 @@ import { NativeSelect } from "@/components/ui/select"
 import { createBrowserClient } from "@supabase/ssr"
 import { apiRequest, getErrorMessage } from "@/lib/api-client"
 import Image from "next/image"
+import { Video, MapPin, Link as LinkIcon } from "lucide-react"
 
 export default function NewEventPage() {
   const router = useRouter()
@@ -32,7 +33,10 @@ export default function NewEventPage() {
     hostType: "CLUB" as "CLUB" | "DEPARTMENT" | "STUDENT_GROUP" | "COLLEGE" | "OTHER",
     hostName: "",
     startTime: "",
-    endTime: ""
+    endTime: "",
+    eventMode: "OFFLINE" as "ONLINE" | "OFFLINE" | "HYBRID",
+    meetLink: "",
+    registrationUrl: ""
   })
 
   useEffect(() => {
@@ -122,7 +126,10 @@ export default function NewEventPage() {
         hostType: formData.hostType,
         hostName: formData.hostName,
         startTime: new Date(formData.startTime).toISOString(),
-        endTime: formData.endTime ? new Date(formData.endTime).toISOString() : null
+        endTime: formData.endTime ? new Date(formData.endTime).toISOString() : null,
+        eventMode: formData.eventMode,
+        meetLink: formData.meetLink || null,
+        registrationUrl: formData.registrationUrl || null
       }
 
       const data = await apiRequest("/api/events", {
@@ -279,6 +286,64 @@ export default function NewEventPage() {
                   value={formData.endTime}
                   onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                 />
+              </div>
+            </div>
+
+            {/* Event Mode Section */}
+            <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                Event Mode
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <NativeSelect
+                    id="eventMode"
+                    label="Mode *"
+                    value={formData.eventMode}
+                    onChange={(e) => setFormData({ ...formData, eventMode: e.target.value as typeof formData.eventMode })}
+                    required
+                  >
+                    <option value="OFFLINE">Offline (In-Person)</option>
+                    <option value="ONLINE">Online (Virtual)</option>
+                    <option value="HYBRID">Hybrid (Both)</option>
+                  </NativeSelect>
+                </div>
+
+                {(formData.eventMode === "ONLINE" || formData.eventMode === "HYBRID") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="meetLink">Meeting Link</Label>
+                    <Input
+                      id="meetLink"
+                      type="url"
+                      value={formData.meetLink}
+                      onChange={(e) => setFormData({ ...formData, meetLink: e.target.value })}
+                      placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    />
+                    <p className="text-xs text-muted-foreground">Google Meet, Zoom, Teams, etc.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Registration Section */}
+            <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+              <h3 className="font-semibold flex items-center gap-2">
+                <LinkIcon className="h-4 w-4" />
+                Registration (Optional)
+              </h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="registrationUrl">Registration Form URL</Label>
+                <Input
+                  id="registrationUrl"
+                  type="url"
+                  value={formData.registrationUrl}
+                  onChange={(e) => setFormData({ ...formData, registrationUrl: e.target.value })}
+                  placeholder="https://forms.google.com/..."
+                />
+                <p className="text-xs text-muted-foreground">Google Forms, Typeform, or any registration link</p>
               </div>
             </div>
 
