@@ -1,7 +1,15 @@
 import { prisma } from "@/lib/prisma"
-import { successResponse } from "@/lib/api-response"
+import { errorResponse, successResponse } from "@/lib/api-response"
 
 export async function GET() {
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } })
-  return successResponse(categories)
+  try {
+    const categories = await prisma.category.findMany({
+      include: { parent: true },
+      orderBy: [{ parentId: "asc" }, { name: "asc" }],
+    })
+    return successResponse(categories)
+  } catch (error) {
+    console.error("Failed to load categories:", error)
+    return errorResponse(error, 500)
+  }
 }

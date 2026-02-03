@@ -70,6 +70,18 @@ export function BuyButton({
   const [error, setError] = useState("")
   const router = useRouter()
 
+  const cancelTransaction = useCallback(async (transactionId: string) => {
+    try {
+      const cancelRes = await fetch(`/api/transactions/${transactionId}/cancel`, {
+        method: "POST",
+      })
+      return cancelRes.ok
+    } catch (cancelError) {
+      console.error("Failed to cancel transaction:", cancelError)
+      return false
+    }
+  }, [])
+
   // Memoized script loader with singleton pattern
   const loadRazorpayScript = useCallback(() => {
     return new Promise<boolean>((resolve, reject) => {
@@ -134,9 +146,7 @@ export function BuyButton({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          listingId,
-          sellerId,
-          amount: price
+          listingId
         })
       })
 
@@ -153,11 +163,17 @@ export function BuyButton({
         throw new Error("Invalid response from server")
       }
 
+      const transactionId = transaction.id
+
       // Load Razorpay script
       try {
         await loadRazorpayScript()
       } catch {
-        setError("Failed to load payment gateway. Please refresh and try again.")
+        const cancelled = await cancelTransaction(transactionId)
+        setError(cancelled
+          ? "Failed to load payment gateway. Please refresh and try again."
+          : "Failed to load payment gateway. Please refresh and try again. If you see this again, contact support."
+        )
         setLoading(false)
         return
       }
@@ -213,7 +229,12 @@ export function BuyButton({
           color: "#7c3aed"
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: async function() {
+            const cancelled = await cancelTransaction(transactionId)
+            setError(cancelled
+              ? "Payment cancelled. You can try again."
+              : "Payment cancelled, but we couldn't release the order. Please contact support."
+            )
             setLoading(false)
           },
           escape: true,
@@ -227,10 +248,14 @@ export function BuyButton({
 
       const rzp = new window.Razorpay(options)
       
-      rzp.on("payment.failed", function (response) {
+      rzp.on("payment.failed", async function (response) {
         const errorMsg = response.error?.description || "Payment failed"
         console.error("Payment failed:", errorMsg)
-        setError(`Payment failed: ${errorMsg}. Please try again.`)
+        const cancelled = await cancelTransaction(transactionId)
+        setError(cancelled
+          ? `Payment failed: ${errorMsg}. Please try again.`
+          : `Payment failed: ${errorMsg}. Please contact support if you were charged.`
+        )
         setLoading(false)
       })
       
