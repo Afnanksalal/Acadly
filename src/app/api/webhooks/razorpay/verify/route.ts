@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { successResponse, errorResponse, validationErrorResponse } from "@/lib/api-response"
 import { validateAndSanitizeBody } from "@/lib/validation"
 import { z } from "zod"
-import { verifyPaymentSignature } from "@/lib/razorpay"
+import { fetchOrder, fetchPayment, verifyPaymentSignature } from "@/lib/razorpay"
 import { notifyPaymentReceived, notifyPickupCodeGenerated } from "@/lib/notifications"
 import crypto from "crypto"
 
@@ -49,6 +49,70 @@ export const POST = async (request: NextRequest) => {
     }
 
     console.log(`[${requestId}] Signature verified successfully`)
+
+    const existingTransaction = await prisma.transaction.findUnique({
+      where: { id: data.transactionId },
+      select: {
+        id: true,
+        status: true,
+        amount: true,
+        razorpayOrderId: true,
+      }
+    })
+
+    if (!existingTransaction) {
+      throw new Error("TRANSACTION_NOT_FOUND")
+    }
+
+    if (existingTransaction.razorpayOrderId !== data.razorpay_order_id) {
+      throw new Error("ORDER_MISMATCH")
+    }
+
+    if (existingTransaction.status === "PAID") {
+      return successResponse({
+        transaction: {
+          id: existingTransaction.id,
+          status: existingTransaction.status,
+          amount: existingTransaction.amount,
+          razorpayPaymentId: data.razorpay_payment_id
+        },
+        pickupCode: null,
+        message: "Payment already verified"
+      })
+    }
+
+    let payment
+    let order
+
+    try {
+      [payment, order] = await Promise.all([
+        fetchPayment(data.razorpay_payment_id),
+        fetchOrder(data.razorpay_order_id)
+      ])
+    } catch (fetchError) {
+      console.error(`[${requestId}] Failed to verify payment with Razorpay:`, fetchError)
+      return errorResponse(new Error("Unable to verify payment with Razorpay. Please try again."), 502)
+    }
+
+    const expectedAmount = Math.round(Number(existingTransaction.amount) * 100)
+    const paymentStatus = payment.status as string
+    const validStatuses = new Set(["captured", "authorized"])
+
+    if (!validStatuses.has(paymentStatus)) {
+      return validationErrorResponse("Payment is not completed. Please try again.")
+    }
+
+    if (payment.order_id !== data.razorpay_order_id || order.id !== data.razorpay_order_id) {
+      return validationErrorResponse("Payment order does not match the transaction.")
+    }
+
+    if (payment.amount !== expectedAmount || order.amount !== expectedAmount) {
+      return validationErrorResponse("Payment amount does not match the transaction.")
+    }
+
+    if (payment.currency !== order.currency) {
+      return validationErrorResponse("Payment currency does not match the order.")
+    }
 
     // Update transaction status and deactivate listing atomically
     const result = await prisma.$transaction(async (tx) => {

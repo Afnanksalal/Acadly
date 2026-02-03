@@ -17,6 +17,8 @@ export default function NewListingPage() {
   const [price, setPrice] = useState("")
   const [categoryId, setCategoryId] = useState("")
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [categoriesError, setCategoriesError] = useState("")
   const [type, setType] = useState<"PRODUCT" | "SERVICE">("PRODUCT")
   const [userId, setUserId] = useState<string>("")
   const [error, setError] = useState<string>("")
@@ -54,10 +56,34 @@ export default function NewListingPage() {
       
       setUserId(id)
     })
-    fetch("/api/categories").then(r => r.json()).then((response) => {
-      const list = response.data || response
-      setCategories(list)
-    })
+    const loadCategories = async () => {
+      setCategoriesLoading(true)
+      setCategoriesError("")
+      try {
+        const response = await fetch("/api/categories")
+        const payload = await response.json()
+        if (!response.ok) {
+          throw new Error(payload?.error?.message || "Failed to load categories")
+        }
+        const list = payload.data || payload
+        const formatted = Array.isArray(list)
+          ? list.map((cat) => ({
+            id: cat.id,
+            name: cat.parent ? `${cat.parent.name} / ${cat.name}` : cat.name
+          }))
+          : []
+        setCategories(formatted)
+        if (formatted.length === 0) {
+          setCategoriesError("No categories are available yet.")
+        }
+      } catch (err) {
+        setCategoriesError(err instanceof Error ? err.message : "Failed to load categories")
+      } finally {
+        setCategoriesLoading(false)
+      }
+    }
+
+    loadCategories()
   }, [router, supabase.auth])
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -244,13 +270,19 @@ export default function NewListingPage() {
                 <NativeSelect
                   value={categoryId}
                   onChange={e => setCategoryId(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || categoriesLoading || categories.length === 0}
                   required
                   className="text-sm"
                 >
                   <option value="">Select category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </NativeSelect>
+                {categoriesLoading && (
+                  <p className="text-xs text-muted-foreground">Loading categories...</p>
+                )}
+                {!categoriesLoading && categoriesError && (
+                  <p className="text-xs text-destructive">{categoriesError}</p>
+                )}
               </div>
             </div>
 

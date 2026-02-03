@@ -39,8 +39,8 @@ export async function ListingsContent({
       include: { category: true }
     }),
     prisma.category.findMany({
-      where: { parentId: null },
-      orderBy: { name: 'asc' }
+      include: { parent: true },
+      orderBy: [{ parentId: "asc" }, { name: "asc" }]
     })
   ])
 
@@ -63,7 +63,10 @@ export async function ListingsContent({
 
       {/* Search and Filters */}
       <ListingsSearch 
-        categories={categories}
+        categories={categories.map((cat) => ({
+          id: cat.id,
+          name: cat.parent ? `${cat.parent.name} / ${cat.name}` : cat.name
+        }))}
         initialSearch={search}
         initialCategory={category}
         initialType={type}

@@ -229,7 +229,7 @@ export const createTransactionSchema = z.object({
       }
       return num
     })
-  ]),
+  ]).optional(),
 })
 
 export const createListingSchema = z.object({

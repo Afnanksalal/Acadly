@@ -34,6 +34,7 @@ export function ListingsSearch({
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || "")
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || "")
   const [showFilters, setShowFilters] = useState(false)
+  const hasCategories = categories.length > 0
 
   const hasActiveFilters = search || category || type || minPrice || maxPrice
 
@@ -136,14 +137,22 @@ export function ListingsSearch({
                 <NativeSelect
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
+                  disabled={!hasCategories}
                 >
-                  <option value="">All Categories</option>
+                  <option value="">
+                    {hasCategories ? "All Categories" : "No categories available"}
+                  </option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
                     </option>
                   ))}
                 </NativeSelect>
+                {!hasCategories && (
+                  <p className="text-xs text-muted-foreground">
+                    Categories couldn&apos;t be loaded. Try refreshing the page.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -240,7 +249,7 @@ export function ListingsSearch({
               )}
               {category && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                  Category: {categories.find(c => c.id === category)?.name}
+                  Category: {categories.find(c => c.id === category)?.name || "Unknown"}
                 </span>
               )}
               {type && (

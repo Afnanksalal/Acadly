@@ -191,9 +191,13 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
 
     const { listing } = result
 
-    // Use listing price or provided amount with validation
-    const finalAmount: number = typeof data.amount === 'number' ? data.amount : parseFloat(listing.price.toString())
-    
+    // Use listing price only (server-side authoritative amount)
+    const finalAmount = parseFloat(listing.price.toString())
+
+    if (Number.isNaN(finalAmount)) {
+      return validationErrorResponse("Invalid listing price")
+    }
+
     // Validate amount bounds
     if (finalAmount < 1 || finalAmount > 999999) {
       return validationErrorResponse("Transaction amount must be between ₹1 and ₹9,99,999")
