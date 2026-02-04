@@ -251,12 +251,18 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       return validationErrorResponse("Transaction amount must be between ₹1 and ₹9,99,999")
     }
 
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error(`[${transactionId}] Razorpay credentials not configured`)
+      return errorResponse(new Error("Payment system not configured. Please contact support."), 500)
+    }
+
     // Create Razorpay order using utility (handles retries and validation)
     let order
     try {
       order = await createOrder({
         amount: finalAmount,
         receipt: transactionId,
+        paymentCapture: true,
         notes: {
           listingId: data.listingId,
           buyerId: user.id,

@@ -1,10 +1,5 @@
-import Razorpay from "razorpay"
 import { prisma } from "./prisma"
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-})
+import { createRefund, getRazorpayInstance } from "./razorpay"
 
 export interface RefundResult {
   success: boolean
@@ -19,6 +14,15 @@ export async function processRefund(
   reason?: string
 ): Promise<RefundResult> {
   try {
+    try {
+      getRazorpayInstance()
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Refund configuration error",
+      }
+    }
+
     // Get transaction details
     const transaction = await prisma.transaction.findUnique({
       where: { id: transactionId },
@@ -43,7 +47,7 @@ export async function processRefund(
 
     // Calculate refund amount (default to full amount)
     const transactionAmount = Number(transaction.amount)
-    const refundAmount = amount ? Math.min(amount * 100, transactionAmount * 100) : transactionAmount * 100
+    const refundAmount = amount ? Math.min(amount, transactionAmount) : transactionAmount
 
     // Validate refund amount
     if (refundAmount <= 0) {
@@ -52,8 +56,9 @@ export async function processRefund(
 
     try {
       // Process refund with Razorpay
-      const refund = await razorpay.payments.refund(transaction.razorpayPaymentId, {
-        amount: Math.round(refundAmount), // Ensure integer
+      const refund = await createRefund({
+        paymentId: transaction.razorpayPaymentId,
+        amount: refundAmount,
         notes: {
           reason: reason || "Dispute resolution",
           transaction_id: transactionId,
@@ -112,7 +117,7 @@ export async function processPartialRefund(
     return { success: false, error: "Transaction not found" }
   }
 
-  const refundAmount = Math.floor(Number(transaction.amount) * refundPercentage * 100) // Convert to paise
+  const refundAmount = Number(transaction.amount) * refundPercentage
   return processRefund(transactionId, refundAmount, reason)
 }
 

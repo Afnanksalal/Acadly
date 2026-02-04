@@ -502,7 +502,6 @@ export function ChatMessages({
                 buyerName={buyerName}
                 buyerPhone={buyerPhone}
                 chatId={chatId}
-                showFooterText={false}
                 buttonLabel={`Buy for ₹${Number(effectivePrice).toLocaleString('en-IN')}`}
               />
             </div>
