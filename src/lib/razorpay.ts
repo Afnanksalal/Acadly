@@ -166,7 +166,7 @@ export async function createOrder(params: {
         receipt,
         notes,
         partial_payment: partialPayment,
-        payment_capture: paymentCapture ? 1 : 0,
+        payment_capture: paymentCapture,
       })
       
       console.log(`[RAZORPAY] Order created: ${order.id} for ₹${amount}`)
