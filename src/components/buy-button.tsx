@@ -57,7 +57,6 @@ type BuyButtonProps = {
   buyerName?: string
   buyerPhone?: string
   chatId?: string
-  showFooterText?: boolean
   buttonLabel?: string
 }
 
@@ -69,7 +68,6 @@ export function BuyButton({
   buyerName,
   buyerPhone,
   chatId,
-  showFooterText = true,
   buttonLabel
 }: BuyButtonProps) {
   const [loading, setLoading] = useState(false)
@@ -305,11 +303,6 @@ export function BuyButton({
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
-      {showFooterText && (
-        <p className="text-xs text-center text-muted-foreground">
-          OLX-style flow: pay securely, seller gets notified, pickup code shared after payment.
-        </p>
       )}
     </div>
   )
