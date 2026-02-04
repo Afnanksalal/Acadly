@@ -119,6 +119,53 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       // Validate buyer is not seller
       validateBuyerNotSeller(user.id, listing.userId)
 
+      let chat = null
+      if (data.chatId) {
+        chat = await tx.chat.findUnique({
+          where: { id: data.chatId },
+          select: { id: true, listingId: true, buyerId: true, sellerId: true }
+        })
+
+        if (!chat) {
+          throw new Error("CHAT_NOT_FOUND")
+        }
+
+        if (chat.listingId !== listing.id) {
+          throw new Error("CHAT_LISTING_MISMATCH")
+        }
+
+        if (chat.sellerId !== listing.userId) {
+          throw new Error("CHAT_SELLER_MISMATCH")
+        }
+
+        if (chat.buyerId !== user.id) {
+          throw new Error("ONLY_BUYER_CAN_PAY")
+        }
+      } else {
+        chat = await tx.chat.findUnique({
+          where: {
+            listingId_buyerId_sellerId: {
+              listingId: listing.id,
+              buyerId: user.id,
+              sellerId: listing.userId
+            }
+          },
+          select: { id: true, buyerId: true, sellerId: true }
+        })
+      }
+
+      const acceptedOffer = chat ? await tx.offer.findFirst({
+        where: {
+          chatId: chat.id,
+          status: "ACCEPTED",
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } }
+          ]
+        },
+        orderBy: { createdAt: "desc" }
+      }) : null
+
       // Check for existing active transaction with proper locking
       // Use more aggressive locking to prevent race conditions
       const existingTransaction = await tx.transaction.findFirst({
@@ -186,13 +233,14 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
         throw new Error("TRANSACTION_LIMIT_EXCEEDED")
       }
 
-      return { listing }
+      return { listing, acceptedOffer, chat }
     })
 
-    const { listing } = result
+    const { listing, acceptedOffer, chat } = result
 
-    // Use listing price only (server-side authoritative amount)
-    const finalAmount = parseFloat(listing.price.toString())
+    const offerAmount = acceptedOffer ? parseFloat(acceptedOffer.price.toString()) : null
+    const listingAmount = parseFloat(listing.price.toString())
+    const finalAmount = offerAmount ?? listingAmount
 
     if (Number.isNaN(finalAmount)) {
       return validationErrorResponse("Invalid listing price")
@@ -213,7 +261,9 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
           listingId: data.listingId,
           buyerId: user.id,
           sellerId: listing.userId,
-          transactionId
+          transactionId,
+          ...(acceptedOffer ? { offerId: acceptedOffer.id } : {}),
+          ...(chat ? { chatId: chat.id } : {})
         }
       })
     } catch (razorpayError) {
@@ -297,6 +347,14 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
           return validationErrorResponse("A payment is currently being processed for this item. Please try again in a few minutes.")
         case "TRANSACTION_LIMIT_EXCEEDED":
           return validationErrorResponse("Daily transaction limit exceeded. Please try again tomorrow.")
+        case "CHAT_NOT_FOUND":
+          return notFoundResponse("Chat not found for this purchase")
+        case "CHAT_LISTING_MISMATCH":
+          return validationErrorResponse("This chat does not match the listing")
+        case "CHAT_SELLER_MISMATCH":
+          return validationErrorResponse("Chat does not match the listing seller")
+        case "ONLY_BUYER_CAN_PAY":
+          return validationErrorResponse("Only the buyer can complete the purchase")
       }
     }
 
