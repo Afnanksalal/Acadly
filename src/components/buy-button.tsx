@@ -150,6 +150,12 @@ export function BuyButton({
     setError("")
 
     try {
+      if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+        setError("Payment gateway is not configured. Please contact support.")
+        setLoading(false)
+        return
+      }
+
       // Create transaction and Razorpay order
       const res = await fetch("/api/transactions", {
         method: "POST",

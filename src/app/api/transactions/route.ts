@@ -257,6 +257,7 @@ export const POST = withVerifiedAuth(async (request: NextRequest, user) => {
       order = await createOrder({
         amount: finalAmount,
         receipt: transactionId,
+        paymentCapture: true,
         notes: {
           listingId: data.listingId,
           buyerId: user.id,

@@ -123,6 +123,7 @@ export async function createOrder(params: {
   receipt: string
   notes?: Record<string, string>
   partialPayment?: boolean
+  paymentCapture?: boolean
 }): Promise<{
   id: string
   amount: number
@@ -132,7 +133,14 @@ export async function createOrder(params: {
 }> {
   const razorpay = getRazorpayInstance()
   
-  const { amount, currency = 'INR', receipt, notes, partialPayment = false } = params
+  const {
+    amount,
+    currency = 'INR',
+    receipt,
+    notes,
+    partialPayment = false,
+    paymentCapture = true,
+  } = params
   
   // Validate amount
   if (amount < 1) {
@@ -158,6 +166,7 @@ export async function createOrder(params: {
         receipt,
         notes,
         partial_payment: partialPayment,
+        payment_capture: paymentCapture,
       })
       
       console.log(`[RAZORPAY] Order created: ${order.id} for ₹${amount}`)
