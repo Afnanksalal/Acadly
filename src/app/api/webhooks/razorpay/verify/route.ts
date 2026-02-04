@@ -96,7 +96,7 @@ export const POST = async (request: NextRequest) => {
 
     const expectedAmount = Math.round(Number(existingTransaction.amount) * 100)
     const paymentStatus = payment.status as string
-    const validStatuses = new Set(["captured", "authorized"])
+    const validStatuses = new Set(["captured"])
 
     if (!validStatuses.has(paymentStatus)) {
       return validationErrorResponse("Payment is not completed. Please try again.")
