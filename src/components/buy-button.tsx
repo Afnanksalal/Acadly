@@ -49,23 +49,29 @@ declare global {
   }
 }
 
-export function BuyButton({ 
-  listingId, 
-  sellerId, 
-  price, 
-  title,
-  buyerEmail,
-  buyerName,
-  buyerPhone
-}: { 
+type BuyButtonProps = {
   listingId: string
-  sellerId: string
-  price: string
+  price: string | number
   title: string
   buyerEmail?: string
   buyerName?: string
   buyerPhone?: string
-}) {
+  chatId?: string
+  showFooterText?: boolean
+  buttonLabel?: string
+}
+
+export function BuyButton({ 
+  listingId, 
+  price, 
+  title,
+  buyerEmail,
+  buyerName,
+  buyerPhone,
+  chatId,
+  showFooterText = true,
+  buttonLabel
+}: BuyButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
@@ -81,6 +87,9 @@ export function BuyButton({
       return false
     }
   }, [])
+
+  const displayPrice = typeof price === "number" ? price : parseFloat(price)
+  const formattedPrice = Number.isFinite(displayPrice) ? displayPrice : 0
 
   // Memoized script loader with singleton pattern
   const loadRazorpayScript = useCallback(() => {
@@ -146,7 +155,8 @@ export function BuyButton({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          listingId
+          listingId,
+          ...(chatId ? { chatId } : {})
         })
       })
 
@@ -282,7 +292,7 @@ export function BuyButton({
             Processing...
           </>
         ) : (
-          `Buy Now - ₹${parseFloat(price).toLocaleString('en-IN')}`
+          buttonLabel || `Buy Now - ₹${formattedPrice.toLocaleString('en-IN')}`
         )}
       </Button>
       {error && (
@@ -290,9 +300,11 @@ export function BuyButton({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <p className="text-xs text-center text-muted-foreground">
-        Secure payment powered by Razorpay
-      </p>
+      {showFooterText && (
+        <p className="text-xs text-center text-muted-foreground">
+          OLX-style flow: pay securely, seller gets notified, pickup code shared after payment.
+        </p>
+      )}
     </div>
   )
 }

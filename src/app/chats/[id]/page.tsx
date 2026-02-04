@@ -128,6 +128,13 @@ export default async function ChatDetailPage({ params }: { params: { id: string 
               }))} 
               currentUserId={user.id}
               listingPrice={parseFloat(chat.listing.price.toString())}
+              listingId={chat.listing.id}
+              listingTitle={chat.listing.title}
+              listingActive={chat.listing.isActive}
+              buyerId={chat.buyerId}
+              buyerEmail={profile?.email || undefined}
+              buyerName={profile?.name || profile?.username || undefined}
+              buyerPhone={profile?.phone || undefined}
             />
           </ErrorBoundary>
         </CardContent>

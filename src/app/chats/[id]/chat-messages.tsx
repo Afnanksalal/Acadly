@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
+import { BuyButton } from "@/components/buy-button"
 import { apiRequest } from "@/lib/api-client"
 import { Send, WifiOff, IndianRupee, Check, X, Clock } from "lucide-react"
 
@@ -27,11 +28,25 @@ export function ChatMessages({
   initialMessages,
   currentUserId,
   listingPrice,
+  listingId,
+  listingTitle,
+  listingActive,
+  buyerId,
+  buyerEmail,
+  buyerName,
+  buyerPhone,
 }: {
   chatId: string
   initialMessages: Message[]
   currentUserId: string
   listingPrice?: number
+  listingId?: string
+  listingTitle?: string
+  listingActive?: boolean
+  buyerId?: string
+  buyerEmail?: string
+  buyerName?: string
+  buyerPhone?: string
 }) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [newMessage, setNewMessage] = useState("")
@@ -332,6 +347,15 @@ export function ChatMessages({
 
   const activeOffer = offers.find(o => o.status === 'PROPOSED' || o.status === 'COUNTERED')
   const canMakeOffer = !activeOffer && listingPrice
+  const acceptedOffer = offers.find(o => {
+    if (o.status !== 'ACCEPTED') return false
+    if (!o.expiresAt) return true
+    return new Date(o.expiresAt) > new Date()
+  })
+  const acceptedPrice = acceptedOffer ? Number(acceptedOffer.price) : null
+  const effectivePrice = acceptedPrice ?? listingPrice ?? null
+  const isBuyer = buyerId === currentUserId
+  const canBuy = Boolean(isBuyer && listingId && listingTitle && effectivePrice && listingActive)
 
   return (
     <div className="flex flex-col h-[70vh] min-h-[400px] max-h-[700px] sm:min-h-[500px]">
@@ -454,6 +478,34 @@ export function ChatMessages({
             <Button onClick={makeOffer} disabled={offerLoading || !offerPrice} size="sm" className="px-4">
               {offerLoading ? '...' : 'Send'}
             </Button>
+          </div>
+        </div>
+      )}
+
+      {canBuy && effectivePrice !== null && listingId && listingTitle && (
+        <div className="border-t border-border p-3 sm:p-4 bg-muted/30">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">Ready to buy?</p>
+              <p className="text-xs text-muted-foreground">
+                {acceptedPrice !== null
+                  ? `Accepted offer just for you: ₹${acceptedPrice.toLocaleString()}`
+                  : `Listed price: ₹${Number(effectivePrice).toLocaleString()}`}
+              </p>
+            </div>
+            <div className="w-full sm:w-auto">
+              <BuyButton
+                listingId={listingId}
+                price={effectivePrice}
+                title={listingTitle}
+                buyerEmail={buyerEmail}
+                buyerName={buyerName}
+                buyerPhone={buyerPhone}
+                chatId={chatId}
+                showFooterText={false}
+                buttonLabel={`Buy for ₹${Number(effectivePrice).toLocaleString('en-IN')}`}
+              />
+            </div>
           </div>
         </div>
       )}

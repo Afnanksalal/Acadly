@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ChatButton } from "./chat-button"
-import { BuyButton } from "./buy-button"
+import { BuyButton } from "@/components/buy-button"
 import { ReportButton } from "@/components/report-button"
 import { ImageGallery } from "./image-gallery"
 import { Calendar, Tag, User as UserIcon, Star, MapPin } from "lucide-react"
@@ -56,6 +56,41 @@ export default async function ListingDetail({ params }: { params: { id: string }
   const isOwner = user?.id === listing.userId
   const canMessage = user && profile?.verified && !isOwner
 
+  let acceptedOfferPrice: number | null = null
+  if (user && !isOwner) {
+    const chat = await prisma.chat.findUnique({
+      where: {
+        listingId_buyerId_sellerId: {
+          listingId: listing.id,
+          buyerId: user.id,
+          sellerId: listing.userId
+        }
+      },
+      select: { id: true }
+    })
+
+    if (chat) {
+      const acceptedOffer = await prisma.offer.findFirst({
+        where: {
+          chatId: chat.id,
+          status: "ACCEPTED",
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: new Date() } }
+          ]
+        },
+        orderBy: { createdAt: "desc" }
+      })
+
+      if (acceptedOffer) {
+        acceptedOfferPrice = parseFloat(acceptedOffer.price.toString())
+      }
+    }
+  }
+
+  const listingPrice = parseFloat(listing.price.toString())
+  const effectivePrice = acceptedOfferPrice ?? listingPrice
+
   const images = Array.isArray(listing.images) ? listing.images.filter((img): img is string => typeof img === 'string') : []
 
   return (
@@ -96,7 +131,15 @@ export default async function ListingDetail({ params }: { params: { id: string }
                   </div>
                 </div>
                 <div className="text-left sm:text-right">
-                  <div className="text-2xl sm:text-3xl font-bold text-primary">₹{listing.price.toString()}</div>
+                  {acceptedOfferPrice ? (
+                    <div className="flex flex-col items-start sm:items-end">
+                      <span className="text-sm text-muted-foreground line-through">₹{listing.price.toString()}</span>
+                      <span className="text-2xl sm:text-3xl font-bold text-primary">₹{acceptedOfferPrice.toLocaleString('en-IN')}</span>
+                      <span className="text-xs text-emerald-600 font-semibold">Your accepted offer</span>
+                    </div>
+                  ) : (
+                    <div className="text-2xl sm:text-3xl font-bold text-primary">₹{listing.price.toString()}</div>
+                  )}
                   {!listing.isActive && (
                     <Badge variant="destructive" className="mt-1">Sold</Badge>
                   )}
@@ -161,8 +204,7 @@ export default async function ListingDetail({ params }: { params: { id: string }
                 <div className="space-y-3">
                   <BuyButton 
                     listingId={listing.id}
-                    sellerId={listing.userId}
-                    price={listing.price.toString()}
+                    price={effectivePrice}
                     title={listing.title}
                     buyerEmail={profile?.email}
                     buyerName={profile?.name || profile?.username || undefined}

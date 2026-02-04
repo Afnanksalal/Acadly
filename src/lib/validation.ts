@@ -220,6 +220,7 @@ export function validatePagination(params: PaginationParams) {
 // Transaction validation schemas
 export const createTransactionSchema = z.object({
   listingId: z.string().uuid("Invalid listing selected"),
+  chatId: z.string().uuid("Invalid chat").optional(),
   amount: z.union([
     z.number().positive("Amount must be greater than 0"),
     z.string().transform((val) => {
