@@ -14,6 +14,50 @@ import crypto from 'crypto'
 // Singleton Razorpay instance
 let razorpayInstance: Razorpay | null = null
 
+type RazorpayErrorPayload = {
+  error?: {
+    description?: string
+    code?: string
+    source?: string
+    step?: string
+    reason?: string
+    metadata?: Record<string, unknown>
+  }
+  statusCode?: number
+  message?: string
+}
+
+function normalizeRazorpayError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error
+  }
+
+  if (error && typeof error === 'object') {
+    const payload = error as RazorpayErrorPayload
+    const description = payload.error?.description ?? payload.message
+    const details: string[] = []
+
+    if (description) {
+      details.push(description)
+    }
+
+    if (payload.error?.code) {
+      details.push(`code: ${payload.error.code}`)
+    }
+
+    if (payload.statusCode) {
+      details.push(`status: ${payload.statusCode}`)
+    }
+
+    const message = details.length > 0 ? details.join(' | ') : 'Razorpay request failed'
+    const normalized = new Error(message)
+    normalized.cause = payload
+    return normalized
+  }
+
+  return new Error(String(error))
+}
+
 /**
  * Get or create Razorpay instance (singleton pattern)
  */
@@ -179,8 +223,12 @@ export async function createOrder(params: {
         status: order.status,
       }
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error))
-      console.warn(`[RAZORPAY] Order creation attempt ${attempt}/${maxRetries} failed:`, lastError.message)
+      lastError = normalizeRazorpayError(error)
+      console.warn(
+        `[RAZORPAY] Order creation attempt ${attempt}/${maxRetries} failed:`,
+        lastError.message,
+        lastError.cause ?? error
+      )
       
       if (attempt < maxRetries) {
         // Exponential backoff: 1s, 2s, 4s
